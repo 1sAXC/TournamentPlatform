@@ -1,0 +1,6 @@
+@TournamentPlatform.AuthService_HostAddress = http://localhost:5219
+
+GET {{TournamentPlatform.AuthService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
