@@ -1,0 +1,158 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: tournamentplatform-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: src/Services/Auth/Auth.Api/Auth.Api.csproj
+        DLL_NAME: Auth.Api.dll
+    container_name: tournamentplatform-auth-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ApplyMigrations: "true"
+      ConnectionStrings__AuthDb: Host=auth-db;Port=5432;Database=auth_db;Username=postgres;Password=postgres
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+      RabbitMq__VirtualHost: /
+      Jwt__Issuer: TournamentPlatform.Auth
+      Jwt__Audience: TournamentPlatform.Services
+      Jwt__Secret: DevelopmentJwtSecretMustBeAtLeast32Characters!
+      Jwt__ExpiresMinutes: 60
+      AdminSeed__Password: ChangeMe_AuthAdmin_123!
+    ports:
+      - "5240:8080"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  tournament-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: src/Services/Tournament/Tournament.Api/Tournament.Api.csproj
+        DLL_NAME: Tournament.Api.dll
+    container_name: tournamentplatform-tournament-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ApplyMigrations: "true"
+      ConnectionStrings__TournamentDb: Host=tournament-db;Port=5432;Database=tournament_db;Username=postgres;Password=postgres
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+      RabbitMq__VirtualHost: /
+      Jwt__Issuer: TournamentPlatform.Auth
+      Jwt__Audience: TournamentPlatform.Services
+      Jwt__Secret: DevelopmentJwtSecretMustBeAtLeast32Characters!
+    ports:
+      - "5015:8080"
+    depends_on:
+      tournament-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth-api:
+        condition: service_started
+
+  rating-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: src/Services/Rating/Rating.Api/Rating.Api.csproj
+        DLL_NAME: Rating.Api.dll
+    container_name: tournamentplatform-rating-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ApplyMigrations: "true"
+      ConnectionStrings__RatingDb: Host=rating-db;Port=5432;Database=rating_db;Username=postgres;Password=postgres
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+      RabbitMq__VirtualHost: /
+      Jwt__Issuer: TournamentPlatform.Auth
+      Jwt__Audience: TournamentPlatform.Services
+      Jwt__Secret: DevelopmentJwtSecretMustBeAtLeast32Characters!
+    ports:
+      - "5196:8080"
+    depends_on:
+      rating-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth-api:
+        condition: service_started
+
+  auth-db:
+    image: postgres:16
+    container_name: tournamentplatform-auth-db
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  tournament-db:
+    image: postgres:16
+    container_name: tournamentplatform-tournament-db
+    environment:
+      POSTGRES_DB: tournament_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - tournament-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tournament_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rating-db:
+    image: postgres:16
+    container_name: tournamentplatform-rating-db
+    environment:
+      POSTGRES_DB: rating_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - rating-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rating_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  auth-db-data:
+  tournament-db-data:
+  rating-db-data:

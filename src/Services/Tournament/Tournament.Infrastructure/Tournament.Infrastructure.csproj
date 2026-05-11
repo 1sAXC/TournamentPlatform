@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tournament.Application\Tournament.Application.csproj" />
+    <ProjectReference Include="..\Tournament.Domain\Tournament.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TournamentPlatform.Contracts\TournamentPlatform.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TournamentPlatform.Shared\TournamentPlatform.Shared.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TournamentPlatform.Messaging\TournamentPlatform.Messaging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
