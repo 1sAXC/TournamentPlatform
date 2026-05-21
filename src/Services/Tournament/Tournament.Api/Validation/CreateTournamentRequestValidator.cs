@@ -5,6 +5,8 @@ namespace Tournament.Api.Validation;
 
 public sealed class CreateTournamentRequestValidator : AbstractValidator<CreateTournamentRequest>
 {
+    private const int MaxTournamentPlayers = 120;
+
     public CreateTournamentRequestValidator()
     {
         RuleFor(request => request.Title)
@@ -33,7 +35,7 @@ public sealed class CreateTournamentRequestValidator : AbstractValidator<CreateT
 
         RuleFor(request => request.MaxPlayers)
             .GreaterThan(0)
-            .LessThanOrEqualTo(1000);
+            .LessThanOrEqualTo(MaxTournamentPlayers);
 
         RuleFor(request => request)
             .Must(request => request.MaxPlayers % request.TeamSize == 0)

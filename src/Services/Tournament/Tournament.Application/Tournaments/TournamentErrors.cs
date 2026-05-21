@@ -9,7 +9,7 @@ public static class TournamentErrors
     public static readonly Error DuplicateTitle = new("Tournaments.DuplicateTitle", "Tournament title already exists.");
     public static readonly Error InvalidTitle = new("Tournaments.InvalidTitle", "Tournament title has invalid format.");
     public static readonly Error InvalidFormat = new("Tournaments.InvalidFormat", "Tournament format is invalid.");
-    public static readonly Error InvalidMaxPlayers = new("Tournaments.InvalidMaxPlayers", "MaxPlayers must be less than or equal to 1000.");
+    public static readonly Error InvalidMaxPlayers = new("Tournaments.InvalidMaxPlayers", "MaxPlayers must be less than or equal to 120.");
     public static readonly Error InvalidTeamSize = new("Tournaments.InvalidTeamSize", "TeamSize is not allowed for this discipline.");
     public static readonly Error MaxPlayersNotMultipleOfTeamSize = new("Tournaments.MaxPlayersNotMultipleOfTeamSize", "MaxPlayers must be divisible by TeamSize.");
     public static readonly Error DisciplineNotFound = new("Tournaments.DisciplineNotFound", "Discipline does not exist or is inactive.");

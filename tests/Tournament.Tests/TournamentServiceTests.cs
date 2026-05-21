@@ -85,7 +85,7 @@ public sealed class TournamentServiceTests
     {
         var service = CreateService(new InMemoryTournamentRepository());
 
-        var result = await service.CreateAsync(ValidRequest("Stage8 Cup") with { MaxPlayers = 1001 }, ActiveOrganizer);
+        var result = await service.CreateAsync(ValidRequest("Stage8 Cup") with { MaxPlayers = 121 }, ActiveOrganizer);
 
         Assert.True(result.IsFailure);
         Assert.Equal(TournamentErrors.InvalidMaxPlayers, result.Error);

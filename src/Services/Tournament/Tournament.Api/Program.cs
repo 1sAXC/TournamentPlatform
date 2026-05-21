@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRabbitMqMessaging(builder.Configuration);
-builder.Services.AddTournamentApplication();
+builder.Services.AddTournamentApplication(builder.Configuration);
 builder.Services.AddTournamentInfrastructure(builder.Configuration);
 builder.Services.AddTournamentPlatformApiDefaults();
 builder.Services.AddControllers();

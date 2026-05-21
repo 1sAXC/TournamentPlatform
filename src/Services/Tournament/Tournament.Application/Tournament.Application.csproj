@@ -7,7 +7,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.OrTools" Version="9.12.4544" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

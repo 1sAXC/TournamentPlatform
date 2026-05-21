@@ -13,6 +13,8 @@ public sealed class TournamentService(
     IOutboxWriter outboxWriter,
     ITournamentLifecycleService lifecycleService) : ITournamentService
 {
+    private const int MaxTournamentPlayers = 120;
+
     private static readonly Regex TitleRegex = new(
         @"^(?!.* {2,})(?!.*-{2,})[A-Za-z0-9][A-Za-z0-9 -]*[A-Za-z0-9]$",
         RegexOptions.Compiled,
@@ -45,7 +47,7 @@ public sealed class TournamentService(
             return Result<TournamentDetailsResponse>.Failure(swissRoundsValidation.Error);
         }
 
-        if (request.MaxPlayers > 1000)
+        if (request.MaxPlayers > MaxTournamentPlayers)
         {
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidMaxPlayers);
         }

@@ -61,6 +61,8 @@ services:
       Jwt__Issuer: TournamentPlatform.Auth
       Jwt__Audience: TournamentPlatform.Services
       Jwt__Secret: DevelopmentJwtSecretMustBeAtLeast32Characters!
+      TeamBalancing__CpSatTimeLimitSeconds: 10
+      TeamBalancing__GreedyLocalSearchMaxIterations: 10000
     ports:
       - "5015:8080"
     depends_on:
