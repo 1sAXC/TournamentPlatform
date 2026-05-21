@@ -139,6 +139,100 @@ public sealed class RatingServiceTests
     }
 
     [Fact]
+    public async Task HandleMatchCompletedAsync_TwoVsTwo_ShouldApplySameDeltaToAllPlayersInSameTeam()
+    {
+        var repository = new InMemoryRatingRepository();
+        var outbox = new InMemoryOutboxWriter();
+        var service = CreateService(repository, outbox);
+        var winnerIds = NewPlayers(2);
+        var loserIds = NewPlayers(2);
+        AddRating(repository, winnerIds[0], 1600);
+        AddRating(repository, winnerIds[1], 1400);
+        AddRating(repository, loserIds[0], 1500);
+        AddRating(repository, loserIds[1], 1500);
+
+        await service.HandleMatchCompletedAsync(MatchCompleted(
+            winnerIds,
+            loserIds,
+            teamSize: 2,
+            winnerScore: null,
+            loserScore: null));
+
+        Assert.Equal(1614, GetRating(repository, winnerIds[0]).Elo);
+        Assert.Equal(1414, GetRating(repository, winnerIds[1]).Elo);
+        Assert.Equal(1486, GetRating(repository, loserIds[0]).Elo);
+        Assert.Equal(1486, GetRating(repository, loserIds[1]).Elo);
+        Assert.Equal(4, repository.RatingHistories.Count);
+        Assert.Equal(4, outbox.Events.OfType<RatingUpdatedEvent>().Count());
+    }
+
+    [Fact]
+    public async Task HandleMatchCompletedAsync_FiveVsFive_ShouldUseLowerKFactor()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+        var winnerIds = NewPlayers(5);
+        var loserIds = NewPlayers(5);
+        foreach (var playerId in winnerIds.Concat(loserIds))
+        {
+            AddRating(repository, playerId, 1000);
+        }
+
+        await service.HandleMatchCompletedAsync(MatchCompleted(
+            winnerIds,
+            loserIds,
+            teamSize: 5,
+            winnerScore: null,
+            loserScore: null));
+
+        Assert.All(winnerIds, playerId => Assert.Equal(1012, GetRating(repository, playerId).Elo));
+        Assert.All(loserIds, playerId => Assert.Equal(988, GetRating(repository, playerId).Elo));
+    }
+
+    [Fact]
+    public async Task HandleMatchCompletedAsync_ShouldUseScoreMultiplier_WhenScoreDifferenceExists()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+        var winnerId = Guid.NewGuid();
+        var loserId = Guid.NewGuid();
+        AddRating(repository, winnerId, 1000);
+        AddRating(repository, loserId, 1000);
+
+        await service.HandleMatchCompletedAsync(MatchCompleted(
+            [winnerId],
+            [loserId],
+            teamSize: 1,
+            winnerScore: 10,
+            loserScore: 0));
+
+        Assert.Equal(1020, GetRating(repository, winnerId).Elo);
+        Assert.Equal(980, GetRating(repository, loserId).Elo);
+    }
+
+    [Fact]
+    public async Task HandleMatchCompletedAsync_TechnicalDefeat_ShouldBeCalculatedAsEightZero()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+        var winnerId = Guid.NewGuid();
+        var loserId = Guid.NewGuid();
+        AddRating(repository, winnerId, 1000);
+        AddRating(repository, loserId, 1000);
+
+        await service.HandleMatchCompletedAsync(MatchCompleted(
+            [winnerId],
+            [loserId],
+            teamSize: 1,
+            winnerScore: null,
+            loserScore: null,
+            isTechnicalDefeat: true));
+
+        Assert.Equal(1019, GetRating(repository, winnerId).Elo);
+        Assert.Equal(981, GetRating(repository, loserId).Elo);
+    }
+
+    [Fact]
     public async Task HandleMatchCompletedAsync_ShouldBeIdempotent()
     {
         var repository = new InMemoryRatingRepository();
@@ -160,12 +254,71 @@ public sealed class RatingServiceTests
     }
 
     [Fact]
-    public void EloCalculator_ShouldGiveBiggerDeltaForUpset()
+    public async Task HandleMatchCompletedAsync_ShouldNotDropBelowMinimumElo()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+        var winnerId = Guid.NewGuid();
+        var loserId = Guid.NewGuid();
+        AddRating(repository, winnerId, 100);
+        AddRating(repository, loserId, 105);
+
+        await service.HandleMatchCompletedAsync(MatchCompleted(
+            [winnerId],
+            [loserId],
+            teamSize: 1,
+            winnerScore: null,
+            loserScore: null));
+
+        Assert.Equal(100, GetRating(repository, loserId).Elo);
+        Assert.Equal(-5, repository.RatingHistories.Single(history => history.PlayerId == loserId).Delta);
+    }
+
+    [Fact]
+    public async Task HandleMatchCompletedAsync_ShouldCreateMissingRatingWithInitialElo()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+        var winnerId = Guid.NewGuid();
+        var loserId = Guid.NewGuid();
+        AddRating(repository, loserId, 1000);
+
+        await service.HandleMatchCompletedAsync(MatchCompleted(
+            [winnerId],
+            [loserId],
+            teamSize: 1,
+            winnerScore: null,
+            loserScore: null));
+
+        var winnerRating = GetRating(repository, winnerId);
+        var winnerHistory = repository.RatingHistories.Single(history => history.PlayerId == winnerId);
+        Assert.Equal(1016, winnerRating.Elo);
+        Assert.Equal(1000, winnerHistory.OldElo);
+        Assert.Equal(1016, winnerHistory.NewElo);
+    }
+
+    [Fact]
+    public void EloCalculator_EqualRatings_OneVsOne_ShouldReturnPlus16WithoutScoreMultiplier()
     {
         var calculator = new EloCalculator();
 
-        var favoriteDelta = calculator.CalculateDelta(1200, 900, 1, 1);
-        var underdogDelta = calculator.CalculateDelta(900, 1200, 1, 1);
+        var delta = calculator.CalculateTeamDelta(
+            teamAverageElo: 1000,
+            opponentAverageElo: 1000,
+            teamSize: 1,
+            actualScore: 1,
+            scoreMultiplier: 1);
+
+        Assert.Equal(16, delta);
+    }
+
+    [Fact]
+    public void EloCalculator_UnderdogWin_ShouldGiveBiggerDeltaThanFavoriteWin()
+    {
+        var calculator = new EloCalculator();
+
+        var favoriteDelta = calculator.CalculateTeamDelta(1200, 900, 1, 1, 1);
+        var underdogDelta = calculator.CalculateTeamDelta(900, 1200, 1, 1, 1);
 
         Assert.True(underdogDelta > favoriteDelta);
     }
@@ -177,36 +330,61 @@ public sealed class RatingServiceTests
         return new RatingService(repository, new EloCalculator(), outbox ?? new InMemoryOutboxWriter());
     }
 
+    private static Guid[] NewPlayers(int count)
+    {
+        return Enumerable.Range(0, count).Select(_ => Guid.NewGuid()).ToArray();
+    }
+
+    private static void AddRating(InMemoryRatingRepository repository, Guid playerId, int elo)
+    {
+        repository.AddPlayerRating(PlayerRating.CreateInitial(playerId, DisciplineCodes.CS2, elo, DateTime.UtcNow));
+    }
+
+    private static PlayerRating GetRating(InMemoryRatingRepository repository, Guid playerId)
+    {
+        return repository.PlayerRatings.Single(rating => rating.PlayerId == playerId);
+    }
+
     private static MatchCompletedEvent MatchCompleted(Guid winnerId, Guid loserId)
+    {
+        return MatchCompleted([winnerId], [loserId], teamSize: 1, winnerScore: 2, loserScore: 0);
+    }
+
+    private static MatchCompletedEvent MatchCompleted(
+        IReadOnlyCollection<Guid> winnerIds,
+        IReadOnlyCollection<Guid> loserIds,
+        int teamSize,
+        int? winnerScore,
+        int? loserScore,
+        bool isTechnicalDefeat = false)
     {
         return new MatchCompletedEvent
         {
             MatchId = Guid.NewGuid(),
             TournamentId = Guid.NewGuid(),
             DisciplineCode = DisciplineCodes.CS2,
-            TeamSize = 1,
+            TeamSize = teamSize,
             WinnerTeamId = Guid.NewGuid(),
             LoserTeamId = Guid.NewGuid(),
-            WinnerScore = 2,
-            LoserScore = 0,
-            WinnerPlayers =
-            [
-                new MatchCompletedPlayerDto
+            WinnerScore = winnerScore,
+            LoserScore = loserScore,
+            IsTechnicalDefeat = isTechnicalDefeat,
+            WinnerPlayers = winnerIds
+                .Select(playerId => new MatchCompletedPlayerDto
                 {
-                    UserId = winnerId,
+                    UserId = playerId,
                     Nickname = "Winner",
                     EloBeforeMatch = 1000
-                }
-            ],
-            LoserPlayers =
-            [
-                new MatchCompletedPlayerDto
+                })
+                .ToArray(),
+            LoserPlayers = loserIds
+                .Select(playerId => new MatchCompletedPlayerDto
                 {
-                    UserId = loserId,
+                    UserId = playerId,
                     Nickname = "Loser",
                     EloBeforeMatch = 1000
-                }
-            ]
+                })
+                .ToArray()
         };
     }
 

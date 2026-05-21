@@ -88,15 +88,20 @@ public sealed class RatingService(
         var winnerAverageElo = winnerRatings.Values.Average(rating => rating.Elo);
         var loserAverageElo = loserRatings.Values.Average(rating => rating.Elo);
         var scoreCoefficient = CalculateScoreCoefficient(integrationEvent);
+        var winnerDelta = eloCalculator.CalculateTeamDelta(
+            winnerAverageElo,
+            loserAverageElo,
+            integrationEvent.TeamSize,
+            actualScore: 1,
+            scoreCoefficient);
+        var loserDelta = -winnerDelta;
         var now = DateTime.UtcNow;
 
         foreach (var player in integrationEvent.WinnerPlayers)
         {
-            ApplyPlayerMatchResult(
+            ApplyPlayerRatingChange(
                 winnerRatings[player.UserId],
-                loserAverageElo,
-                actualScore: 1,
-                scoreCoefficient,
+                winnerDelta,
                 integrationEvent,
                 isWin: true,
                 now);
@@ -104,11 +109,9 @@ public sealed class RatingService(
 
         foreach (var player in integrationEvent.LoserPlayers)
         {
-            ApplyPlayerMatchResult(
+            ApplyPlayerRatingChange(
                 loserRatings[player.UserId],
-                winnerAverageElo,
-                actualScore: 0,
-                scoreCoefficient,
+                loserDelta,
                 integrationEvent,
                 isWin: false,
                 now);
@@ -179,17 +182,14 @@ public sealed class RatingService(
         return result;
     }
 
-    private void ApplyPlayerMatchResult(
+    private void ApplyPlayerRatingChange(
         PlayerRating rating,
-        double opponentAverageElo,
-        double actualScore,
-        double scoreCoefficient,
+        int delta,
         MatchCompletedEvent integrationEvent,
         bool isWin,
         DateTime updatedAtUtc)
     {
         var oldElo = rating.Elo;
-        var delta = eloCalculator.CalculateDelta(oldElo, opponentAverageElo, actualScore, scoreCoefficient);
         var newElo = Math.Max(MinimumElo, oldElo + delta);
 
         rating.ApplyMatchResult(newElo, isWin, updatedAtUtc);
@@ -219,15 +219,22 @@ public sealed class RatingService(
 
     private static double CalculateScoreCoefficient(MatchCompletedEvent integrationEvent)
     {
-        if (integrationEvent.IsTechnicalDefeat
-            || integrationEvent.WinnerScore is null
-            || integrationEvent.LoserScore is null)
+        int scoreDifference;
+
+        if (integrationEvent.IsTechnicalDefeat)
         {
-            return 1.0;
+            scoreDifference = 8;
+        }
+        else if (integrationEvent.WinnerScore is not null && integrationEvent.LoserScore is not null)
+        {
+            scoreDifference = Math.Abs(integrationEvent.WinnerScore.Value - integrationEvent.LoserScore.Value);
+        }
+        else
+        {
+            scoreDifference = 1;
         }
 
-        var scoreDifference = Math.Abs(integrationEvent.WinnerScore.Value - integrationEvent.LoserScore.Value);
-        return 1 + Math.Min(scoreDifference, 10) * 0.03;
+        return 1 + Math.Min(scoreDifference, 10) * 0.025;
     }
 
     private static RatingHistoryResponse ToResponse(RatingHistory history)
