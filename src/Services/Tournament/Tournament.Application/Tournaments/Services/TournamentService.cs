@@ -10,6 +10,7 @@ namespace Tournament.Application.Tournaments.Services;
 
 public sealed class TournamentService(
     ITournamentRepository tournaments,
+    IUserProjectionRepository users,
     IOutboxWriter outboxWriter,
     ITournamentLifecycleService lifecycleService) : ITournamentService
 {
@@ -91,6 +92,38 @@ public sealed class TournamentService(
         await tournaments.SaveChangesAsync(cancellationToken);
 
         return Result<TournamentDetailsResponse>.Success(ToDetailsResponse(tournament));
+    }
+
+    public async Task<Result<TournamentDetailsResponse>> CreateByAdminAsync(
+        AdminCreateTournamentRequest request,
+        CurrentTournamentUser currentUser,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsAdmin(currentUser))
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.AdminAccessDenied);
+        }
+
+        var organizer = await users.GetByIdAsync(request.OrganizerId, cancellationToken);
+        if (organizer is null)
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.OrganizerNotFound);
+        }
+
+        if (!string.Equals(organizer.Role, UserRole.Organizer.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.OrganizerRoleRequired);
+        }
+
+        if (organizer.IsDeleted)
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.OrganizerInactive);
+        }
+
+        return await CreateAsync(
+            request.ToCreateTournamentRequest(),
+            new CurrentTournamentUser(organizer.UserId, UserRole.Organizer.ToString(), AccountStatus.Active.ToString()),
+            cancellationToken);
     }
 
     public async Task<Result<IReadOnlyCollection<TournamentListItemResponse>>> GetAllAsync(

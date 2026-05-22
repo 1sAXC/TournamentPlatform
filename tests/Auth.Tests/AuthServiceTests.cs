@@ -103,6 +103,76 @@ public sealed class AuthServiceTests
         Assert.Equal("PendingApproval", result.Value.User.AccountStatus);
     }
 
+    [Fact]
+    public async Task ChangePassword_ShouldAllowPlayerAndReplaceOldPassword()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1"));
+        var player = Assert.Single(repository.Users);
+
+        var result = await service.ChangePasswordAsync(player.Id, new ChangePasswordRequest("Password1", "NewPassword1"));
+        var oldLogin = await service.LoginAsync(new LoginRequest("player@example.com", "Password1"));
+        var newLogin = await service.LoginAsync(new LoginRequest("player@example.com", "NewPassword1"));
+
+        Assert.True(result.IsSuccess);
+        Assert.True(oldLogin.IsFailure);
+        Assert.Equal(AuthErrors.InvalidCredentials, oldLogin.Error);
+        Assert.True(newLogin.IsSuccess);
+        Assert.Equal(player.Id, newLogin.Value.User.Id);
+    }
+
+    [Fact]
+    public async Task ChangePassword_ShouldAllowOrganizer()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1"));
+        var organizer = Assert.Single(repository.Users);
+
+        var result = await service.ChangePasswordAsync(organizer.Id, new ChangePasswordRequest("Password1", "NewPassword1"));
+        var login = await service.LoginAsync(new LoginRequest("organizer@example.com", "NewPassword1"));
+
+        Assert.True(result.IsSuccess);
+        Assert.True(login.IsSuccess);
+        Assert.Equal("Organizer", login.Value.User.Role);
+    }
+
+    [Fact]
+    public async Task ChangePassword_ShouldAllowAdmin()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var admin = User.CreateAdmin(Guid.NewGuid(), "admin@example.com", "temporary", DateTime.UtcNow);
+        admin.SetPasswordHash("HASHED:Password1");
+        repository.Users.Add(admin);
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+
+        var result = await service.ChangePasswordAsync(admin.Id, new ChangePasswordRequest("Password1", "NewPassword1"));
+        var login = await service.LoginAsync(new LoginRequest("admin@example.com", "NewPassword1"));
+
+        Assert.True(result.IsSuccess);
+        Assert.True(login.IsSuccess);
+        Assert.Equal("Admin", login.Value.User.Role);
+    }
+
+    [Fact]
+    public async Task ChangePassword_ShouldRejectInvalidCurrentPassword()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1"));
+        var player = Assert.Single(repository.Users);
+
+        var result = await service.ChangePasswordAsync(player.Id, new ChangePasswordRequest("WrongPassword1", "NewPassword1"));
+        var oldLogin = await service.LoginAsync(new LoginRequest("player@example.com", "Password1"));
+        var newLogin = await service.LoginAsync(new LoginRequest("player@example.com", "NewPassword1"));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(AuthErrors.InvalidCurrentPassword, result.Error);
+        Assert.True(oldLogin.IsSuccess);
+        Assert.True(newLogin.IsFailure);
+    }
+
     private static AuthService CreateService(
         InMemoryAuthUserRepository repository,
         InMemoryOutboxWriter outbox)

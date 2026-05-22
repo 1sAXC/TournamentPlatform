@@ -99,6 +99,28 @@ public sealed class AuthService(
             : Result<CurrentUserResponse>.Success(CreateCurrentUserResponse(user));
     }
 
+    public async Task<Result> ChangePasswordAsync(
+        Guid userId,
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return Result.Failure(AuthErrors.UserNotFound);
+        }
+
+        if (!passwordHashingService.VerifyPassword(user, request.CurrentPassword))
+        {
+            return Result.Failure(AuthErrors.InvalidCurrentPassword);
+        }
+
+        user.SetPasswordHash(passwordHashingService.HashPassword(user, request.NewPassword));
+        await users.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+
     private AuthResponse CreateAuthResponse(User user)
     {
         var token = jwtTokenGenerator.Generate(user);

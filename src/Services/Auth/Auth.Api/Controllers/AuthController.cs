@@ -61,6 +61,24 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
         return ToActionResult(result);
     }
 
+    [Authorize]
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ChangePassword(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetCurrentUser(out var currentUser))
+        {
+            return Unauthorized();
+        }
+
+        var result = await authService.ChangePasswordAsync(currentUser.UserId, request, cancellationToken);
+        return result.IsSuccess ? NoContent() : ToErrorActionResult(result.Error);
+    }
+
     private IActionResult ToActionResult<T>(Result<T> result)
     {
         if (result.IsSuccess)
@@ -84,6 +102,21 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
         }
 
         return BadRequest(CreateProblemDetails(result.Error, StatusCodes.Status400BadRequest));
+    }
+
+    private IActionResult ToErrorActionResult(Error error)
+    {
+        if (error == AuthErrors.InvalidCredentials || error == AuthErrors.AccessDenied)
+        {
+            return Unauthorized(CreateProblemDetails(AuthErrors.InvalidCredentials, StatusCodes.Status401Unauthorized));
+        }
+
+        if (error == AuthErrors.UserNotFound)
+        {
+            return NotFound(CreateProblemDetails(error, StatusCodes.Status404NotFound));
+        }
+
+        return BadRequest(CreateProblemDetails(error, StatusCodes.Status400BadRequest));
     }
 
     private static ProblemDetails CreateProblemDetails(Error error, int statusCode)

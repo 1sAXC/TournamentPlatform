@@ -12,6 +12,7 @@ namespace Tournament.Tests;
 public sealed class TournamentServiceTests
 {
     private static readonly CurrentTournamentUser ActiveOrganizer = new(Guid.NewGuid(), "Organizer", "Active");
+    private static readonly CurrentTournamentUser Admin = new(Guid.NewGuid(), "Admin", "Active");
 
     [Fact]
     public async Task ActiveOrganizer_CanCreateTournament()
@@ -24,6 +25,90 @@ public sealed class TournamentServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal("Open", result.Value.Status);
         Assert.Single(repository.Tournaments);
+    }
+
+    [Fact]
+    public async Task ActiveOrganizer_CreateFlow_UsesCurrentOrganizerId()
+    {
+        var repository = new InMemoryTournamentRepository();
+        var service = CreateService(repository);
+
+        var result = await service.CreateAsync(ValidRequest("Organizer Flow Cup"), ActiveOrganizer);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(ActiveOrganizer.Id, result.Value.OrganizerId);
+        Assert.Equal(ActiveOrganizer.Id, repository.Tournaments.Single().OrganizerId);
+    }
+
+    [Fact]
+    public async Task Admin_CanCreateTournamentForActiveOrganizer()
+    {
+        var organizerId = Guid.NewGuid();
+        var repository = new InMemoryTournamentRepository();
+        var users = new InMemoryUserProjectionRepository();
+        users.Users.Add(UserProjection.Create(organizerId, "Organizer", DateTime.UtcNow));
+        var service = CreateService(repository, users: users);
+
+        var result = await service.CreateByAdminAsync(AdminValidRequest("Admin Cup", organizerId), Admin);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(organizerId, result.Value.OrganizerId);
+        Assert.Equal(organizerId, repository.Tournaments.Single().OrganizerId);
+    }
+
+    [Fact]
+    public async Task AdminCreate_WithMissingOrganizer_GetsOrganizerNotFound()
+    {
+        var service = CreateService(new InMemoryTournamentRepository());
+
+        var result = await service.CreateByAdminAsync(AdminValidRequest("Missing Organizer Cup", Guid.NewGuid()), Admin);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TournamentErrors.OrganizerNotFound, result.Error);
+    }
+
+    [Fact]
+    public async Task AdminCreate_WithPlayerOrganizerId_GetsOrganizerRoleRequired()
+    {
+        var playerId = Guid.NewGuid();
+        var users = new InMemoryUserProjectionRepository();
+        users.Users.Add(UserProjection.Create(playerId, "Player", DateTime.UtcNow));
+        var service = CreateService(new InMemoryTournamentRepository(), users: users);
+
+        var result = await service.CreateByAdminAsync(AdminValidRequest("Player Owner Cup", playerId), Admin);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TournamentErrors.OrganizerRoleRequired, result.Error);
+    }
+
+    [Fact]
+    public async Task AdminCreate_WithDeletedOrganizer_GetsOrganizerInactive()
+    {
+        var organizerId = Guid.NewGuid();
+        var organizer = UserProjection.Create(organizerId, "Organizer", DateTime.UtcNow);
+        organizer.MarkDeleted(DateTime.UtcNow);
+        var users = new InMemoryUserProjectionRepository();
+        users.Users.Add(organizer);
+        var service = CreateService(new InMemoryTournamentRepository(), users: users);
+
+        var result = await service.CreateByAdminAsync(AdminValidRequest("Inactive Organizer Cup", organizerId), Admin);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TournamentErrors.OrganizerInactive, result.Error);
+    }
+
+    [Fact]
+    public async Task AdminCreate_ByNonAdmin_GetsAdminAccessDenied()
+    {
+        var organizerId = Guid.NewGuid();
+        var users = new InMemoryUserProjectionRepository();
+        users.Users.Add(UserProjection.Create(organizerId, "Organizer", DateTime.UtcNow));
+        var service = CreateService(new InMemoryTournamentRepository(), users: users);
+
+        var result = await service.CreateByAdminAsync(AdminValidRequest("Forbidden Cup", organizerId), ActiveOrganizer);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TournamentErrors.AdminAccessDenied, result.Error);
     }
 
     [Fact]
@@ -346,13 +431,28 @@ public sealed class TournamentServiceTests
             16);
     }
 
+    private static AdminCreateTournamentRequest AdminValidRequest(string title, Guid organizerId)
+    {
+        return new AdminCreateTournamentRequest(
+            organizerId,
+            title,
+            "Description",
+            DisciplineCodes.CS2,
+            "SingleElimination",
+            null,
+            1,
+            16);
+    }
+
     private static TournamentService CreateService(
         InMemoryTournamentRepository repository,
         InMemoryOutboxWriter? outboxWriter = null,
-        ITournamentLifecycleService? lifecycleService = null)
+        ITournamentLifecycleService? lifecycleService = null,
+        InMemoryUserProjectionRepository? users = null)
     {
         return new TournamentService(
             repository,
+            users ?? new InMemoryUserProjectionRepository(),
             outboxWriter ?? new InMemoryOutboxWriter(),
             lifecycleService ?? new TestTournamentLifecycleService());
     }
@@ -467,6 +567,26 @@ public sealed class TournamentServiceTests
         public Task<ITournamentTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult<ITournamentTransaction>(new NoopTournamentTransaction());
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class InMemoryUserProjectionRepository : IUserProjectionRepository
+    {
+        public List<UserProjection> Users { get; } = [];
+
+        public Task<UserProjection?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Users.FirstOrDefault(user => user.UserId == userId));
+        }
+
+        public void Add(UserProjection projection)
+        {
+            Users.Add(projection);
         }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -28,6 +28,7 @@ public static class TournamentApplicationServiceCollectionExtensions
         services.AddScoped<ITournamentService, TournamentService>();
         services.AddScoped<ITournamentLifecycleService, TournamentLifecycleService>();
         services.AddScoped<IPlayerRatingProjectionService, PlayerRatingProjectionService>();
+        services.AddScoped<IUserProjectionService, UserProjectionService>();
         services.AddSingleton<IRandomProvider, RandomProvider>();
         services.AddScoped<GreedyTeamBalancer>();
         services.AddScoped<ITeamBalancer, CpSatAverageEloTeamBalancer>();

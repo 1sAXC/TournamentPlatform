@@ -59,6 +59,29 @@ public sealed class SecurityPolicyTests
     }
 
     [Fact]
+    public async Task RequireAdmin_AllowsOnlyAdmin()
+    {
+        var authorizationService = CreateAuthorizationService();
+
+        var admin = await authorizationService.AuthorizeAsync(
+            User("Admin", "Active"),
+            resource: null,
+            AuthorizationPolicies.RequireAdmin);
+        var organizer = await authorizationService.AuthorizeAsync(
+            User("Organizer", "Active"),
+            resource: null,
+            AuthorizationPolicies.RequireAdmin);
+        var player = await authorizationService.AuthorizeAsync(
+            User("Player", "Active"),
+            resource: null,
+            AuthorizationPolicies.RequireAdmin);
+
+        Assert.True(admin.Succeeded);
+        Assert.False(organizer.Succeeded);
+        Assert.False(player.Succeeded);
+    }
+
+    [Fact]
     public void CurrentUser_IsReadFromJwtClaims()
     {
         var userId = Guid.NewGuid();

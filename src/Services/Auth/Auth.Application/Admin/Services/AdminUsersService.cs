@@ -52,6 +52,41 @@ public sealed class AdminUsersService(
             : Result<AdminUserResponse>.Success(ToResponse(user));
     }
 
+    public async Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsAsync(
+        OrganizerApplicationsQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var page = new PageRequest(query.PageNumber, query.PageSize);
+        var normalizedSearch = NormalizeOptional(query.Search);
+        const UserRole role = UserRole.Organizer;
+        const AccountStatus status = AccountStatus.PendingApproval;
+
+        var totalCount = await users.CountUsersAsync(role, status, normalizedSearch, cancellationToken);
+        var items = await users.GetUsersAsync(
+            (page.PageNumber - 1) * page.PageSize,
+            page.PageSize,
+            role,
+            status,
+            normalizedSearch,
+            cancellationToken);
+
+        return Result<PagedResult<OrganizerApplicationResponse>>.Success(new PagedResult<OrganizerApplicationResponse>(
+            items.Select(ToOrganizerApplicationResponse).ToArray(),
+            page.PageNumber,
+            page.PageSize,
+            totalCount));
+    }
+
+    public async Task<Result<OrganizerApplicationResponse>> GetOrganizerApplicationAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        return IsPendingOrganizer(user)
+            ? Result<OrganizerApplicationResponse>.Success(ToOrganizerApplicationResponse(user!))
+            : Result<OrganizerApplicationResponse>.Failure(AdminErrors.UserNotFound);
+    }
+
     public async Task<Result<AdminUserResponse>> CreateUserAsync(
         CreateAdminUserRequest request,
         Guid adminUserId,
@@ -106,6 +141,16 @@ public sealed class AdminUsersService(
         return Result<AdminUserResponse>.Success(ToResponse(user));
     }
 
+    public async Task<Result<OrganizerApplicationResponse>> ApproveOrganizerApplicationAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await ApproveOrganizerAsync(userId, cancellationToken);
+        return result.IsSuccess
+            ? Result<OrganizerApplicationResponse>.Success(ToOrganizerApplicationResponse(result.Value))
+            : Result<OrganizerApplicationResponse>.Failure(result.Error);
+    }
+
     public async Task<Result<AdminUserResponse>> RejectOrganizerAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
@@ -126,6 +171,16 @@ public sealed class AdminUsersService(
         await users.SaveChangesAsync(cancellationToken);
 
         return Result<AdminUserResponse>.Success(ToResponse(user));
+    }
+
+    public async Task<Result<OrganizerApplicationResponse>> RejectOrganizerApplicationAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await RejectOrganizerAsync(userId, cancellationToken);
+        return result.IsSuccess
+            ? Result<OrganizerApplicationResponse>.Success(ToOrganizerApplicationResponse(result.Value))
+            : Result<OrganizerApplicationResponse>.Failure(result.Error);
     }
 
     public async Task<Result> DeleteUserAsync(
@@ -311,6 +366,35 @@ public sealed class AdminUsersService(
             user.RejectedAtUtc,
             user.DeletedAtUtc,
             user.CreatedByAdminId);
+    }
+
+    private static OrganizerApplicationResponse ToOrganizerApplicationResponse(User user)
+    {
+        return new OrganizerApplicationResponse(
+            user.Id,
+            user.Email,
+            user.Status.ToString(),
+            user.OrganizerName ?? string.Empty,
+            user.CreatedAtUtc,
+            user.ApprovedAtUtc,
+            user.RejectedAtUtc);
+    }
+
+    private static OrganizerApplicationResponse ToOrganizerApplicationResponse(AdminUserResponse user)
+    {
+        return new OrganizerApplicationResponse(
+            user.Id,
+            user.Email,
+            user.Status,
+            user.OrganizerName ?? string.Empty,
+            user.CreatedAtUtc,
+            user.ApprovedAtUtc,
+            user.RejectedAtUtc);
+    }
+
+    private static bool IsPendingOrganizer(User? user)
+    {
+        return user is { Role: UserRole.Organizer, Status: AccountStatus.PendingApproval };
     }
 
     private static bool TryParseOptionalEnum<TEnum>(string? value, out TEnum? result)

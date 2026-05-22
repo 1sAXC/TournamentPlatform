@@ -10,6 +10,11 @@ public interface ITournamentService
         CurrentTournamentUser currentUser,
         CancellationToken cancellationToken = default);
 
+    Task<Result<TournamentDetailsResponse>> CreateByAdminAsync(
+        AdminCreateTournamentRequest request,
+        CurrentTournamentUser currentUser,
+        CancellationToken cancellationToken = default);
+
     Task<Result<IReadOnlyCollection<TournamentListItemResponse>>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<Result<TournamentDetailsResponse>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyCollection<TournamentListItemResponse>>> GetAvailableAsync(CancellationToken cancellationToken = default);

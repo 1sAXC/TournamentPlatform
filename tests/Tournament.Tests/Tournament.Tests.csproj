@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Services\Tournament\Tournament.Api\Tournament.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\Tournament\Tournament.Application\Tournament.Application.csproj" />
     <ProjectReference Include="..\..\src\Services\Tournament\Tournament.Domain\Tournament.Domain.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\TournamentPlatform.Contracts\TournamentPlatform.Contracts.csproj" />

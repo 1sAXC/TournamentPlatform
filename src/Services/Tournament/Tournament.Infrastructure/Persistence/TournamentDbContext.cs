@@ -17,6 +17,7 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<DoubleEliminationStanding> DoubleEliminationStandings => Set<DoubleEliminationStanding>();
     public DbSet<Discipline> Disciplines => Set<Discipline>();
     public DbSet<PlayerRatingProjection> PlayerRatingProjections => Set<PlayerRatingProjection>();
+    public DbSet<UserProjection> UserProjections => Set<UserProjection>();
     public DbSet<DeletedUserProjection> DeletedUserProjections => Set<DeletedUserProjection>();
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();

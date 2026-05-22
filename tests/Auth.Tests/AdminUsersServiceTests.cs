@@ -11,6 +11,83 @@ namespace Auth.Tests;
 public sealed class AdminUsersServiceTests
 {
     [Fact]
+    public async Task GetOrganizerApplications_ShouldReturnOnlyPendingOrganizers()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var pendingOrganizer = User.CreateOrganizerSelfRegistration(
+            "pending@example.com",
+            "hash",
+            "Pending Org",
+            DateTime.UtcNow.AddMinutes(-1));
+        var approvedOrganizer = User.CreateOrganizerSelfRegistration(
+            "approved@example.com",
+            "hash",
+            "Approved Org",
+            DateTime.UtcNow);
+        approvedOrganizer.Approve(DateTime.UtcNow);
+        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow);
+        repository.Users.AddRange([pendingOrganizer, approvedOrganizer, player]);
+
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        var result = await service.GetOrganizerApplicationsAsync(new OrganizerApplicationsQuery());
+
+        Assert.True(result.IsSuccess);
+        var application = Assert.Single(result.Value.Items);
+        Assert.Equal(pendingOrganizer.Id, application.Id);
+        Assert.Equal("PendingApproval", application.Status);
+        Assert.Equal("Pending Org", application.OrganizerName);
+        Assert.Equal(1, result.Value.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetOrganizerApplications_ShouldReturnEmptyPage_WhenNoPendingOrganizers()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        repository.Users.Add(User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow));
+
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        var result = await service.GetOrganizerApplicationsAsync(new OrganizerApplicationsQuery());
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value.Items);
+        Assert.Equal(0, result.Value.TotalCount);
+        Assert.Equal(0, result.Value.TotalPages);
+    }
+
+    [Fact]
+    public async Task GetOrganizerApplication_ShouldReturnPendingOrganizer()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var organizer = User.CreateOrganizerSelfRegistration(
+            "organizer@example.com",
+            "hash",
+            "Organizer Inc",
+            DateTime.UtcNow);
+        repository.Users.Add(organizer);
+
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        var result = await service.GetOrganizerApplicationAsync(organizer.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(organizer.Id, result.Value.Id);
+        Assert.Equal("organizer@example.com", result.Value.Email);
+        Assert.Equal("Organizer Inc", result.Value.OrganizerName);
+    }
+
+    [Fact]
+    public async Task GetOrganizerApplication_ShouldFail_WhenApplicationDoesNotExist()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        repository.Users.Add(User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow));
+
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        var result = await service.GetOrganizerApplicationAsync(repository.Users.Single().Id);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(AdminErrors.UserNotFound, result.Error);
+    }
+
+    [Fact]
     public async Task ApproveOrganizer_ShouldActivatePendingOrganizerAndWriteUserCreated()
     {
         var repository = new InMemoryAuthUserRepository();
@@ -33,6 +110,27 @@ public sealed class AdminUsersServiceTests
     }
 
     [Fact]
+    public async Task ApproveOrganizerApplication_ShouldReuseApproveLogic()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var outbox = new InMemoryOutboxWriter();
+        var organizer = User.CreateOrganizerSelfRegistration(
+            "organizer@example.com",
+            "hash",
+            "Organizer Inc",
+            DateTime.UtcNow);
+        repository.Users.Add(organizer);
+
+        var service = CreateService(repository, outbox);
+        var result = await service.ApproveOrganizerApplicationAsync(organizer.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Active", result.Value.Status);
+        Assert.Equal(AccountStatus.Active, organizer.Status);
+        Assert.Single(outbox.Events);
+    }
+
+    [Fact]
     public async Task RejectOrganizer_ShouldRejectPendingOrganizerWithoutUserCreated()
     {
         var repository = new InMemoryAuthUserRepository();
@@ -50,6 +148,27 @@ public sealed class AdminUsersServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(AccountStatus.Rejected, organizer.Status);
         Assert.NotNull(organizer.RejectedAtUtc);
+        Assert.Empty(outbox.Events);
+    }
+
+    [Fact]
+    public async Task RejectOrganizerApplication_ShouldReuseRejectLogic()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var outbox = new InMemoryOutboxWriter();
+        var organizer = User.CreateOrganizerSelfRegistration(
+            "organizer@example.com",
+            "hash",
+            "Organizer Inc",
+            DateTime.UtcNow);
+        repository.Users.Add(organizer);
+
+        var service = CreateService(repository, outbox);
+        var result = await service.RejectOrganizerApplicationAsync(organizer.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Rejected", result.Value.Status);
+        Assert.Equal(AccountStatus.Rejected, organizer.Status);
         Assert.Empty(outbox.Events);
     }
 
@@ -180,7 +299,7 @@ public sealed class AdminUsersServiceTests
                     || (user.NormalizedOrganizerName?.Contains(normalizedSearch) ?? false));
             }
 
-            return query;
+            return query.OrderByDescending(user => user.CreatedAtUtc);
         }
     }
 

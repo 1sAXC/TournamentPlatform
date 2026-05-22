@@ -31,6 +31,7 @@ public static class TournamentInfrastructureServiceCollectionExtensions
         services.AddScoped<IOutboxWriter, OutboxWriter>();
         services.AddScoped<ITournamentRepository, TournamentRepository>();
         services.AddScoped<IPlayerRatingProjectionRepository, PlayerRatingProjectionRepository>();
+        services.AddScoped<IUserProjectionRepository, UserProjectionRepository>();
         services.AddHostedService<OutboxPublisherBackgroundService>();
 
         services.AddRabbitMqConsumer<UserCreatedEvent, TournamentUserCreatedConsumer>("tournament.user-created");

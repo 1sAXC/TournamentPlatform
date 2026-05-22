@@ -466,6 +466,31 @@ namespace Tournament.Infrastructure.Persistence.Migrations
                     b.ToTable("TournamentParticipants", (string)null);
                 });
 
+            modelBuilder.Entity("Tournament.Domain.Tournaments.UserProjection", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnName("user_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnName("created_at_utc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnName("deleted_at_utc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnName("role")
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("user_projections", (string)null);
+                });
+
             modelBuilder.Entity("TournamentPlatform.Messaging.Inbox.InboxMessage", b =>
                 {
                     b.Property<Guid>("EventId")
