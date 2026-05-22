@@ -23,7 +23,12 @@ builder.Services.AddTournamentPlatformSwagger();
 builder.Services.AddHealthChecks();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtSecret = jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+var jwtSecret = jwtSection["Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:Secret must be configured and at least 32 characters long.");
+}
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

@@ -201,8 +201,9 @@ public sealed class User
         });
     }
 
-    public void ChangeRole(UserRole role, string? nickname, string? organizerName)
+    public void ChangeRole(UserRole role, string? nickname, string? organizerName, DateTime changedAtUtc)
     {
+        var previousRole = Role;
         Role = role;
 
         Nickname = role == UserRole.Player ? nickname : null;
@@ -210,6 +211,21 @@ public sealed class User
 
         OrganizerName = role == UserRole.Organizer ? organizerName : null;
         NormalizedOrganizerName = role == UserRole.Organizer ? NormalizeOptional(organizerName) : null;
+
+        if (previousRole == role)
+        {
+            return;
+        }
+
+        _domainEvents.Add(new UserRoleChangedEvent
+        {
+            UserId = Id,
+            OldRole = previousRole.ToString(),
+            NewRole = role.ToString(),
+            Nickname = Nickname,
+            OrganizerName = OrganizerName,
+            ChangedAtUtc = changedAtUtc
+        });
     }
 
     public void SetPasswordHash(string passwordHash)

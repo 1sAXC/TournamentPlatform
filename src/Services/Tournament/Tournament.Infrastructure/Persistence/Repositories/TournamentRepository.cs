@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Tournament.Application.Tournaments.Abstractions;
+using Tournament.Application.Tournaments.Dto;
 using Tournament.Application.Tournaments.Exceptions;
 using Tournament.Domain.Tournaments;
 using TournamentPlatform.Contracts.Enums;
@@ -27,60 +28,71 @@ public sealed class TournamentRepository(TournamentDbContext dbContext) : ITourn
     public Task<Domain.Tournaments.Tournament?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return IncludeParticipants(dbContext.Tournaments)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(
                 tournament => tournament.Id == id && !tournament.IsDeleted,
                 cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetAllAsync(
+    public async Task<IReadOnlyCollection<TournamentSummaryDto>> GetAllAsync(
         CancellationToken cancellationToken = default)
     {
-        return await IncludeParticipants(dbContext.Tournaments)
+        return await dbContext.Tournaments
+            .AsNoTracking()
             .Where(tournament => !tournament.IsDeleted)
             .OrderByDescending(tournament => tournament.CreatedAtUtc)
+            .Select(ToSummary())
             .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByStatusAsync(
+    public async Task<IReadOnlyCollection<TournamentSummaryDto>> GetByStatusAsync(
         TournamentStatus status,
         CancellationToken cancellationToken = default)
     {
-        return await IncludeParticipants(dbContext.Tournaments)
+        return await dbContext.Tournaments
+            .AsNoTracking()
             .Where(tournament => !tournament.IsDeleted && tournament.Status == status)
             .OrderByDescending(tournament => tournament.CreatedAtUtc)
+            .Select(ToSummary())
             .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetAvailableAsync(
+    public async Task<IReadOnlyCollection<TournamentSummaryDto>> GetAvailableAsync(
         CancellationToken cancellationToken = default)
     {
-        return await IncludeParticipants(dbContext.Tournaments)
+        return await dbContext.Tournaments
+            .AsNoTracking()
             .Where(tournament => !tournament.IsDeleted
                 && tournament.Status == TournamentStatus.Open
                 && tournament.Participants.Count(participant => participant.IsActive) < tournament.MaxPlayers)
             .OrderByDescending(tournament => tournament.CreatedAtUtc)
+            .Select(ToSummary())
             .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByOrganizerAsync(
+    public async Task<IReadOnlyCollection<TournamentSummaryDto>> GetByOrganizerAsync(
         Guid organizerId,
         CancellationToken cancellationToken = default)
     {
-        return await IncludeParticipants(dbContext.Tournaments)
+        return await dbContext.Tournaments
+            .AsNoTracking()
             .Where(tournament => !tournament.IsDeleted && tournament.OrganizerId == organizerId)
             .OrderByDescending(tournament => tournament.CreatedAtUtc)
+            .Select(ToSummary())
             .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByPlayerAsync(
+    public async Task<IReadOnlyCollection<TournamentSummaryDto>> GetByPlayerAsync(
         Guid playerId,
         CancellationToken cancellationToken = default)
     {
-        return await IncludeParticipants(dbContext.Tournaments)
+        return await dbContext.Tournaments
+            .AsNoTracking()
             .Where(tournament => !tournament.IsDeleted
                 && tournament.Participants.Any(participant => participant.PlayerId == playerId
                     && (participant.IsActive || tournament.StartedAtUtc != null)))
             .OrderByDescending(tournament => tournament.CreatedAtUtc)
+            .Select(ToSummary())
             .ToArrayAsync(cancellationToken);
     }
 
@@ -129,5 +141,26 @@ public sealed class TournamentRepository(TournamentDbContext dbContext) : ITourn
             .ThenInclude(round => round.Matches)
             .Include(tournament => tournament.SwissStandings)
             .Include(tournament => tournament.DoubleEliminationStandings);
+    }
+
+    private static System.Linq.Expressions.Expression<Func<Domain.Tournaments.Tournament, TournamentSummaryDto>> ToSummary()
+    {
+        return tournament => new TournamentSummaryDto(
+                tournament.Id,
+                tournament.Title,
+                tournament.Description,
+                tournament.DisciplineCode,
+                tournament.Format,
+                tournament.SwissRounds,
+                tournament.TeamSize,
+                tournament.MaxPlayers,
+                tournament.OrganizerId,
+                tournament.Status,
+                tournament.CurrentRoundNumber,
+                tournament.Participants.Count(participant => participant.IsActive),
+                tournament.CreatedAtUtc,
+                tournament.StartedAtUtc,
+                tournament.CompletedAtUtc,
+                tournament.CancelledAtUtc);
     }
 }

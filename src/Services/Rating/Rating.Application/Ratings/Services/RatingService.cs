@@ -67,6 +67,26 @@ public sealed class RatingService(
         await ratings.SaveChangesAsync(cancellationToken);
     }
 
+    public Task HandleUserRoleChangedAsync(
+        UserRoleChangedEvent integrationEvent,
+        CancellationToken cancellationToken = default)
+    {
+        if (!string.Equals(integrationEvent.NewRole, "Player", StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.CompletedTask;
+        }
+
+        return HandleUserCreatedAsync(new UserCreatedEvent
+        {
+            UserId = integrationEvent.UserId,
+            Role = integrationEvent.NewRole,
+            Email = string.Empty,
+            CreatedAtUtc = integrationEvent.ChangedAtUtc,
+            CreationSource = "RoleChange",
+            PlayerNickname = integrationEvent.Nickname
+        }, cancellationToken);
+    }
+
     public async Task HandleMatchCompletedAsync(
         MatchCompletedEvent integrationEvent,
         CancellationToken cancellationToken = default)
@@ -206,11 +226,9 @@ public sealed class RatingService(
         {
             UserId = rating.PlayerId,
             DisciplineCode = rating.DisciplineCode,
-            PreviousElo = oldElo,
             OldElo = oldElo,
             NewElo = newElo,
             Delta = newElo - oldElo,
-            SourceMatchId = integrationEvent.MatchId,
             MatchId = integrationEvent.MatchId,
             TournamentId = integrationEvent.TournamentId,
             UpdatedAtUtc = updatedAtUtc

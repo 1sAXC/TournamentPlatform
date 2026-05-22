@@ -297,6 +297,7 @@ public sealed class TournamentServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1, lifecycle.StartAttempts);
+        Assert.Equal(2, repository.SaveChangesCount);
         Assert.Equal("Open", result.Value.Status);
         Assert.Equal(1, result.Value.CurrentPlayersCount);
     }
@@ -497,6 +498,7 @@ public sealed class TournamentServiceTests
         ];
 
         public List<Domain.Tournaments.Tournament> Tournaments { get; } = [];
+        public int SaveChangesCount { get; private set; }
 
         public Task<bool> TitleExistsAsync(string normalizedTitle, CancellationToken cancellationToken = default)
         {
@@ -516,42 +518,42 @@ public sealed class TournamentServiceTests
             return Task.FromResult(Tournaments.FirstOrDefault(tournament => tournament.Id == id));
         }
 
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetAllAsync(
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetAllAsync(
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>(Tournaments.ToArray());
+            return Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>(Tournaments.Select(ToSummary).ToArray());
         }
 
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByStatusAsync(
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByStatusAsync(
             TournamentStatus status,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>(
-                Tournaments.Where(tournament => tournament.Status == status).ToArray());
+            return Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>(
+                Tournaments.Where(tournament => tournament.Status == status).Select(ToSummary).ToArray());
         }
 
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetAvailableAsync(
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetAvailableAsync(
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>(
-                Tournaments.Where(tournament => tournament.Status == TournamentStatus.Open).ToArray());
+            return Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>(
+                Tournaments.Where(tournament => tournament.Status == TournamentStatus.Open).Select(ToSummary).ToArray());
         }
 
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByOrganizerAsync(
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByOrganizerAsync(
             Guid organizerId,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>(
-                Tournaments.Where(tournament => tournament.OrganizerId == organizerId).ToArray());
+            return Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>(
+                Tournaments.Where(tournament => tournament.OrganizerId == organizerId).Select(ToSummary).ToArray());
         }
 
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByPlayerAsync(
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByPlayerAsync(
             Guid playerId,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>(
+            return Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>(
                 Tournaments.Where(tournament => tournament.Participants.Any(participant =>
-                    participant.PlayerId == playerId && (participant.IsActive || tournament.StartedAtUtc is not null))).ToArray());
+                    participant.PlayerId == playerId && (participant.IsActive || tournament.StartedAtUtc is not null))).Select(ToSummary).ToArray());
         }
 
         public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -571,7 +573,29 @@ public sealed class TournamentServiceTests
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
+            SaveChangesCount++;
             return Task.CompletedTask;
+        }
+
+        private static TournamentSummaryDto ToSummary(Domain.Tournaments.Tournament value)
+        {
+            return new TournamentSummaryDto(
+                value.Id,
+                value.Title,
+                value.Description,
+                value.DisciplineCode,
+                value.Format,
+                value.SwissRounds,
+                value.TeamSize,
+                value.MaxPlayers,
+                value.OrganizerId,
+                value.Status,
+                value.CurrentRoundNumber,
+                value.ActiveParticipantsCount,
+                value.CreatedAtUtc,
+                value.StartedAtUtc,
+                value.CompletedAtUtc,
+                value.CancelledAtUtc);
         }
     }
 
@@ -622,7 +646,9 @@ public sealed class TournamentServiceTests
     {
         public int StartAttempts { get; private set; }
 
-        public Task TryStartTournamentAsync(Guid tournamentId, CancellationToken cancellationToken = default)
+        public Task TryStartTournamentAsync(
+            Domain.Tournaments.Tournament tournament,
+            CancellationToken cancellationToken = default)
         {
             StartAttempts++;
             return Task.CompletedTask;

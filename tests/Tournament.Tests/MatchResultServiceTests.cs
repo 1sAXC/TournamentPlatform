@@ -2,6 +2,7 @@ using Tournament.Application.Brackets;
 using Tournament.Application.Matches;
 using Tournament.Application.Tournaments;
 using Tournament.Application.Tournaments.Abstractions;
+using Tournament.Application.Tournaments.Dto;
 using Tournament.Domain.Tournaments;
 using TournamentPlatform.Contracts.Enums;
 using TournamentPlatform.Contracts.Events;
@@ -82,6 +83,7 @@ public sealed class MatchResultServiceTests
             new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
 
         Assert.True(result.IsFailure);
+        Assert.Equal(Tournament.Application.Tournaments.TournamentErrors.InvalidWinnerTeam, result.Error);
     }
 
     [Fact]
@@ -96,7 +98,7 @@ public sealed class MatchResultServiceTests
             new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
 
         Assert.True(result.IsFailure);
-        Assert.Equal(Tournament.Application.Tournaments.TournamentErrors.InvalidMaxPlayers, result.Error);
+        Assert.Equal(Tournament.Application.Tournaments.TournamentErrors.InvalidMatchScore, result.Error);
     }
 
     [Fact]
@@ -174,14 +176,35 @@ public sealed class MatchResultServiceTests
         public Task<bool> TitleExistsAsync(string normalizedTitle, CancellationToken cancellationToken = default) => Task.FromResult(false);
         public Task<Discipline?> GetActiveDisciplineAsync(string disciplineCode, CancellationToken cancellationToken = default) => Task.FromResult<Discipline?>(null);
         public Task<Domain.Tournaments.Tournament?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(id == tournament.Id ? tournament : null);
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>([tournament]);
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByStatusAsync(TournamentStatus status, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>([]);
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetAvailableAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>([]);
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByOrganizerAsync(Guid organizerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>([]);
-        public Task<IReadOnlyCollection<Domain.Tournaments.Tournament>> GetByPlayerAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<Domain.Tournaments.Tournament>>([]);
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([ToSummary(tournament)]);
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByStatusAsync(TournamentStatus status, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([]);
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetAvailableAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([]);
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByOrganizerAsync(Guid organizerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([]);
+        public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByPlayerAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([]);
         public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(false);
         public Task<ITournamentTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public void Add(Domain.Tournaments.Tournament value) { }
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        private static TournamentSummaryDto ToSummary(Domain.Tournaments.Tournament value)
+        {
+            return new TournamentSummaryDto(
+                value.Id,
+                value.Title,
+                value.Description,
+                value.DisciplineCode,
+                value.Format,
+                value.SwissRounds,
+                value.TeamSize,
+                value.MaxPlayers,
+                value.OrganizerId,
+                value.Status,
+                value.CurrentRoundNumber,
+                value.ActiveParticipantsCount,
+                value.CreatedAtUtc,
+                value.StartedAtUtc,
+                value.CompletedAtUtc,
+                value.CancelledAtUtc);
+        }
     }
 }

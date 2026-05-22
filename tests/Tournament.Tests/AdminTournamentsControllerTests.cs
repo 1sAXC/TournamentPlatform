@@ -116,7 +116,6 @@ public sealed class AdminTournamentsControllerTests
             "Open",
             0,
             0,
-            0,
             DateTime.UtcNow,
             null,
             null,

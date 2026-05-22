@@ -8,7 +8,6 @@ using TournamentPlatform.Contracts.Enums;
 namespace Tournament.Application.Tournaments.Services;
 
 public sealed class TournamentLifecycleService(
-    ITournamentRepository tournaments,
     IPlayerRatingProjectionRepository ratingProjections,
     ITeamBalancer teamBalancer,
     IBracketGeneratorFactory bracketGeneratorFactory,
@@ -16,14 +15,10 @@ public sealed class TournamentLifecycleService(
 {
     private const int DefaultElo = 1000;
 
-    public async Task TryStartTournamentAsync(Guid tournamentId, CancellationToken cancellationToken = default)
+    public async Task TryStartTournamentAsync(
+        Domain.Tournaments.Tournament tournament,
+        CancellationToken cancellationToken = default)
     {
-        var tournament = await tournaments.GetByIdAsync(tournamentId, cancellationToken);
-        if (tournament is null)
-        {
-            return;
-        }
-
         if (tournament.Status != TournamentStatus.Open)
         {
             return;
@@ -52,8 +47,6 @@ public sealed class TournamentLifecycleService(
         var startedAtUtc = DateTime.UtcNow;
         tournament.Start(startedAtUtc);
         outboxWriter.Add(ToTournamentStartedEvent(tournament, startedAtUtc));
-
-        await tournaments.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<IReadOnlyList<Team>> EnsureTeamsAsync(

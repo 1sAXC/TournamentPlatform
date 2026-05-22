@@ -29,6 +29,23 @@ public sealed class RatingUserDeletedConsumer(
     }
 }
 
+public sealed class RatingUserRoleChangedConsumer(
+    IRatingService ratingService,
+    ILogger<RatingUserRoleChangedConsumer> logger)
+    : IIntegrationEventConsumer<UserRoleChangedEvent>
+{
+    public async Task ConsumeAsync(UserRoleChangedEvent integrationEvent, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation(
+            "RatingService received UserRoleChanged for user {UserId}: {OldRole} -> {NewRole}",
+            integrationEvent.UserId,
+            integrationEvent.OldRole,
+            integrationEvent.NewRole);
+
+        await ratingService.HandleUserRoleChangedAsync(integrationEvent, cancellationToken);
+    }
+}
+
 public sealed class RatingMatchCompletedConsumer(
     IRatingService ratingService,
     ILogger<RatingMatchCompletedConsumer> logger)

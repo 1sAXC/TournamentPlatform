@@ -402,7 +402,7 @@ public sealed class TournamentService(
 
             if (tournament.ActiveParticipantsCount == tournament.MaxPlayers)
             {
-                await lifecycleService.TryStartTournamentAsync(tournament.Id, cancellationToken);
+                await lifecycleService.TryStartTournamentAsync(tournament, cancellationToken);
             }
 
             await tournaments.SaveChangesAsync(cancellationToken);
@@ -471,12 +471,12 @@ public sealed class TournamentService(
     }
 
     private static IReadOnlyCollection<TournamentListItemResponse> ToListResponse(
-        IReadOnlyCollection<Domain.Tournaments.Tournament> source)
+        IReadOnlyCollection<TournamentSummaryDto> source)
     {
         return source.Select(ToListItemResponse).ToArray();
     }
 
-    private static TournamentListItemResponse ToListItemResponse(Domain.Tournaments.Tournament tournament)
+    private static TournamentListItemResponse ToListItemResponse(TournamentSummaryDto tournament)
     {
         return new TournamentListItemResponse(
             tournament.Id,
@@ -490,8 +490,7 @@ public sealed class TournamentService(
             tournament.OrganizerId,
             tournament.Status.ToString(),
             tournament.CurrentRoundNumber,
-            tournament.ActiveParticipantsCount,
-            tournament.ActiveParticipantsCount,
+            tournament.CurrentPlayersCount,
             tournament.CreatedAtUtc,
             tournament.StartedAtUtc,
             tournament.CompletedAtUtc,

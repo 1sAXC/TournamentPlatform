@@ -31,6 +31,11 @@ public sealed class UserProjection
         DeletedAtUtc = null;
     }
 
+    public void ChangeRole(string role)
+    {
+        Role = role;
+    }
+
     public void MarkDeleted(DateTime deletedAtUtc)
     {
         DeletedAtUtc = deletedAtUtc;

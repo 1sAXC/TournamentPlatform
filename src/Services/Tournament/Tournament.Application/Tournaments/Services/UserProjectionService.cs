@@ -37,4 +37,24 @@ public sealed class UserProjectionService(IUserProjectionRepository users) : IUs
             await users.SaveChangesAsync(cancellationToken);
         }
     }
+
+    public async Task HandleUserRoleChangedAsync(
+        UserRoleChangedEvent integrationEvent,
+        CancellationToken cancellationToken = default)
+    {
+        var projection = await users.GetByIdAsync(integrationEvent.UserId, cancellationToken);
+        if (projection is null)
+        {
+            users.Add(UserProjection.Create(
+                integrationEvent.UserId,
+                integrationEvent.NewRole,
+                integrationEvent.ChangedAtUtc));
+        }
+        else
+        {
+            projection.ChangeRole(integrationEvent.NewRole);
+        }
+
+        await users.SaveChangesAsync(cancellationToken);
+    }
 }

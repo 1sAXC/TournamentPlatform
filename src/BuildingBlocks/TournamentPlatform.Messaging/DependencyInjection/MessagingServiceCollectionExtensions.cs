@@ -12,7 +12,8 @@ public static class MessagingServiceCollectionExtensions
     public static IServiceCollection AddRabbitMqMessaging(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMq"));
-        services.AddScoped<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
+        services.AddSingleton<IRabbitMqConnectionProvider, RabbitMqConnectionProvider>();
+        services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
         return services;
     }
 

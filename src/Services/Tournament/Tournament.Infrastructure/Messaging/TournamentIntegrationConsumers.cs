@@ -44,3 +44,34 @@ public sealed class TournamentUserDeletedConsumer(
         logger.LogInformation("TournamentService projected UserDeleted for user {UserId}", integrationEvent.UserId);
     }
 }
+
+public sealed class TournamentUserRoleChangedConsumer(
+    IUserProjectionService userProjectionService,
+    IPlayerRatingProjectionService playerRatingProjectionService,
+    ILogger<TournamentUserRoleChangedConsumer> logger)
+    : IIntegrationEventConsumer<UserRoleChangedEvent>
+{
+    public async Task ConsumeAsync(UserRoleChangedEvent integrationEvent, CancellationToken cancellationToken = default)
+    {
+        await userProjectionService.HandleUserRoleChangedAsync(integrationEvent, cancellationToken);
+
+        if (string.Equals(integrationEvent.NewRole, "Player", StringComparison.OrdinalIgnoreCase))
+        {
+            await playerRatingProjectionService.HandleUserCreatedAsync(new UserCreatedEvent
+            {
+                UserId = integrationEvent.UserId,
+                Role = integrationEvent.NewRole,
+                Email = string.Empty,
+                CreatedAtUtc = integrationEvent.ChangedAtUtc,
+                CreationSource = "RoleChange",
+                PlayerNickname = integrationEvent.Nickname
+            }, cancellationToken);
+        }
+
+        logger.LogInformation(
+            "TournamentService projected UserRoleChanged for user {UserId}: {OldRole} -> {NewRole}",
+            integrationEvent.UserId,
+            integrationEvent.OldRole,
+            integrationEvent.NewRole);
+    }
+}

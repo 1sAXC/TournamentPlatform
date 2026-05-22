@@ -11,6 +11,8 @@ public static class TournamentErrors
     public static readonly Error InvalidFormat = new("Tournaments.InvalidFormat", "Tournament format is invalid.");
     public static readonly Error InvalidMaxPlayers = new("Tournaments.InvalidMaxPlayers", "MaxPlayers must be less than or equal to 120.");
     public static readonly Error InvalidTeamSize = new("Tournaments.InvalidTeamSize", "TeamSize is not allowed for this discipline.");
+    public static readonly Error InvalidWinnerTeam = new("Tournaments.InvalidWinnerTeam", "WinnerTeamId must reference one of the match teams.");
+    public static readonly Error InvalidMatchScore = new("Tournaments.InvalidMatchScore", "WinnerScore must be greater than LoserScore.");
     public static readonly Error MaxPlayersNotMultipleOfTeamSize = new("Tournaments.MaxPlayersNotMultipleOfTeamSize", "MaxPlayers must be divisible by TeamSize.");
     public static readonly Error DisciplineNotFound = new("Tournaments.DisciplineNotFound", "Discipline does not exist or is inactive.");
     public static readonly Error InvalidSwissRounds = new("Tournaments.InvalidSwissRounds", "SwissRounds must be specified only for Swiss tournaments.");

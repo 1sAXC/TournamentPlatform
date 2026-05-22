@@ -253,7 +253,8 @@ public sealed class AdminUsersService(
             return Result<AdminUserResponse>.Failure(validationResult.Error);
         }
 
-        user.ChangeRole(role, request.Nickname?.Trim(), request.OrganizerName?.Trim());
+        user.ChangeRole(role, request.Nickname?.Trim(), request.OrganizerName?.Trim(), DateTime.UtcNow);
+        AddDomainEventsToOutbox(user);
         await users.SaveChangesAsync(cancellationToken);
 
         return Result<AdminUserResponse>.Success(ToResponse(user));
@@ -320,17 +321,9 @@ public sealed class AdminUsersService(
             }
 
             var normalizedNickname = NormalizeRequired(nickname);
-            var nicknameExists = await users.ExistsByNicknameAsync(normalizedNickname, cancellationToken);
-            if (nicknameExists)
+            if (await users.ExistsByNicknameExceptUserAsync(normalizedNickname, userId, cancellationToken))
             {
-                var existingUser = userId.HasValue
-                    ? await users.GetByIdAsync(userId.Value, cancellationToken)
-                    : null;
-
-                if (existingUser?.NormalizedNickname != normalizedNickname)
-                {
-                    return Result.Failure(AdminErrors.DuplicateNickname);
-                }
+                return Result.Failure(AdminErrors.DuplicateNickname);
             }
         }
 

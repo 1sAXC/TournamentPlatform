@@ -12,7 +12,6 @@ public sealed record TournamentDetailsResponse(
     Guid OrganizerId,
     string Status,
     int CurrentRoundNumber,
-    int ActiveParticipantsCount,
     int CurrentPlayersCount,
     DateTime CreatedAtUtc,
     DateTime? StartedAtUtc,

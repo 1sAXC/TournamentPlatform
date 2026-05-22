@@ -17,6 +17,17 @@ public sealed class AuthUserRepository(AuthDbContext dbContext) : IAuthUserRepos
         return dbContext.Users.AnyAsync(user => user.NormalizedNickname == normalizedNickname, cancellationToken);
     }
 
+    public Task<bool> ExistsByNicknameExceptUserAsync(
+        string normalizedNickname,
+        Guid? excludedUserId,
+        CancellationToken cancellationToken = default)
+    {
+        return dbContext.Users.AnyAsync(
+            user => user.NormalizedNickname == normalizedNickname
+                && (!excludedUserId.HasValue || user.Id != excludedUserId.Value),
+            cancellationToken);
+    }
+
     public Task<User?> GetByLoginAsync(string normalizedLogin, CancellationToken cancellationToken = default)
     {
         return dbContext.Users.FirstOrDefaultAsync(

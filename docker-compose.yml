@@ -30,7 +30,7 @@ services:
       RabbitMq__VirtualHost: /
       Jwt__Issuer: TournamentPlatform.Auth
       Jwt__Audience: TournamentPlatform.Services
-      Jwt__Secret: DevelopmentJwtSecretMustBeAtLeast32Characters!
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET must be set in the environment or local .env file}
       Jwt__ExpiresMinutes: 60
       AdminSeed__Password: ChangeMe_AuthAdmin_123!
     ports:
@@ -60,7 +60,7 @@ services:
       RabbitMq__VirtualHost: /
       Jwt__Issuer: TournamentPlatform.Auth
       Jwt__Audience: TournamentPlatform.Services
-      Jwt__Secret: DevelopmentJwtSecretMustBeAtLeast32Characters!
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET must be set in the environment or local .env file}
       TeamBalancing__CpSatTimeLimitSeconds: 10
       TeamBalancing__GreedyLocalSearchMaxIterations: 10000
     ports:
@@ -92,7 +92,7 @@ services:
       RabbitMq__VirtualHost: /
       Jwt__Issuer: TournamentPlatform.Auth
       Jwt__Audience: TournamentPlatform.Services
-      Jwt__Secret: DevelopmentJwtSecretMustBeAtLeast32Characters!
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET must be set in the environment or local .env file}
     ports:
       - "5196:8080"
     depends_on:

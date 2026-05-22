@@ -57,14 +57,14 @@ public sealed class MatchResultService(
 
         if (request.WinnerTeamId != match.TeamAId && request.WinnerTeamId != match.TeamBId)
         {
-            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidTeamSize);
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidWinnerTeam);
         }
 
         if (request.WinnerScore is not null
             && request.LoserScore is not null
             && request.WinnerScore <= request.LoserScore)
         {
-            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidMaxPlayers);
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidMatchScore);
         }
 
         var winnerScore = request.WinnerScore ?? 1;

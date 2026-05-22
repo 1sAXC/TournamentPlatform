@@ -109,6 +109,72 @@ public sealed class RatingServiceTests
     }
 
     [Fact]
+    public async Task HandleUserRoleChangedAsync_ToPlayer_ShouldCreateInitialRatings()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+        var playerId = Guid.NewGuid();
+
+        await service.HandleUserRoleChangedAsync(new UserRoleChangedEvent
+        {
+            UserId = playerId,
+            OldRole = "Organizer",
+            NewRole = "Player",
+            Nickname = "PlayerOne",
+            ChangedAtUtc = DateTime.UtcNow
+        });
+
+        Assert.Equal(4, repository.PlayerRatings.Count);
+        Assert.Equal(4, repository.RatingHistories.Count);
+        Assert.All(repository.PlayerRatings, rating =>
+        {
+            Assert.Equal(playerId, rating.PlayerId);
+            Assert.Equal(1000, rating.Elo);
+            Assert.False(rating.IsDeleted);
+        });
+    }
+
+    [Fact]
+    public async Task HandleUserRoleChangedAsync_ToPlayer_ShouldBeIdempotent()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+        var integrationEvent = new UserRoleChangedEvent
+        {
+            UserId = Guid.NewGuid(),
+            OldRole = "Organizer",
+            NewRole = "Player",
+            Nickname = "PlayerOne",
+            ChangedAtUtc = DateTime.UtcNow
+        };
+
+        await service.HandleUserRoleChangedAsync(integrationEvent);
+        await service.HandleUserRoleChangedAsync(integrationEvent);
+
+        Assert.Equal(4, repository.PlayerRatings.Count);
+        Assert.Equal(4, repository.RatingHistories.Count);
+    }
+
+    [Fact]
+    public async Task HandleUserRoleChangedAsync_ToNonPlayer_ShouldNotCreateRatings()
+    {
+        var repository = new InMemoryRatingRepository();
+        var service = CreateService(repository);
+
+        await service.HandleUserRoleChangedAsync(new UserRoleChangedEvent
+        {
+            UserId = Guid.NewGuid(),
+            OldRole = "Player",
+            NewRole = "Organizer",
+            OrganizerName = "Organizer Inc",
+            ChangedAtUtc = DateTime.UtcNow
+        });
+
+        Assert.Empty(repository.PlayerRatings);
+        Assert.Empty(repository.RatingHistories);
+    }
+
+    [Fact]
     public async Task GetPlayerRatingAsync_ShouldReturnNotFoundForMissingRating()
     {
         var service = CreateService(new InMemoryRatingRepository());

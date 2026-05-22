@@ -19,7 +19,6 @@ public static class TournamentResponseMapper
             tournament.Status.ToString(),
             tournament.CurrentRoundNumber,
             tournament.ActiveParticipantsCount,
-            tournament.ActiveParticipantsCount,
             tournament.CreatedAtUtc,
             tournament.StartedAtUtc,
             tournament.CompletedAtUtc,

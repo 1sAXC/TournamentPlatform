@@ -10,6 +10,7 @@ namespace TournamentPlatform.Messaging.RabbitMq;
 
 public sealed class RabbitMqIntegrationEventPublisher(
     IOptions<RabbitMqOptions> options,
+    IRabbitMqConnectionProvider connectionProvider,
     ILogger<RabbitMqIntegrationEventPublisher> logger) : IIntegrationEventPublisher
 {
     private static readonly JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web);
@@ -65,8 +66,7 @@ public sealed class RabbitMqIntegrationEventPublisher(
 
     private void PublishCore(Guid eventId, string eventType, string payload, string? correlationId)
     {
-        var factory = CreateConnectionFactory();
-        using var connection = factory.CreateConnection();
+        var connection = connectionProvider.GetConnection();
         using var channel = connection.CreateModel();
 
         channel.ExchangeDeclare(_options.ExchangeName, ExchangeType.Topic, durable: true, autoDelete: false);
@@ -85,18 +85,5 @@ public sealed class RabbitMqIntegrationEventPublisher(
             mandatory: false,
             basicProperties: properties,
             body: body);
-    }
-
-    private ConnectionFactory CreateConnectionFactory()
-    {
-        return new ConnectionFactory
-        {
-            HostName = _options.Host,
-            Port = _options.Port,
-            UserName = _options.Username,
-            Password = _options.Password,
-            VirtualHost = _options.VirtualHost,
-            DispatchConsumersAsync = true
-        };
     }
 }
