@@ -1,0 +1,10 @@
+namespace Auth.Application.Admin.Dto;
+
+public sealed record OrganizerApplicationResponse(
+    Guid Id,
+    string Email,
+    string Status,
+    string OrganizerName,
+    DateTime CreatedAtUtc,
+    DateTime? ApprovedAtUtc,
+    DateTime? RejectedAtUtc);
