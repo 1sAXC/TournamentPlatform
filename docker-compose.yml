@@ -154,6 +154,19 @@ services:
       timeout: 5s
       retries: 5
 
+  frontend:
+    build:
+      context: ./src/Web/Frontend
+      dockerfile: Dockerfile
+    container_name: tournamentplatform-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth-api
+      - tournament-api
+      - rating-api
+    restart: unless-stopped
+
 volumes:
   auth-db-data:
   tournament-db-data:

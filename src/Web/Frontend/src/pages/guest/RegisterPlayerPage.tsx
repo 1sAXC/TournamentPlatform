@@ -1,0 +1,72 @@
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { AuthShell } from './AuthShell';
+import { Field } from '@/shared/ui/Field';
+import { Alert } from '@/shared/ui/Alert';
+import { useRegisterPlayerMutation } from '@/features/auth/hooks';
+import { toApiError } from '@/shared/api/http';
+
+const schema = z.object({
+  nickname: z.string().min(3, 'Минимум 3 символа').max(32, 'Максимум 32'),
+  email: z.string().email('Некорректный e-mail'),
+  password: z.string().min(8, 'Минимум 8 символов'),
+  confirm: z.string(),
+}).refine((d) => d.password === d.confirm, { path: ['confirm'], message: 'Пароли не совпадают' });
+type FormValues = z.infer<typeof schema>;
+
+export function RegisterPlayerPage() {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { nickname: '', email: '', password: '', confirm: '' },
+  });
+  const mutation = useRegisterPlayerMutation();
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+
+  const onSubmit = handleSubmit(({ nickname, email, password }) => {
+    setError(null);
+    mutation.mutate({ nickname, email, password }, {
+      onSuccess: () => navigate('/', { replace: true }),
+      onError: (err) => {
+        const e = toApiError(err);
+        setError(e.status === 409 ? 'Такой никнейм или e-mail уже занят' : e.title ?? 'Не удалось зарегистрироваться');
+      },
+    });
+  });
+
+  return (
+    <AuthShell
+      title="Регистрация игрока"
+      sub="Создайте аккаунт для участия в турнирах"
+      alert={error ? <Alert kind="error" icon="flag">{error}</Alert> : undefined}
+      footer={<>
+        Хотите проводить турниры?{' '}
+        <Link to="/register/organizer" className="link">Регистрация организатора</Link><br />
+        Уже есть аккаунт? <Link to="/login" className="link">Войти</Link>
+      </>}
+    >
+      <form className="col" style={{ gap: 14 }} onSubmit={onSubmit}>
+        <Field label="Никнейм" hint="Будет отображаться в турнирной таблице" error={errors.nickname?.message}>
+          <input className="input" {...register('nickname')} />
+        </Field>
+        <Field label="E-mail" error={errors.email?.message}>
+          <input className="input" type="email" {...register('email')} />
+        </Field>
+        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <Field label="Пароль" error={errors.password?.message}>
+            <input className="input" type="password" autoComplete="new-password" {...register('password')} />
+          </Field>
+          <Field label="Повторите" error={errors.confirm?.message}>
+            <input className="input" type="password" autoComplete="new-password" {...register('confirm')} />
+          </Field>
+        </div>
+        <button className="btn btn-primary btn-lg btn-block" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Создаём…' : 'Создать аккаунт'}
+        </button>
+      </form>
+    </AuthShell>
+  );
+}
