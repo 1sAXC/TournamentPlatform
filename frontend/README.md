@@ -1,6 +1,6 @@
 # Tournament Platform — Frontend
 
-React + Vite + TypeScript SPA для платформы турниров. Подключается к микросервисам Auth/Tournament/Rating через nginx reverse proxy.
+React + Vite + TypeScript SPA для платформы турниров. Подключается к микросервисам Auth/Tournament/Rating через nginx reverse proxy. Располагается рядом с .NET-решением: `frontend/` в корне репозитория.
 
 ## Стек
 
