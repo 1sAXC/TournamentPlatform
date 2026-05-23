@@ -1,0 +1,235 @@
+import { useParams } from 'react-router-dom';
+import { ScreenFrame } from '@/shared/ui/ScreenFrame';
+import { playerNav, organizerNav, adminNav } from '@/features/navigation';
+import {
+  useRegisterForTournament, useTournament, useUnregisterFromTournament,
+} from '@/features/tournaments/hooks';
+import { useAuth } from '@/shared/auth/useAuth';
+import { Badge } from '@/shared/ui/Badge';
+import { PStat } from '@/shared/ui/PStat';
+import { Card } from '@/shared/ui/Card';
+import { Avatar } from '@/shared/ui/Avatar';
+import { Icon } from '@/shared/ui/Icon';
+import { Alert } from '@/shared/ui/Alert';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel } from '@/shared/lib/disciplines';
+import { formatDate } from '@/shared/lib/formatters';
+import { showToast } from '@/shared/ui/Toast';
+import { toApiError } from '@/shared/api/http';
+
+export function TournamentDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const { data, isLoading, isError, refetch, isFetching } = useTournament(id);
+  const { role } = useAuth();
+  const register = useRegisterForTournament();
+  const unregister = useUnregisterFromTournament();
+
+  const nav = role === 'Admin' ? adminNav : role === 'Organizer' ? organizerNav : playerNav;
+
+  if (isLoading || !id) return <ScreenFrame nav={nav}><EmptyState title="Загрузка…" /></ScreenFrame>;
+  if (isError || !data) return <ScreenFrame nav={nav}><EmptyState title="Турнир не найден" /></ScreenFrame>;
+
+  const tone = STATUS_TONE[data.status] ?? 'open';
+  const currentRound = data.rounds.find(r => r.number === data.currentRoundNumber);
+  const standings = computeStandings(data);
+
+  function onRegister() {
+    register.mutate(id!, {
+      onSuccess: () => showToast('success', 'Вы зарегистрированы в турнире'),
+      onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось зарегистрироваться'),
+    });
+  }
+  function onLeave() {
+    if (!confirm('Покинуть турнир?')) return;
+    unregister.mutate(id!, {
+      onSuccess: () => showToast('info', 'Вы покинули турнир'),
+      onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось покинуть турнир'),
+    });
+  }
+
+  return (
+    <ScreenFrame nav={nav}>
+      <div className="card card-pad" style={{ marginBottom: 16 }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="row" style={{ gap: 14, alignItems: 'flex-start' }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 8,
+              background: 'var(--accent-soft)',
+              display: 'grid', placeItems: 'center',
+              color: 'var(--accent)',
+            }}>
+              <Icon name="trophy" size={26} />
+            </div>
+            <div>
+              <h1 style={{ fontSize: 22, marginBottom: 6 }}>{data.title}</h1>
+              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                <Badge tone={tone}>{STATUS_LABEL[data.status]}</Badge>
+                <span className="t-tag">{disciplineLabel(data.disciplineCode)}</span>
+                <span className="t-tag fmt">{formatLabel(data.format)}</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                  · {data.teamSize > 1 ? `Командный ${data.teamSize}v${data.teamSize}` : 'Одиночный 1v1'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <button className="btn btn-sm" onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? 'Обновляем…' : 'Обновить'}
+            </button>
+            {role === 'Player' && data.canRegister && (
+              <button className="btn btn-primary btn-lg" onClick={onRegister} disabled={register.isPending}>
+                {register.isPending ? 'Записываем…' : 'Записаться на турнир'}
+              </button>
+            )}
+            {role === 'Player' && data.canLeave && (
+              <button className="btn btn-danger btn-lg" onClick={onLeave} disabled={unregister.isPending}>
+                Покинуть турнир
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 18 }}>
+          <PStat
+            value={`${data.currentPlayersCount}/${data.maxPlayers}`}
+            label="Участников"
+            tone="accent"
+          />
+          <PStat value={data.swissRounds ?? '—'} label="Раундов" />
+          <PStat
+            value={data.startedAtUtc ? formatDate(data.startedAtUtc) : '—'}
+            label={data.startedAtUtc ? 'Старт' : 'Регистрация'}
+            tone={data.startedAtUtc ? 'warning' : undefined}
+          />
+        </div>
+      </div>
+
+      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'flex-start' }}>
+        <div className="col" style={{ gap: 14 }}>
+          {data.description && (
+            <Card title="Описание">
+              <div style={{ color: 'var(--text-dim)', lineHeight: 1.7, fontSize: 13 }}>
+                {data.description}
+              </div>
+            </Card>
+          )}
+
+          <Card title={`Участники (${data.currentPlayersCount} / ${data.maxPlayers})`}>
+            {data.participants.length === 0 ? (
+              <EmptyState title="Пока никого нет">Будьте первым</EmptyState>
+            ) : (
+              <div className="col" style={{ gap: 6 }}>
+                {data.participants.filter(p => p.isActive).map((p) => (
+                  <div key={p.id} className="row" style={{ padding: '8px 10px', background: 'var(--surface-2)', borderRadius: 5, gap: 10 }}>
+                    <Avatar name={p.playerNickname} size="sm" variant="plr" />
+                    <span style={{ fontWeight: 500, fontSize: 13, flex: 1 }}>{p.playerNickname}</span>
+                    <Badge tone="success">Принят</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {data.teams.length > 0 && (
+            <Card title={`Команды (${data.teams.length})`}>
+              <div className="col" style={{ gap: 8 }}>
+                {data.teams.map((team) => (
+                  <div key={team.id} style={{ padding: 10, background: 'var(--surface-2)', borderRadius: 5 }}>
+                    <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{team.name}</div>
+                      <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                        Средний ELO: {Math.round(team.averageElo)}
+                      </span>
+                    </div>
+                    <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
+                      {team.members.map((m) => (
+                        <span key={m.playerId} className="t-tag">{m.nickname} · {m.elo}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+
+        <div>
+          <Card title="Турнирная таблица" pad={false}>
+            {standings.length === 0 ? (
+              <div style={{ padding: '12px 14px' }}>
+                <Alert kind="info" icon="cal">Турнир ещё не начался. Таблица появится после старта.</Alert>
+              </div>
+            ) : (
+              <table className="tbl">
+                <thead>
+                  <tr><th>#</th><th>Команда</th><th>В</th><th>П</th><th>Раунды</th></tr>
+                </thead>
+                <tbody>
+                  {standings.map((s, i) => (
+                    <tr key={s.teamId}>
+                      <td className="mono" style={{ color: i === 0 ? 'var(--accent)' : 'var(--muted)' }}>{i + 1}</td>
+                      <td className="strong">{s.name}</td>
+                      <td className="mono" style={{ color: 'var(--success)' }}>{s.wins}</td>
+                      <td className="mono">{s.losses}</td>
+                      <td className="mono">{s.roundsFor}–{s.roundsAgainst}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Card>
+
+          {currentRound && (
+            <div style={{ marginTop: 14 }}>
+              <Card title={`Текущий раунд · #${currentRound.number}`}>
+                <div className="col" style={{ gap: 8 }}>
+                  {currentRound.matches.map((m) => {
+                    const teamA = data.teams.find(t => t.id === m.teamAId)?.name ?? '—';
+                    const teamB = data.teams.find(t => t.id === m.teamBId)?.name ?? '—';
+                    const done = m.status === 'Completed';
+                    return (
+                      <div key={m.id} className="match-card" style={{ marginBottom: 0 }}>
+                        <div className="mc-head">
+                          <span className="mc-id">Матч {m.matchNumber}</span>
+                          <Badge tone={done ? 'done' : 'pending'} />
+                        </div>
+                        <div className="mc-teams">
+                          <span className={`mc-team ${done && m.winnerTeamId === m.teamAId ? 'win' : done ? 'loss' : ''}`}>{teamA}</span>
+                          <span className={`mc-score ${done ? 'done' : ''}`}>
+                            {done ? (m.winnerTeamId === m.teamAId ? `${m.winnerScore ?? '-'}–${m.loserScore ?? '-'}` : `${m.loserScore ?? '-'}–${m.winnerScore ?? '-'}`) : 'VS'}
+                          </span>
+                          <span className={`mc-team ${done && m.winnerTeamId === m.teamBId ? 'win' : done ? 'loss' : ''}`}>{teamB}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
+      </div>
+    </ScreenFrame>
+  );
+}
+
+interface StandingRow {
+  teamId: string;
+  name: string;
+  wins: number;
+  losses: number;
+  roundsFor: number;
+  roundsAgainst: number;
+}
+
+function computeStandings(data: { teams: { id: string; name: string }[]; rounds: { matches: { teamAId?: string | null; teamBId?: string | null; winnerTeamId?: string | null; loserTeamId?: string | null; winnerScore?: number | null; loserScore?: number | null; status: string }[] }[] }): StandingRow[] {
+  const map = new Map<string, StandingRow>();
+  data.teams.forEach((t) => map.set(t.id, { teamId: t.id, name: t.name, wins: 0, losses: 0, roundsFor: 0, roundsAgainst: 0 }));
+  data.rounds.forEach((r) => r.matches.forEach((m) => {
+    if (m.status !== 'Completed' || !m.winnerTeamId || !m.loserTeamId) return;
+    const w = map.get(m.winnerTeamId);
+    const l = map.get(m.loserTeamId);
+    if (w) { w.wins += 1; w.roundsFor += m.winnerScore ?? 0; w.roundsAgainst += m.loserScore ?? 0; }
+    if (l) { l.losses += 1; l.roundsFor += m.loserScore ?? 0; l.roundsAgainst += m.winnerScore ?? 0; }
+  }));
+  return Array.from(map.values()).sort((a, b) => b.wins - a.wins || (b.roundsFor - b.roundsAgainst) - (a.roundsFor - a.roundsAgainst));
+}
