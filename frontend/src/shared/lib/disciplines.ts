@@ -21,17 +21,29 @@ export function formatLabel(code: string): string {
 }
 
 export const STATUS_LABEL: Record<string, string> = {
-  Draft: 'Черновик',
-  RegistrationOpen: 'Открыт',
+  Open: 'Открыт',
+  Full: 'Заполнен',
   InProgress: 'Идёт',
   Completed: 'Завершён',
   Cancelled: 'Отменён',
 };
 
 export const STATUS_TONE: Record<string, string> = {
-  Draft: 'pending',
-  RegistrationOpen: 'open',
+  Open: 'open',
+  Full: 'full',
   InProgress: 'progress',
   Completed: 'done',
   Cancelled: 'cancelled',
 };
+
+export const ACCOUNT_STATUS_LABEL: Record<string, string> = {
+  Active: 'Активен',
+  PendingApproval: 'На рассмотрении',
+  Rejected: 'Отклонён',
+  Deleted: 'Удалён',
+};
+
+export function accountStatusLabel(status: string | undefined | null): string {
+  if (!status) return '—';
+  return ACCOUNT_STATUS_LABEL[status] ?? status;
+}

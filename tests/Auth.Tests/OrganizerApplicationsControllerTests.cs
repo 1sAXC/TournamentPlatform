@@ -135,6 +135,9 @@ public sealed class OrganizerApplicationsControllerTests
         public Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsAsync(OrganizerApplicationsQuery query, CancellationToken cancellationToken = default) =>
             Task.FromResult(OrganizerApplicationsResult);
 
+        public Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsHistoryAsync(OrganizerApplicationsQuery query, CancellationToken cancellationToken = default) =>
+            Task.FromResult(OrganizerApplicationsResult);
+
         public Task<Result<OrganizerApplicationResponse>> GetOrganizerApplicationAsync(Guid userId, CancellationToken cancellationToken = default) =>
             Task.FromResult(OrganizerApplicationResult);
 

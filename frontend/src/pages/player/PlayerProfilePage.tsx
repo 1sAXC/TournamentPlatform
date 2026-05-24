@@ -15,7 +15,7 @@ import { Card } from '@/shared/ui/Card';
 import { Field } from '@/shared/ui/Field';
 import { EloChart } from '@/shared/ui/EloChart';
 import { EmptyEloChart } from '@/shared/ui/EmptyEloChart';
-import { disciplineLabel, DISCIPLINES } from '@/shared/lib/disciplines';
+import { accountStatusLabel, disciplineLabel, DISCIPLINES } from '@/shared/lib/disciplines';
 import { formatDate } from '@/shared/lib/formatters';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
@@ -164,7 +164,7 @@ export function PlayerProfilePage() {
               <Row label="Никнейм" value={user?.nickname ?? '—'} />
               <Row label="E-mail" value={user?.email ?? '—'} />
               <Row label="Роль" value={<RoleBadge role="Player" />} />
-              <Row label="Статус" value={<Badge tone={user?.accountStatus === 'Active' ? 'success' : 'pending'}>{user?.accountStatus ?? '—'}</Badge>} />
+              <Row label="Статус" value={<Badge tone={user?.accountStatus === 'Active' ? 'success' : 'pending'}>{accountStatusLabel(user?.accountStatus)}</Badge>} />
             </div>
           </Card>
         </div>

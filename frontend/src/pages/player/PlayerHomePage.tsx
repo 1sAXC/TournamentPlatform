@@ -22,7 +22,7 @@ export function PlayerHomePage() {
   const bestElo = (ratings.data ?? []).reduce((max, r) => Math.max(max, r.elo), 0);
   const bestDiscipline = (ratings.data ?? []).find(r => r.elo === bestElo)?.disciplineCode;
   const winrate = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
-  const myActive = (my.data ?? []).filter(t => t.status === 'InProgress' || t.status === 'RegistrationOpen');
+  const myActive = (my.data ?? []).filter(t => t.status === 'InProgress' || t.status === 'Open' || t.status === 'Full');
 
   return (
     <ScreenFrame nav={playerNav}>

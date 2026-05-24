@@ -22,6 +22,14 @@ public interface IAuthUserRepository
         AccountStatus? status,
         string? normalizedSearch,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<User>> GetOrganizerHistoryAsync(
+        int skip,
+        int take,
+        string? normalizedSearch,
+        CancellationToken cancellationToken = default);
+    Task<int> CountOrganizerHistoryAsync(
+        string? normalizedSearch,
+        CancellationToken cancellationToken = default);
     Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default);
     void Add(User user);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

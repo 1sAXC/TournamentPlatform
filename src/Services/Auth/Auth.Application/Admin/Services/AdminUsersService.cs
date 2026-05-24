@@ -77,6 +77,27 @@ public sealed class AdminUsersService(
             totalCount));
     }
 
+    public async Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsHistoryAsync(
+        OrganizerApplicationsQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var page = new PageRequest(query.PageNumber, query.PageSize);
+        var normalizedSearch = NormalizeOptional(query.Search);
+
+        var totalCount = await users.CountOrganizerHistoryAsync(normalizedSearch, cancellationToken);
+        var items = await users.GetOrganizerHistoryAsync(
+            (page.PageNumber - 1) * page.PageSize,
+            page.PageSize,
+            normalizedSearch,
+            cancellationToken);
+
+        return Result<PagedResult<OrganizerApplicationResponse>>.Success(new PagedResult<OrganizerApplicationResponse>(
+            items.Select(ToOrganizerApplicationResponse).ToArray(),
+            page.PageNumber,
+            page.PageSize,
+            totalCount));
+    }
+
     public async Task<Result<OrganizerApplicationResponse>> GetOrganizerApplicationAsync(
         Guid userId,
         CancellationToken cancellationToken = default)

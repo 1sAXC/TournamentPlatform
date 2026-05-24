@@ -28,7 +28,7 @@ export function AdminTournamentsPage() {
   const all = data ?? [];
   const counts = useMemo(() => ({
     total: all.length,
-    open: all.filter(t => t.status === 'RegistrationOpen').length,
+    open: all.filter(t => t.status === 'Open' || t.status === 'Full').length,
     progress: all.filter(t => t.status === 'InProgress').length,
     done: all.filter(t => t.status === 'Completed').length,
   }), [all]);
@@ -98,8 +98,8 @@ export function AdminTournamentsPage() {
               <tbody>
                 {filtered.map((t) => {
                   const tone = STATUS_TONE[t.status] ?? 'open';
-                  const isActive = t.status === 'RegistrationOpen' || t.status === 'InProgress';
-                  const isDeletable = t.status === 'Cancelled' || t.status === 'Completed' || t.status === 'Draft';
+                  const isActive = t.status === 'Open' || t.status === 'Full' || t.status === 'InProgress';
+                  const isDeletable = t.status === 'Cancelled' || t.status === 'Completed';
                   return (
                     <tr key={t.id}>
                       <td className="strong" style={{ color: tone === 'done' || tone === 'cancelled' ? 'var(--muted)' : 'var(--accent)' }}>

@@ -9,6 +9,7 @@ public interface IAdminUsersService
     Task<Result<PagedResult<AdminUserResponse>>> GetUsersAsync(AdminUsersQuery query, CancellationToken cancellationToken = default);
     Task<Result<AdminUserResponse>> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsAsync(OrganizerApplicationsQuery query, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsHistoryAsync(OrganizerApplicationsQuery query, CancellationToken cancellationToken = default);
     Task<Result<OrganizerApplicationResponse>> GetOrganizerApplicationAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<Result<OrganizerApplicationResponse>> ApproveOrganizerApplicationAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<Result<OrganizerApplicationResponse>> RejectOrganizerApplicationAsync(Guid userId, CancellationToken cancellationToken = default);

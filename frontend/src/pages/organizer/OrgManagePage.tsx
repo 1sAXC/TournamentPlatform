@@ -31,7 +31,7 @@ export function OrgManagePage() {
 
   const tone = STATUS_TONE[data.status] ?? 'open';
   const currentRound = data.rounds.find(r => r.number === data.currentRoundNumber) ?? data.rounds[data.rounds.length - 1];
-  const canManage = data.status === 'RegistrationOpen' || data.status === 'InProgress';
+  const canManage = data.status === 'Open' || data.status === 'Full' || data.status === 'InProgress';
   const canStartNextSwiss = data.format === 'Swiss'
     && data.status === 'InProgress'
     && currentRound
@@ -98,7 +98,7 @@ export function OrgManagePage() {
           {!currentRound || currentRound.matches.length === 0 ? (
             <div className="card">
               <EmptyState title="Матчей пока нет">
-                {data.status === 'RegistrationOpen' ? 'Дождитесь старта турнира' : 'После старта появятся матчи'}
+                {data.status === 'Open' || data.status === 'Full' ? 'Дождитесь старта турнира' : 'После старта появятся матчи'}
               </EmptyState>
             </div>
           ) : (

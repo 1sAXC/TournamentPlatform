@@ -9,7 +9,8 @@ import { DISCIPLINES, STATUS_LABEL, STATUS_TONE } from '@/shared/lib/disciplines
 
 const STATUSES: { value: string; label: string }[] = [
   { value: 'all', label: 'Все статусы' },
-  { value: 'RegistrationOpen', label: STATUS_LABEL.RegistrationOpen },
+  { value: 'Open', label: STATUS_LABEL.Open },
+  { value: 'Full', label: STATUS_LABEL.Full },
   { value: 'InProgress', label: STATUS_LABEL.InProgress },
   { value: 'Completed', label: STATUS_LABEL.Completed },
 ];

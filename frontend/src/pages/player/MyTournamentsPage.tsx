@@ -15,7 +15,7 @@ export function MyTournamentsPage() {
   const unregister = useUnregisterFromTournament();
 
   const all = data ?? [];
-  const active = all.filter(t => t.status === 'InProgress' || t.status === 'RegistrationOpen');
+  const active = all.filter(t => t.status === 'InProgress' || t.status === 'Open' || t.status === 'Full');
   const completed = all.filter(t => t.status === 'Completed' || t.status === 'Cancelled');
 
   function leave(id: string) {
@@ -79,7 +79,7 @@ export function MyTournamentsPage() {
                         <td style={{ textAlign: 'right' }}>
                           <div className="row" style={{ gap: 6, justifyContent: 'flex-end' }}>
                             <Link to={`/tournaments/${t.id}`} className="btn btn-sm">Просмотр</Link>
-                            {t.status === 'RegistrationOpen' && (
+                            {(t.status === 'Open' || t.status === 'Full') && (
                               <button className="btn btn-sm btn-danger" onClick={() => leave(t.id)} disabled={unregister.isPending}>
                                 Покинуть
                               </button>

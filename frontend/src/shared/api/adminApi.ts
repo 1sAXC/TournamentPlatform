@@ -15,6 +15,10 @@ export const adminApi = {
     http.get<PagedResult<OrganizerApplicationResponse>>(
       '/api/admin/organizer-applications', { params: q },
     ).then(r => r.data),
+  listApplicationsHistory: (q: OrganizerApplicationsQuery = {}) =>
+    http.get<PagedResult<OrganizerApplicationResponse>>(
+      '/api/admin/organizer-applications/history', { params: q },
+    ).then(r => r.data),
   approveApplication: (id: string) =>
     http.post<OrganizerApplicationResponse>(
       `/api/admin/organizer-applications/${id}/approve`,
