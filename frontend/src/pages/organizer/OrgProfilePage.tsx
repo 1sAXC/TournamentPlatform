@@ -65,7 +65,7 @@ export function OrgProfilePage() {
             <div style={{ fontSize: 12, color: 'var(--muted)' }}>{user?.email}</div>
           </div>
         </div>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+        <div className="pstat-row">
           <PStat value={all.length} label="Турниров" tone="accent" />
           <PStat value={totalParticipants} label="Участников" tone="success" />
           <PStat value={completed} label="Завершено" />

@@ -12,6 +12,7 @@ import { Card } from '@/shared/ui/Card';
 import { TournamentBracket, type BracketRound } from '@/shared/ui/TournamentBracket';
 import type { MatchResponse, TournamentDetailsResponse } from '@/shared/api/types';
 import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel } from '@/shared/lib/disciplines';
+import { roundLabel } from '@/shared/lib/bracketLabels';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
 import { OrgMatchResultModal } from './OrgMatchResultModal';
@@ -184,8 +185,9 @@ function buildBracketRounds(
   data: TournamentDetailsResponse,
   onMatchClick: (m: MatchResponse) => void,
 ): BracketRound[] {
+  const totalRounds = data.rounds.length;
   return data.rounds.map((r) => ({
-    label: r.number === 1 ? 'Раунд 1' : `Раунд ${r.number}`,
+    label: roundLabel(data.format, r.number, totalRounds),
     current: r.number === data.currentRoundNumber && data.status === 'InProgress',
     matches: r.matches.map((m) => ({
       id: m.id,

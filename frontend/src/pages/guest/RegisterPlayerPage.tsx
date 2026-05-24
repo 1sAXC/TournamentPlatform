@@ -10,15 +10,18 @@ import { useRegisterPlayerMutation } from '@/features/auth/hooks';
 import { toApiError } from '@/shared/api/http';
 
 const schema = z.object({
-  nickname: z.string().min(3, 'Минимум 3 символа').max(32, 'Максимум 32'),
+  nickname: z.string().min(3, 'Минимум 3 символа').max(30, 'Максимум 30'),
   email: z.string().email('Некорректный e-mail'),
-  password: z.string().min(8, 'Минимум 8 символов'),
+  password: z.string()
+    .min(8, 'Минимум 8 символов')
+    .regex(/[A-Za-z]/, 'Нужна хотя бы одна латинская буква')
+    .regex(/[0-9]/, 'Нужна хотя бы одна цифра'),
   confirm: z.string(),
 }).refine((d) => d.password === d.confirm, { path: ['confirm'], message: 'Пароли не совпадают' });
 type FormValues = z.infer<typeof schema>;
 
 export function RegisterPlayerPage() {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, setError: setFieldError, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { nickname: '', email: '', password: '', confirm: '' },
   });
@@ -32,7 +35,15 @@ export function RegisterPlayerPage() {
       onSuccess: () => navigate('/', { replace: true }),
       onError: (err) => {
         const e = toApiError(err);
-        setError(e.status === 409 ? 'Такой никнейм или e-mail уже занят' : e.title ?? 'Не удалось зарегистрироваться');
+        if (e.code === 'Auth.DuplicateNickname') {
+          setFieldError('nickname', { type: 'server', message: 'Этот никнейм уже занят' });
+          return;
+        }
+        if (e.code === 'Auth.DuplicateEmail') {
+          setFieldError('email', { type: 'server', message: 'Такой e-mail уже зарегистрирован' });
+          return;
+        }
+        setError(e.title ?? 'Не удалось зарегистрироваться');
       },
     });
   });

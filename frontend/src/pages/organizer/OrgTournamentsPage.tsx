@@ -43,7 +43,7 @@ export function OrgTournamentsPage() {
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 18 }}>
+      <div className="stat-row" style={{ marginBottom: 18 }}>
         <Stat label="Всего" value={total} />
         <Stat label="Активных" value={active} delta={active > 0 ? { text: 'идут сейчас', dir: 'up' } : undefined} />
         <Stat label="Открытых" value={open} />

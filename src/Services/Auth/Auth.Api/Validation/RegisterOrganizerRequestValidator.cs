@@ -17,6 +17,10 @@ public sealed class RegisterOrganizerRequestValidator : AbstractValidator<Regist
 
         RuleFor(request => request.Password)
             .NotEmpty()
-            .MinimumLength(8);
+            .MinimumLength(8)
+            .Matches("[A-Za-z]")
+            .WithMessage("Password must contain at least one letter.")
+            .Matches("[0-9]")
+            .WithMessage("Password must contain at least one digit.");
     }
 }

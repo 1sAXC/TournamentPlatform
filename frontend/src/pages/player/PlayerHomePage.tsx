@@ -38,7 +38,7 @@ export function PlayerHomePage() {
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 22 }}>
+      <div className="stat-row" style={{ marginBottom: 22 }}>
         <Stat
           label="Лучший рейтинг ELO"
           value={bestElo || '—'}

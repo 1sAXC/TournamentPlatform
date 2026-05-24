@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { playerNav, organizerNav, adminNav } from '@/features/navigation';
@@ -20,9 +21,10 @@ import { toApiError } from '@/shared/api/http';
 export function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError, refetch, isFetching } = useTournament(id);
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const register = useRegisterForTournament();
   const unregister = useUnregisterFromTournament();
+  const [refreshing, setRefreshing] = useState(false);
 
   const nav = role === 'Admin' ? adminNav : role === 'Organizer' ? organizerNav : playerNav;
 
@@ -32,6 +34,24 @@ export function TournamentDetailPage() {
   const tone = STATUS_TONE[data.status] ?? 'open';
   const currentRound = data.rounds.find(r => r.number === data.currentRoundNumber);
   const standings = computeStandings(data);
+
+  // Backend's `canLeave` flag is too permissive (it's based on tournament
+  // status only and doesn't check whether the current user is actually
+  // registered). Gate the leave button on the participant list instead.
+  const isRegistered = !!user && data.participants.some(p => p.playerId === user.userId && p.isActive);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetch(),
+        // Keep the spinner up at least 400ms so it's visibly doing something.
+        new Promise((r) => setTimeout(r, 400)),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   function onRegister() {
     register.mutate(id!, {
@@ -46,6 +66,8 @@ export function TournamentDetailPage() {
       onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось покинуть турнир'),
     });
   }
+
+  const showRefreshSpinner = refreshing || isFetching;
 
   return (
     <ScreenFrame nav={nav}>
@@ -73,22 +95,24 @@ export function TournamentDetailPage() {
             </div>
           </div>
           <div className="row" style={{ gap: 8 }}>
-            <button className="btn btn-sm" onClick={() => refetch()} disabled={isFetching}>
-              {isFetching ? 'Обновляем…' : 'Обновить'}
+            <button className="btn btn-sm" onClick={onRefresh} disabled={showRefreshSpinner}>
+              {showRefreshSpinner
+                ? <><span className="spin" /> Обновляем…</>
+                : <><Icon name="swap" size={12} /> Обновить</>}
             </button>
-            {role === 'Player' && data.canRegister && (
+            {role === 'Player' && !isRegistered && data.canRegister && (
               <button className="btn btn-primary btn-lg" onClick={onRegister} disabled={register.isPending}>
                 {register.isPending ? 'Записываем…' : 'Записаться на турнир'}
               </button>
             )}
-            {role === 'Player' && data.canLeave && (
+            {role === 'Player' && isRegistered && (
               <button className="btn btn-danger btn-lg" onClick={onLeave} disabled={unregister.isPending}>
                 Покинуть турнир
               </button>
             )}
           </div>
         </div>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 18 }}>
+        <div className="pstat-row" style={{ marginTop: 18 }}>
           <PStat
             value={`${data.currentPlayersCount}/${data.maxPlayers}`}
             label="Участников"

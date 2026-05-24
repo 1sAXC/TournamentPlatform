@@ -93,7 +93,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
         if (result.Error == AuthErrors.InvalidCredentials || result.Error == AuthErrors.AccessDenied)
         {
-            return Unauthorized(CreateProblemDetails(AuthErrors.InvalidCredentials, StatusCodes.Status401Unauthorized));
+            return Unauthorized(CreateProblemDetails(result.Error, StatusCodes.Status401Unauthorized));
         }
 
         if (result.Error == AuthErrors.UserNotFound)
@@ -108,7 +108,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     {
         if (error == AuthErrors.InvalidCredentials || error == AuthErrors.AccessDenied)
         {
-            return Unauthorized(CreateProblemDetails(AuthErrors.InvalidCredentials, StatusCodes.Status401Unauthorized));
+            return Unauthorized(CreateProblemDetails(error, StatusCodes.Status401Unauthorized));
         }
 
         if (error == AuthErrors.UserNotFound)

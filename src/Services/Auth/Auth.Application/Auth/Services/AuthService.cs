@@ -94,9 +94,20 @@ public sealed class AuthService(
     {
         var user = await users.GetByIdAsync(userId, cancellationToken);
 
-        return user is null
-            ? Result<CurrentUserResponse>.Failure(AuthErrors.UserNotFound)
-            : Result<CurrentUserResponse>.Success(CreateCurrentUserResponse(user));
+        if (user is null)
+        {
+            return Result<CurrentUserResponse>.Failure(AuthErrors.UserNotFound);
+        }
+
+        // Mirror login-time gate: deleted/rejected accounts cannot use any
+        // authenticated endpoint. Returning AccessDenied makes /me reply 401,
+        // which the SPA picks up via its interceptor to auto-logout.
+        if (user.Status is AccountStatus.Deleted or AccountStatus.Rejected)
+        {
+            return Result<CurrentUserResponse>.Failure(AuthErrors.AccessDenied);
+        }
+
+        return Result<CurrentUserResponse>.Success(CreateCurrentUserResponse(user));
     }
 
     public async Task<Result> ChangePasswordAsync(
