@@ -156,7 +156,7 @@ services:
 
   frontend:
     build:
-      context: ./src/Web/Frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: tournamentplatform-frontend
     ports:
