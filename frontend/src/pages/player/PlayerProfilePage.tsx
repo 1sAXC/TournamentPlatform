@@ -14,8 +14,8 @@ import { PStat } from '@/shared/ui/PStat';
 import { Card } from '@/shared/ui/Card';
 import { Field } from '@/shared/ui/Field';
 import { EloChart } from '@/shared/ui/EloChart';
-import { EmptyState } from '@/shared/ui/EmptyState';
-import { disciplineLabel } from '@/shared/lib/disciplines';
+import { EmptyEloChart } from '@/shared/ui/EmptyEloChart';
+import { disciplineLabel, DISCIPLINES } from '@/shared/lib/disciplines';
 import { formatDate } from '@/shared/lib/formatters';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
@@ -44,27 +44,29 @@ export function PlayerProfilePage() {
   const bestElo = (ratings.data ?? []).reduce((m, r) => Math.max(m, r.elo), 0);
   const winrate = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
 
+  // Always render a card for every supported discipline. If the player has a
+  // rating entry — show ELO. If they have history — render the chart.
+  // Otherwise show the empty-axes placeholder with a "play first match" hint.
   const byDiscipline = useMemo(() => {
-    const groups = new Map<string, { data: number[]; labels: string[]; trend: 'up' | 'down' | 'flat'; current: number; delta: number }>();
-    (ratings.data ?? []).forEach((r) => {
+    return DISCIPLINES.map(({ code }) => {
+      const rating = (ratings.data ?? []).find(r => r.disciplineCode === code);
       const events = (history.data ?? [])
-        .filter(h => h.disciplineCode === r.disciplineCode)
+        .filter(h => h.disciplineCode === code)
         .sort((a, b) => new Date(a.createdAtUtc).getTime() - new Date(b.createdAtUtc).getTime());
-      const data: number[] = [];
-      const labels: string[] = [];
-      events.forEach((h) => {
-        data.push(h.newElo);
-        labels.push(formatDate(h.createdAtUtc));
-      });
-      if (data.length === 0) {
-        data.push(r.elo);
-        labels.push('сейчас');
-      }
+      const data = events.map(h => h.newElo);
+      const labels = events.map(h => formatDate(h.createdAtUtc));
       const delta = data.length >= 2 ? data[data.length - 1] - data[0] : 0;
       const trend: 'up' | 'down' | 'flat' = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
-      groups.set(r.disciplineCode, { data, labels, trend, current: r.elo, delta });
+      return {
+        code,
+        current: rating?.elo ?? null,
+        delta,
+        trend,
+        data,
+        labels,
+        hasHistory: data.length >= 2,
+      };
     });
-    return Array.from(groups.entries());
   }, [ratings.data, history.data]);
 
   const onSubmitPwd = handleSubmit(({ currentPassword, newPassword }) => {
@@ -93,7 +95,7 @@ export function PlayerProfilePage() {
             <div style={{ fontSize: 12, color: 'var(--muted)' }}>{user?.email}</div>
           </div>
         </div>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+        <div className="pstat-row">
           <PStat value={bestElo || '—'} label="Лучший ELO" tone="accent" />
           <PStat value={totalMatches} label="Матчей" />
           <PStat value={`${winrate}%`} label="Винрейт" tone="success" />
@@ -102,19 +104,17 @@ export function PlayerProfilePage() {
 
       <div className="profile-split">
         <Card title="Рейтинг по дисциплинам">
-          {byDiscipline.length === 0 ? (
-            <EmptyState title="Сыграйте первый турнир">
-              Рейтинг появится после первого матча
-            </EmptyState>
-          ) : (
-            <div className="col" style={{ gap: 10 }}>
-              {byDiscipline.map(([disc, info]) => (
-                <div key={disc} style={{ padding: 12, background: 'var(--surface-2)', borderRadius: 6 }}>
-                  <div className="row" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
-                    <div className="row" style={{ gap: 10 }}>
-                      <span className="t-tag">{disciplineLabel(disc)}</span>
-                      <span className="mono" style={{ fontSize: 16, fontWeight: 600 }}>{info.current}</span>
-                    </div>
+          <div className="col" style={{ gap: 10 }}>
+            {byDiscipline.map((info) => (
+              <div key={info.code} style={{ padding: 12, background: 'var(--surface-2)', borderRadius: 6 }}>
+                <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div className="row" style={{ gap: 10 }}>
+                    <span className="t-tag">{disciplineLabel(info.code)}</span>
+                    <span className="mono" style={{ fontSize: 16, fontWeight: 600 }}>
+                      {info.current ?? '—'}
+                    </span>
+                  </div>
+                  {info.hasHistory ? (
                     <span style={{
                       fontSize: 11,
                       color: info.trend === 'up' ? 'var(--success)'
@@ -123,12 +123,18 @@ export function PlayerProfilePage() {
                       {info.trend === 'up' ? '↑ ' : info.trend === 'down' ? '↓ ' : '— '}
                       {info.delta >= 0 ? '+' : ''}{info.delta}
                     </span>
-                  </div>
-                  <EloChart data={info.data} labels={info.labels} trend={info.trend} />
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>нет матчей</span>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+                {info.hasHistory ? (
+                  <EloChart data={info.data} labels={info.labels} trend={info.trend} />
+                ) : (
+                  <EmptyEloChart message="Сыграйте первый матч, чтобы увидеть динамику рейтинга" />
+                )}
+              </div>
+            ))}
+          </div>
         </Card>
 
         <div className="col" style={{ gap: 14 }}>

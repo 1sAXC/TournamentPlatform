@@ -10,15 +10,18 @@ import { useRegisterOrganizerMutation } from '@/features/auth/hooks';
 import { toApiError } from '@/shared/api/http';
 
 const schema = z.object({
-  organizerName: z.string().min(3, 'Минимум 3 символа').max(64, 'Максимум 64'),
+  organizerName: z.string().min(3, 'Минимум 3 символа').max(100, 'Максимум 100'),
   email: z.string().email('Некорректный e-mail'),
-  password: z.string().min(8, 'Минимум 8 символов'),
+  password: z.string()
+    .min(8, 'Минимум 8 символов')
+    .regex(/[A-Za-z]/, 'Нужна хотя бы одна латинская буква')
+    .regex(/[0-9]/, 'Нужна хотя бы одна цифра'),
   confirm: z.string(),
 }).refine((d) => d.password === d.confirm, { path: ['confirm'], message: 'Пароли не совпадают' });
 type FormValues = z.infer<typeof schema>;
 
 export function RegisterOrganizerPage() {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, setError: setFieldError, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { organizerName: '', email: '', password: '', confirm: '' },
   });
@@ -32,7 +35,15 @@ export function RegisterOrganizerPage() {
       onSuccess: () => navigate('/', { replace: true }),
       onError: (err) => {
         const e = toApiError(err);
-        setError(e.status === 409 ? 'Такое название организации или e-mail уже заняты' : e.title ?? 'Не удалось отправить заявку');
+        if (e.code === 'Auth.DuplicateEmail') {
+          setFieldError('email', { type: 'server', message: 'Такой e-mail уже зарегистрирован' });
+          return;
+        }
+        if (e.code === 'Auth.DuplicateNickname') {
+          setFieldError('organizerName', { type: 'server', message: 'Это название организации уже занято' });
+          return;
+        }
+        setError(e.title ?? 'Не удалось отправить заявку');
       },
     });
   });

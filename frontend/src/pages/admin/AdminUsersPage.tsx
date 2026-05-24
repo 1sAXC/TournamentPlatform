@@ -22,9 +22,22 @@ import { z } from 'zod';
 const userSchema = z.object({
   role: z.enum(['Player', 'Organizer', 'Admin']),
   email: z.string().email('Некорректный e-mail'),
-  password: z.string().min(8, 'Минимум 8 символов'),
+  password: z.string()
+    .min(8, 'Минимум 8 символов')
+    .regex(/[A-Za-z]/, 'Нужна хотя бы одна латинская буква')
+    .regex(/[0-9]/, 'Нужна хотя бы одна цифра'),
   nickname: z.string().optional(),
   organizerName: z.string().optional(),
+}).superRefine((d, ctx) => {
+  if (d.role === 'Organizer') {
+    if (!d.organizerName || d.organizerName.trim().length < 3) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['organizerName'], message: 'Минимум 3 символа' });
+    }
+  } else {
+    if (!d.nickname || d.nickname.trim().length < 3) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['nickname'], message: 'Минимум 3 символа' });
+    }
+  }
 });
 type UserFormValues = z.infer<typeof userSchema>;
 
@@ -76,7 +89,7 @@ export function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 18 }}>
+      <div className="stat-row" style={{ marginBottom: 18 }}>
         <Stat label="Всего" value={data?.totalCount ?? '—'} />
         <Stat label="Игроков" value={items.filter(i => i.role === 'Player').length} />
         <Stat label="Организаторов" value={items.filter(i => i.role === 'Organizer').length} />
@@ -139,6 +152,7 @@ export function AdminUsersPage() {
                             <button
                               className="btn btn-sm btn-ghost"
                               onClick={() => {
+                                if (!confirm(`Сбросить пароль пользователя ${name}? Будет выдан временный пароль, который нужно сообщить пользователю.`)) return;
                                 reset.mutate({ id: u.id }, {
                                   onSuccess: (r) => {
                                     showToast('success', r.temporaryPassword
@@ -149,18 +163,18 @@ export function AdminUsersPage() {
                                 });
                               }}
                               disabled={reset.isPending}
-                            >Пароль</button>
+                            >Сброс пароля</button>
                             <button
                               className="btn btn-sm btn-danger"
                               onClick={() => {
-                                if (!confirm(`Удалить пользователя ${name}?`)) return;
+                                if (!confirm(`Заблокировать пользователя ${name}? Он не сможет войти и зарегистрироваться на турниры.`)) return;
                                 del.mutate(u.id, {
-                                  onSuccess: () => showToast('info', 'Пользователь удалён'),
+                                  onSuccess: () => showToast('info', 'Пользователь заблокирован'),
                                   onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
                                 });
                               }}
                               disabled={del.isPending}
-                            >Удалить</button>
+                            >Заблокировать</button>
                           </div>
                         )}
                       </td>
@@ -189,7 +203,7 @@ export function AdminUsersPage() {
 function CreateUserModal({ onClose }: { onClose: () => void }) {
   const create = useCreateAdminUser();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<UserFormValues>({
+  const { register, handleSubmit, watch, setValue, setError: setFieldError, formState: { errors } } = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: { role: 'Player', email: '', password: '', nickname: '', organizerName: '' },
   });
@@ -206,7 +220,19 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     };
     create.mutate(payload, {
       onSuccess: () => { showToast('success', 'Пользователь создан'); onClose(); },
-      onError: (err) => setError(toApiError(err).title ?? 'Не удалось'),
+      onError: (err) => {
+        const e = toApiError(err);
+        if (e.code === 'Admin.DuplicateEmail' || e.code === 'Auth.DuplicateEmail') {
+          setFieldError('email', { type: 'server', message: 'Такой e-mail уже зарегистрирован' });
+          return;
+        }
+        if (e.code === 'Admin.DuplicateNickname' || e.code === 'Auth.DuplicateNickname') {
+          const field = values.role === 'Organizer' ? 'organizerName' : 'nickname';
+          setFieldError(field, { type: 'server', message: values.role === 'Organizer' ? 'Это название организации уже занято' : 'Этот никнейм уже занят' });
+          return;
+        }
+        setError(e.title ?? 'Не удалось создать пользователя');
+      },
     });
   });
 

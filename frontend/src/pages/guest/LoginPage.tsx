@@ -30,7 +30,15 @@ export function LoginPage() {
       onSuccess: () => navigate('/', { replace: true }),
       onError: (err) => {
         const e = toApiError(err);
-        setError(e.status === 401 ? 'Неверный логин или пароль' : e.title ?? 'Не удалось войти');
+        if (e.code === 'Auth.AccessDenied') {
+          setError('Этот аккаунт заблокирован. Обратитесь к администратору платформы.');
+          return;
+        }
+        if (e.status === 401) {
+          setError('Неверный логин или пароль');
+          return;
+        }
+        setError(e.title ?? 'Не удалось войти');
       },
     });
   });

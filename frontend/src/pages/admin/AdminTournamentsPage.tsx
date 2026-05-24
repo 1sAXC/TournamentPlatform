@@ -67,7 +67,7 @@ export function AdminTournamentsPage() {
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 18 }}>
+      <div className="stat-row" style={{ marginBottom: 18 }}>
         <Stat label="Всего" value={counts.total} />
         <Stat label="Открытых" value={counts.open} />
         <Stat label="Активных" value={counts.progress} delta={counts.progress > 0 ? { text: 'идут сейчас', dir: 'up' } : undefined} />
