@@ -2,14 +2,21 @@ import { useAuth } from '@/shared/auth/useAuth';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { Alert } from '@/shared/ui/Alert';
 import { Card } from '@/shared/ui/Card';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Avatar } from '@/shared/ui/Avatar';
 import { RoleBadge } from '@/shared/ui/RoleBadge';
+import { accountStatusLabel } from '@/shared/lib/disciplines';
 
 export function OrgPendingPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const displayName = user?.organizerName ?? user?.email ?? '—';
+
+  // Active organizers shouldn't see the "application pending" screen — send
+  // them to their tournaments dashboard. See BUG-10.
+  if (user?.accountStatus === 'Active') {
+    return <Navigate to="/organizer" replace />;
+  }
 
   return (
     <ScreenFrame nav={[{ to: '/organizer/profile', label: 'Профиль', icon: 'user' }]}>
@@ -32,7 +39,7 @@ export function OrgPendingPage() {
             </div>
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--text-dim)', lineHeight: 1.6 }}>
-            Статус заявки: <span className="mono" style={{ color: 'var(--warning)' }}>{user?.accountStatus ?? 'PendingApproval'}</span>.
+            Статус заявки: <span className="mono" style={{ color: 'var(--warning)' }}>{accountStatusLabel(user?.accountStatus ?? 'PendingApproval')}</span>.
             Обычно рассмотрение занимает до 24 часов.
           </div>
           <div className="row" style={{ gap: 8, marginTop: 14 }}>

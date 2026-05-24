@@ -62,8 +62,60 @@ const validationMessageMap: Record<string, string> = {
   "'Organizer Name' must not be empty.": 'Введите название организации',
 };
 
+// Maps backend error codes (ProblemDetails.type) to localized titles.
+// Keys mirror the Error.Code values in *Errors.cs on the backend.
+const errorCodeMap: Record<string, string> = {
+  'Auth.DuplicateEmail': 'Пользователь с таким e-mail уже зарегистрирован',
+  'Auth.DuplicateNickname': 'Этот никнейм уже занят',
+  'Auth.InvalidCredentials': 'Неверный логин или пароль',
+  'Auth.InvalidCurrentPassword': 'Текущий пароль неверен',
+  'Auth.AccessDenied': 'Аккаунту запрещён вход',
+  'Auth.UserNotFound': 'Пользователь не найден',
+  'Admin.InvalidRole': 'Некорректная роль пользователя',
+  'Admin.InvalidStatus': 'Некорректный статус аккаунта',
+  'Admin.UserNotFound': 'Пользователь не найден',
+  'Admin.DuplicateEmail': 'Пользователь с таким e-mail уже зарегистрирован',
+  'Admin.DuplicateNickname': 'Этот никнейм уже занят',
+  'Admin.OrganizerApprovalNotAllowed': 'Одобрить можно только заявку в статусе «На рассмотрении»',
+  'Admin.OrganizerRejectNotAllowed': 'Отклонить можно только заявку в статусе «На рассмотрении»',
+  'Admin.LastAdminDeleteNotAllowed': 'Нельзя удалить последнего активного администратора',
+  'Admin.PlayerNicknameRequired': 'Необходимо указать никнейм игрока',
+  'Admin.OrganizerNameRequired': 'Необходимо указать название организации',
+  'Tournaments.AccessDenied': 'Создавать турниры могут только активные организаторы',
+  'Tournaments.NotFound': 'Турнир не найден',
+  'Tournaments.DuplicateTitle': 'Турнир с таким названием уже существует',
+  'Tournaments.InvalidTitle': 'Некорректное название турнира',
+  'Tournaments.InvalidFormat': 'Некорректный формат турнира',
+  'Tournaments.InvalidMaxPlayers': 'Максимальное число участников должно быть не больше 120',
+  'Tournaments.InvalidTeamSize': 'Размер команды недопустим для этой дисциплины',
+  'Tournaments.InvalidWinnerTeam': 'Победитель должен быть одной из команд матча',
+  'Tournaments.InvalidMatchScore': 'Счёт победителя должен быть больше счёта проигравшего',
+  'Tournaments.MaxPlayersNotMultipleOfTeamSize': 'Максимальное число игроков должно делиться на размер команды',
+  'Tournaments.DisciplineNotFound': 'Дисциплина не существует или отключена',
+  'Tournaments.InvalidSwissRounds': 'Количество раундов задаётся только для швейцарской системы',
+  'Tournaments.PlayerAccessDenied': 'Регистрироваться на турниры могут только игроки',
+  'Tournaments.MissingNickname': 'У игрока должен быть указан никнейм',
+  'Tournaments.RegistrationClosed': 'Регистрация на турнир закрыта',
+  'Tournaments.DuplicateRegistration': 'Вы уже зарегистрированы в этом турнире',
+  'Tournaments.Full': 'Достигнут лимит участников турнира',
+  'Tournaments.ParticipantNotFound': 'Вы не зарегистрированы в этом турнире',
+  'Tournaments.AlreadyStarted': 'Изменить регистрацию можно только до старта турнира',
+  'Tournaments.RegistrationConflict': 'Регистрация изменилась параллельно, попробуйте ещё раз',
+  'Tournaments.CannotCancelCompleted': 'Завершённый турнир нельзя отменить',
+  'Tournaments.AdminAccessDenied': 'Это действие доступно только администраторам',
+  'Tournaments.MatchAlreadyCompleted': 'Матч уже завершён',
+  'Tournaments.OrganizerNotFound': 'Организатор не найден',
+  'Tournaments.OrganizerRoleRequired': 'Пользователь должен иметь роль организатора',
+  'Tournaments.OrganizerInactive': 'Организатор должен быть активным',
+};
+
 function translateValidationMessage(message: string): string {
   return validationMessageMap[message] ?? message;
+}
+
+function translateErrorCode(code: string | undefined): string | undefined {
+  if (!code) return undefined;
+  return errorCodeMap[code];
 }
 
 function getValidationErrors(data?: ProblemDetailsResponse): string[] {
@@ -85,9 +137,10 @@ export function toApiError(err: unknown): ApiErrorShape {
       ? validationErrors.join('; ')
       : undefined;
 
+    const localizedTitle = translateErrorCode(data?.type);
     return {
       status: err.response?.status,
-      title: validationTitle ?? data?.detail ?? data?.title ?? err.message,
+      title: validationTitle ?? localizedTitle ?? data?.detail ?? data?.title ?? err.message,
       detail: data?.detail,
       code: data?.type,
       validationErrors,

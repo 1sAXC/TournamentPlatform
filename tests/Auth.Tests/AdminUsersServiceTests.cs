@@ -55,6 +55,67 @@ public sealed class AdminUsersServiceTests
     }
 
     [Fact]
+    public async Task GetOrganizerApplicationsHistory_ShouldReturnApprovedAndRejected_ExcludingPendingAndAdminCreated()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var pendingOrganizer = User.CreateOrganizerSelfRegistration(
+            "pending@example.com",
+            "hash",
+            "Pending Org",
+            DateTime.UtcNow.AddMinutes(-3));
+        var approvedOrganizer = User.CreateOrganizerSelfRegistration(
+            "approved@example.com",
+            "hash",
+            "Approved Org",
+            DateTime.UtcNow.AddMinutes(-2));
+        approvedOrganizer.Approve(DateTime.UtcNow);
+        var rejectedOrganizer = User.CreateOrganizerSelfRegistration(
+            "rejected@example.com",
+            "hash",
+            "Rejected Org",
+            DateTime.UtcNow.AddMinutes(-1));
+        rejectedOrganizer.Reject(DateTime.UtcNow);
+        var adminCreatedOrganizer = User.CreateOrganizerByAdmin(
+            "byadmin@example.com",
+            "hash",
+            "Admin-created Org",
+            createdByAdminId: Guid.NewGuid(),
+            DateTime.UtcNow);
+        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow);
+        repository.Users.AddRange([pendingOrganizer, approvedOrganizer, rejectedOrganizer, adminCreatedOrganizer, player]);
+
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        var result = await service.GetOrganizerApplicationsHistoryAsync(new OrganizerApplicationsQuery());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.TotalCount);
+        Assert.Contains(result.Value.Items, a => a.Id == approvedOrganizer.Id && a.Status == "Active");
+        Assert.Contains(result.Value.Items, a => a.Id == rejectedOrganizer.Id && a.Status == "Rejected");
+        Assert.DoesNotContain(result.Value.Items, a => a.Id == pendingOrganizer.Id);
+        Assert.DoesNotContain(result.Value.Items, a => a.Id == adminCreatedOrganizer.Id);
+        Assert.DoesNotContain(result.Value.Items, a => a.Id == player.Id);
+    }
+
+    [Fact]
+    public async Task GetOrganizerApplicationsHistory_ShouldReturnEmptyPage_WhenNoDecidedApplications()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var pendingOrganizer = User.CreateOrganizerSelfRegistration(
+            "pending@example.com",
+            "hash",
+            "Pending Org",
+            DateTime.UtcNow);
+        repository.Users.Add(pendingOrganizer);
+
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        var result = await service.GetOrganizerApplicationsHistoryAsync(new OrganizerApplicationsQuery());
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value.Items);
+        Assert.Equal(0, result.Value.TotalCount);
+    }
+
+    [Fact]
     public async Task GetOrganizerApplication_ShouldReturnPendingOrganizer()
     {
         var repository = new InMemoryAuthUserRepository();
@@ -228,6 +289,13 @@ public sealed class AdminUsersServiceTests
             return Task.FromResult(Users.Any(user => user.NormalizedNickname == normalizedNickname));
         }
 
+        public Task<bool> ExistsByNicknameExceptUserAsync(string normalizedNickname, Guid? excludedUserId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Users.Any(user =>
+                user.NormalizedNickname == normalizedNickname
+                && (excludedUserId is null || user.Id != excludedUserId)));
+        }
+
         public Task<User?> GetByLoginAsync(string normalizedLogin, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Users.FirstOrDefault(user =>
@@ -260,6 +328,44 @@ public sealed class AdminUsersServiceTests
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(ApplyFilters(role, status, normalizedSearch).Count());
+        }
+
+        public Task<IReadOnlyCollection<User>> GetOrganizerHistoryAsync(
+            int skip,
+            int take,
+            string? normalizedSearch,
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyCollection<User> page = ApplyOrganizerHistoryFilters(normalizedSearch)
+                .OrderByDescending(user => user.ApprovedAtUtc ?? user.RejectedAtUtc ?? user.CreatedAtUtc)
+                .Skip(skip)
+                .Take(take)
+                .ToArray();
+            return Task.FromResult(page);
+        }
+
+        public Task<int> CountOrganizerHistoryAsync(
+            string? normalizedSearch,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(ApplyOrganizerHistoryFilters(normalizedSearch).Count());
+        }
+
+        private IEnumerable<User> ApplyOrganizerHistoryFilters(string? normalizedSearch)
+        {
+            IEnumerable<User> query = Users.Where(user =>
+                user.Role == UserRole.Organizer
+                && user.CreatedByAdminId == null
+                && (user.ApprovedAtUtc != null || user.RejectedAtUtc != null));
+
+            if (!string.IsNullOrWhiteSpace(normalizedSearch))
+            {
+                query = query.Where(user =>
+                    user.NormalizedEmail.Contains(normalizedSearch)
+                    || (user.NormalizedOrganizerName != null && user.NormalizedOrganizerName.Contains(normalizedSearch)));
+            }
+
+            return query;
         }
 
         public Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default)

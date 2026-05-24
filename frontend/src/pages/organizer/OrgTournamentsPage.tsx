@@ -16,7 +16,7 @@ export function OrgTournamentsPage() {
   const navigate = useNavigate();
 
   const all = data ?? [];
-  const open = all.filter(t => t.status === 'RegistrationOpen').length;
+  const open = all.filter(t => t.status === 'Open' || t.status === 'Full').length;
   const active = all.filter(t => t.status === 'InProgress').length;
   const total = all.length;
   const participants = all.reduce((s, t) => s + t.currentPlayersCount, 0);

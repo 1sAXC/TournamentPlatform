@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { adminNav } from '@/features/navigation';
 import {
-  useApproveApplication, useOrganizerApplications, useRejectApplication,
+  useApproveApplication, useOrganizerApplications, useOrganizerApplicationsHistory, useRejectApplication,
 } from '@/features/admin/hooks';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Badge } from '@/shared/ui/Badge';
@@ -18,13 +18,13 @@ import type { OrganizerApplicationResponse } from '@/shared/api/types';
 
 export function AdminApplicationsPage() {
   const pending = useOrganizerApplications({ pageNumber: 1, pageSize: 50 });
+  const history = useOrganizerApplicationsHistory({ pageNumber: 1, pageSize: 50 });
   const approve = useApproveApplication();
   const reject = useRejectApplication();
   const [rejectFor, setRejectFor] = useState<OrganizerApplicationResponse | null>(null);
 
-  const items = pending.data?.items ?? [];
-  const onReview = items.filter(a => a.status === 'PendingApproval' || a.status === 'Pending');
-  const reviewed = items.filter(a => a.status !== 'PendingApproval' && a.status !== 'Pending');
+  const onReview = pending.data?.items ?? [];
+  const reviewed = history.data?.items ?? [];
 
   function onApprove(id: string) {
     approve.mutate(id, {
@@ -82,7 +82,9 @@ export function AdminApplicationsPage() {
 
       <h3 style={{ fontSize: 13, marginBottom: 12 }}>Рассмотренные</h3>
       <div className="card" style={{ padding: 0 }}>
-        {reviewed.length === 0 ? (
+        {history.isLoading ? (
+          <EmptyState title="Загрузка…" />
+        ) : reviewed.length === 0 ? (
           <EmptyState title="Пока пусто" />
         ) : (
           <table className="tbl">

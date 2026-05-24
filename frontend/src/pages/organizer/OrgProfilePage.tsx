@@ -15,6 +15,7 @@ import { Card } from '@/shared/ui/Card';
 import { Field } from '@/shared/ui/Field';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
+import { accountStatusLabel } from '@/shared/lib/disciplines';
 
 const schema = z.object({
   currentPassword: z.string().min(1, 'Введите текущий пароль'),
@@ -59,7 +60,7 @@ export function OrgProfilePage() {
             <div className="row" style={{ gap: 8 }}>
               <RoleBadge role="Organizer" />
               <Badge tone={user?.accountStatus === 'Active' ? 'success' : 'pending'}>
-                {user?.accountStatus ?? '—'}
+                {accountStatusLabel(user?.accountStatus)}
               </Badge>
             </div>
             <div style={{ fontSize: 12, color: 'var(--muted)' }}>{user?.email}</div>

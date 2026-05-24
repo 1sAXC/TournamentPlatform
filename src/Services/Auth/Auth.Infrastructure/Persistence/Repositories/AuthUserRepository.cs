@@ -64,11 +64,53 @@ public sealed class AuthUserRepository(AuthDbContext dbContext) : IAuthUserRepos
         return ApplyFilters(role, status, normalizedSearch).CountAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<User>> GetOrganizerHistoryAsync(
+        int skip,
+        int take,
+        string? normalizedSearch,
+        CancellationToken cancellationToken = default)
+    {
+        return await ApplyOrganizerHistoryFilters(normalizedSearch)
+            .OrderByDescending(user => user.ApprovedAtUtc ?? user.RejectedAtUtc ?? user.CreatedAtUtc)
+            .Skip(skip)
+            .Take(take)
+            .ToArrayAsync(cancellationToken);
+    }
+
+    public Task<int> CountOrganizerHistoryAsync(
+        string? normalizedSearch,
+        CancellationToken cancellationToken = default)
+    {
+        return ApplyOrganizerHistoryFilters(normalizedSearch).CountAsync(cancellationToken);
+    }
+
     public Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.Users.CountAsync(
             user => user.Role == UserRole.Admin && user.Status == AccountStatus.Active,
             cancellationToken);
+    }
+
+    // Organizer "history" = self-registered organizers whose application has
+    // been decided on — either approved (ApprovedAtUtc set) or rejected
+    // (RejectedAtUtc set). Excludes pending applications (still in the inbox)
+    // and organizers admin created directly (CreatedByAdminId set — no
+    // application ever existed).
+    private IQueryable<User> ApplyOrganizerHistoryFilters(string? normalizedSearch)
+    {
+        var query = dbContext.Users
+            .Where(user => user.Role == UserRole.Organizer
+                && user.CreatedByAdminId == null
+                && (user.ApprovedAtUtc != null || user.RejectedAtUtc != null));
+
+        if (!string.IsNullOrWhiteSpace(normalizedSearch))
+        {
+            query = query.Where(user =>
+                user.NormalizedEmail.Contains(normalizedSearch)
+                || (user.NormalizedOrganizerName != null && user.NormalizedOrganizerName.Contains(normalizedSearch)));
+        }
+
+        return query;
     }
 
     public void Add(User user)

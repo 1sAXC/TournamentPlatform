@@ -24,6 +24,16 @@ public sealed class OrganizerApplicationsController(IAdminUsersService adminUser
         return ToActionResult(result);
     }
 
+    [HttpGet("history")]
+    [ProducesResponseType(typeof(PagedResult<OrganizerApplicationResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetApplicationsHistory(
+        [FromQuery] OrganizerApplicationsQuery query,
+        CancellationToken cancellationToken)
+    {
+        var result = await adminUsersService.GetOrganizerApplicationsHistoryAsync(query, cancellationToken);
+        return ToActionResult(result);
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(OrganizerApplicationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

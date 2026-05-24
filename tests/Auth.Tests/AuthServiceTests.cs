@@ -198,6 +198,13 @@ public sealed class AuthServiceTests
             return Task.FromResult(Users.Any(user => user.NormalizedNickname == normalizedNickname));
         }
 
+        public Task<bool> ExistsByNicknameExceptUserAsync(string normalizedNickname, Guid? excludedUserId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Users.Any(user =>
+                user.NormalizedNickname == normalizedNickname
+                && (excludedUserId is null || user.Id != excludedUserId)));
+        }
+
         public Task<User?> GetByLoginAsync(string normalizedLogin, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Users.FirstOrDefault(user =>
@@ -230,6 +237,33 @@ public sealed class AuthServiceTests
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(ApplyFilters(role, status, normalizedSearch).Count());
+        }
+
+        public Task<IReadOnlyCollection<User>> GetOrganizerHistoryAsync(
+            int skip,
+            int take,
+            string? normalizedSearch,
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyCollection<User> page = Users
+                .Where(user => user.Role == UserRole.Organizer
+                    && user.CreatedByAdminId == null
+                    && (user.ApprovedAtUtc != null || user.RejectedAtUtc != null))
+                .OrderByDescending(user => user.ApprovedAtUtc ?? user.RejectedAtUtc ?? user.CreatedAtUtc)
+                .Skip(skip)
+                .Take(take)
+                .ToArray();
+            return Task.FromResult(page);
+        }
+
+        public Task<int> CountOrganizerHistoryAsync(
+            string? normalizedSearch,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Users.Count(user =>
+                user.Role == UserRole.Organizer
+                && user.CreatedByAdminId == null
+                && (user.ApprovedAtUtc != null || user.RejectedAtUtc != null)));
         }
 
         public Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default)

@@ -13,13 +13,26 @@ import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
 
 const schema = z.object({
-  title: z.string().min(3, 'Минимум 3 символа').max(120),
-  description: z.string().max(1000).optional(),
+  title: z.string().min(3, 'Минимум 3 символа').max(120, 'Максимум 120 символов'),
+  description: z.string().max(1000, 'Максимум 1000 символов').optional(),
   disciplineCode: z.string().min(1, 'Выберите дисциплину'),
   format: z.enum(['Swiss', 'SingleElimination', 'DoubleElimination']),
-  swissRounds: z.coerce.number().int().min(1).max(20).optional(),
-  teamSize: z.coerce.number().int().min(1).max(10),
-  maxPlayers: z.coerce.number().int().min(2).max(256),
+  swissRounds: z.coerce
+    .number({ invalid_type_error: 'Введите число раундов' })
+    .int('Должно быть целым числом')
+    .min(1, 'Минимум 1 раунд')
+    .max(20, 'Максимум 20 раундов')
+    .optional(),
+  teamSize: z.coerce
+    .number({ invalid_type_error: 'Введите размер команды' })
+    .int('Должно быть целым числом')
+    .min(1, 'Минимум 1 игрок в команде')
+    .max(10, 'Максимум 10 игроков в команде'),
+  maxPlayers: z.coerce
+    .number({ invalid_type_error: 'Введите число участников' })
+    .int('Должно быть целым числом')
+    .min(2, 'Минимум 2 участника')
+    .max(256, 'Максимум 256 участников'),
 });
 type FormValues = z.infer<typeof schema>;
 

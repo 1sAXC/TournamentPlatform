@@ -11,11 +11,15 @@ import type {
 
 export const adminKeys = {
   apps: (q: OrganizerApplicationsQuery) => ['admin', 'applications', q] as const,
+  appsHistory: (q: OrganizerApplicationsQuery) => ['admin', 'applications-history', q] as const,
   users: (q: AdminUsersQuery) => ['admin', 'users', q] as const,
 };
 
 export const useOrganizerApplications = (q: OrganizerApplicationsQuery = {}) =>
   useQuery({ queryKey: adminKeys.apps(q), queryFn: () => adminApi.listApplications(q) });
+
+export const useOrganizerApplicationsHistory = (q: OrganizerApplicationsQuery = {}) =>
+  useQuery({ queryKey: adminKeys.appsHistory(q), queryFn: () => adminApi.listApplicationsHistory(q) });
 
 export const useAdminUsers = (q: AdminUsersQuery = {}) =>
   useQuery({ queryKey: adminKeys.users(q), queryFn: () => adminApi.listUsers(q) });
@@ -26,6 +30,7 @@ export function useApproveApplication() {
     mutationFn: (id: string) => adminApi.approveApplication(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'applications'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'applications-history'] });
       qc.invalidateQueries({ queryKey: ['admin', 'users'] });
     },
   });
@@ -37,6 +42,7 @@ export function useRejectApplication() {
     mutationFn: (id: string) => adminApi.rejectApplication(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'applications'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'applications-history'] });
       qc.invalidateQueries({ queryKey: ['admin', 'users'] });
     },
   });

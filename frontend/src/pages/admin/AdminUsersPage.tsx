@@ -52,6 +52,7 @@ const STATUS_OPTS = [
   { value: 'Active', label: 'Активен' },
   { value: 'PendingApproval', label: 'На проверке' },
   { value: 'Rejected', label: 'Отклонён' },
+  { value: 'Deleted', label: 'Удалён' },
 ];
 
 export function AdminUsersPage() {
@@ -142,7 +143,8 @@ export function AdminUsersPage() {
                           {u.status === 'Active' ? 'Активен'
                             : u.status === 'PendingApproval' ? 'На проверке'
                               : u.status === 'Rejected' ? 'Отклонён'
-                                : u.status}
+                                : u.status === 'Deleted' ? 'Удалён'
+                                  : u.status}
                         </Badge>
                       </td>
                       <td className="mono">{formatDate(u.createdAtUtc)}</td>

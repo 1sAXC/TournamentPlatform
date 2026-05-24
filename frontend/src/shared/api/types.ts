@@ -26,8 +26,8 @@ export interface ChangePasswordRequest { currentPassword: string; newPassword: s
 
 // ===== Tournament =====
 export type TournamentStatus =
-  | 'Draft'
-  | 'RegistrationOpen'
+  | 'Open'
+  | 'Full'
   | 'InProgress'
   | 'Completed'
   | 'Cancelled';
