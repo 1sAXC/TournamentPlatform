@@ -37,7 +37,8 @@ export function TopBar({ nav, showProfile = true }: Props) {
   const profilePath =
     role === 'Player' ? '/profile' :
       role === 'Organizer' ? '/organizer/profile' :
-        null;
+        role === 'Admin' ? '/admin/profile' :
+          null;
 
   return (
     <header className="tp-topbar">
