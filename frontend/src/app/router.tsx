@@ -22,6 +22,7 @@ import { OrgPendingPage } from '@/pages/organizer/OrgPendingPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminApplicationsPage } from '@/pages/admin/AdminApplicationsPage';
 import { AdminTournamentsPage } from '@/pages/admin/AdminTournamentsPage';
+import { AdminProfilePage } from '@/pages/admin/AdminProfilePage';
 
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
@@ -73,6 +74,7 @@ const router = createBrowserRouter([
       { path: '/admin/applications', element: <AdminApplicationsPage /> },
       { path: '/admin/users', element: <AdminUsersPage /> },
       { path: '/admin/tournaments', element: <AdminTournamentsPage /> },
+      { path: '/admin/profile', element: <AdminProfilePage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },
