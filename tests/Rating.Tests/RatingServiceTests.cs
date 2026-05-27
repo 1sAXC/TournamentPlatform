@@ -277,7 +277,7 @@ public sealed class RatingServiceTests
     }
 
     [Fact]
-    public async Task HandleMatchCompletedAsync_TechnicalDefeat_ShouldBeCalculatedAsEightZero()
+    public async Task HandleMatchCompletedAsync_TechnicalDefeat_ShouldUseMaxScoreMultiplier()
     {
         var repository = new InMemoryRatingRepository();
         var service = CreateService(repository);
@@ -294,8 +294,8 @@ public sealed class RatingServiceTests
             loserScore: null,
             isTechnicalDefeat: true));
 
-        Assert.Equal(1019, GetRating(repository, winnerId).Elo);
-        Assert.Equal(981, GetRating(repository, loserId).Elo);
+        Assert.Equal(1020, GetRating(repository, winnerId).Elo);
+        Assert.Equal(980, GetRating(repository, loserId).Elo);
     }
 
     [Fact]

@@ -14,6 +14,7 @@ public sealed class RatingService(
 {
     private const int InitialElo = 1000;
     private const int MinimumElo = 100;
+    private const int MaxScoreDifference = 10;
 
     private static readonly IReadOnlyCollection<string> InitialDisciplines =
     [
@@ -241,7 +242,7 @@ public sealed class RatingService(
 
         if (integrationEvent.IsTechnicalDefeat)
         {
-            scoreDifference = 8;
+            scoreDifference = MaxScoreDifference;
         }
         else if (integrationEvent.WinnerScore is not null && integrationEvent.LoserScore is not null)
         {
@@ -252,7 +253,7 @@ public sealed class RatingService(
             scoreDifference = 1;
         }
 
-        return 1 + Math.Min(scoreDifference, 10) * 0.025;
+        return 1 + Math.Min(scoreDifference, MaxScoreDifference) * 0.025;
     }
 
     private static RatingHistoryResponse ToResponse(RatingHistory history)
