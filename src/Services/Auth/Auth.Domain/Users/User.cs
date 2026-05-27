@@ -184,6 +184,21 @@ public sealed class User
         RejectedAtUtc = rejectedAtUtc;
     }
 
+    public void ResubmitOrganizerApplication(string organizerName, string passwordHash, DateTime resubmittedAtUtc)
+    {
+        if (Role != UserRole.Organizer || Status != AccountStatus.Rejected)
+        {
+            throw new InvalidOperationException("Only a rejected organizer application can be resubmitted.");
+        }
+
+        Status = AccountStatus.PendingApproval;
+        OrganizerName = organizerName;
+        NormalizedOrganizerName = NormalizeOptional(organizerName);
+        RejectedAtUtc = null;
+        CreatedAtUtc = resubmittedAtUtc;
+        SetPasswordHash(passwordHash);
+    }
+
     public void SoftDelete(DateTime deletedAtUtc)
     {
         if (Status == AccountStatus.Deleted)

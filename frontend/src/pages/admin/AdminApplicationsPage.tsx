@@ -8,8 +8,6 @@ import { Avatar } from '@/shared/ui/Avatar';
 import { Badge } from '@/shared/ui/Badge';
 import { Icon } from '@/shared/ui/Icon';
 import { Modal } from '@/shared/ui/Modal';
-import { Alert } from '@/shared/ui/Alert';
-import { Field } from '@/shared/ui/Field';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { formatDate } from '@/shared/lib/formatters';
 import { showToast } from '@/shared/ui/Toast';
@@ -22,16 +20,10 @@ export function AdminApplicationsPage() {
   const approve = useApproveApplication();
   const reject = useRejectApplication();
   const [rejectFor, setRejectFor] = useState<OrganizerApplicationResponse | null>(null);
+  const [approveFor, setApproveFor] = useState<OrganizerApplicationResponse | null>(null);
 
   const onReview = pending.data?.items ?? [];
   const reviewed = history.data?.items ?? [];
-
-  function onApprove(id: string) {
-    approve.mutate(id, {
-      onSuccess: () => showToast('success', 'Заявка одобрена'),
-      onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
-    });
-  }
 
   return (
     <ScreenFrame nav={adminNav}>
@@ -67,7 +59,7 @@ export function AdminApplicationsPage() {
                   </div>
                 </div>
                 <div className="row" style={{ gap: 6 }}>
-                  <button className="btn btn-success" onClick={() => onApprove(a.id)} disabled={approve.isPending}>
+                  <button className="btn btn-success" onClick={() => setApproveFor(a)}>
                     <Icon name="check" size={13} /> Одобрить
                   </button>
                   <button className="btn btn-danger" onClick={() => setRejectFor(a)}>
@@ -113,55 +105,59 @@ export function AdminApplicationsPage() {
         )}
       </div>
 
+      {approveFor && (
+        <Modal
+          onClose={() => setApproveFor(null)}
+          eyebrow={approveFor.organizerName}
+          title="Одобрить заявку"
+          footer={<>
+            <button className="btn" onClick={() => setApproveFor(null)}>Отмена</button>
+            <button
+              className="btn btn-success"
+              disabled={approve.isPending}
+              onClick={() => {
+                approve.mutate(approveFor.id, {
+                  onSuccess: () => { showToast('success', 'Заявка одобрена'); setApproveFor(null); },
+                  onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
+                });
+              }}
+            >
+              {approve.isPending ? 'Одобряем…' : 'Одобрить заявку'}
+            </button>
+          </>}
+        >
+          <div style={{ fontSize: 13.5 }}>
+            Одобрить заявку организатора «{approveFor.organizerName}»?
+          </div>
+        </Modal>
+      )}
+
       {rejectFor && (
-        <RejectModal
-          application={rejectFor}
-          isPending={reject.isPending}
-          onConfirm={() => {
-            reject.mutate(rejectFor.id, {
-              onSuccess: () => { showToast('info', 'Заявка отклонена'); setRejectFor(null); },
-              onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
-            });
-          }}
-          onCancel={() => setRejectFor(null)}
-        />
+        <Modal
+          onClose={() => setRejectFor(null)}
+          eyebrow={rejectFor.organizerName}
+          title="Отклонить заявку"
+          footer={<>
+            <button className="btn" onClick={() => setRejectFor(null)}>Отмена</button>
+            <button
+              className="btn btn-danger"
+              disabled={reject.isPending}
+              onClick={() => {
+                reject.mutate(rejectFor.id, {
+                  onSuccess: () => { showToast('info', 'Заявка отклонена'); setRejectFor(null); },
+                  onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
+                });
+              }}
+            >
+              {reject.isPending ? 'Отклоняем…' : 'Отклонить заявку'}
+            </button>
+          </>}
+        >
+          <div style={{ fontSize: 13.5 }}>
+            Отклонить заявку организатора «{rejectFor.organizerName}»?
+          </div>
+        </Modal>
       )}
     </ScreenFrame>
-  );
-}
-
-function RejectModal({
-  application, onConfirm, onCancel, isPending,
-}: {
-  application: OrganizerApplicationResponse;
-  onConfirm: () => void;
-  onCancel: () => void;
-  isPending: boolean;
-}) {
-  const [reason, setReason] = useState('');
-  return (
-    <Modal
-      onClose={onCancel}
-      eyebrow={application.organizerName}
-      title="Отклонить заявку"
-      footer={<>
-        <button className="btn" onClick={onCancel}>Отмена</button>
-        <button className="btn btn-danger" onClick={onConfirm} disabled={isPending}>
-          {isPending ? 'Отклоняем…' : 'Отклонить заявку'}
-        </button>
-      </>}
-    >
-      <div className="col" style={{ gap: 12 }}>
-        <Alert kind="warn" icon="flag">
-          Организатор получит уведомление с причиной. Заявку можно подать снова.
-        </Alert>
-        <Field label="Причина отклонения" hint="Необязательно (пока хранится локально, в бэк не отправляется)">
-          <textarea
-            className="textarea" value={reason} onChange={(e) => setReason(e.target.value)}
-            placeholder="Например: не предоставлена информация о проводимых ранее турнирах…"
-          />
-        </Field>
-      </div>
-    </Modal>
   );
 }

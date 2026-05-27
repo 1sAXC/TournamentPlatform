@@ -48,8 +48,24 @@ public sealed class AuthService(
         CancellationToken cancellationToken = default)
     {
         var normalizedEmail = NormalizeRequired(request.Email);
-        if (await users.ExistsByEmailAsync(normalizedEmail, cancellationToken))
+        var existing = await users.GetByLoginAsync(normalizedEmail, cancellationToken);
+        if (existing is not null && existing.NormalizedEmail == normalizedEmail)
         {
+            // A previously rejected organizer may re-apply with the same email:
+            // reuse the existing record (the email column is unique) and reset
+            // it to a fresh pending application.
+            if (existing.Role == UserRole.Organizer && existing.Status == AccountStatus.Rejected)
+            {
+                existing.ResubmitOrganizerApplication(
+                    request.OrganizerName.Trim(),
+                    passwordHashingService.HashPassword(existing, request.Password),
+                    DateTime.UtcNow);
+                AddDomainEventsToOutbox(existing);
+                await users.SaveChangesAsync(cancellationToken);
+
+                return Result<AuthResponse>.Success(CreateAuthResponse(existing));
+            }
+
             return Result<AuthResponse>.Failure(AuthErrors.DuplicateEmail);
         }
 

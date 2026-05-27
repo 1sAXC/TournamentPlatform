@@ -50,6 +50,40 @@ public sealed class AuthServiceTests
     }
 
     [Fact]
+    public async Task RegisterOrganizer_ShouldRejectDuplicateEmailWhenApplicationStillActive()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+
+        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1"));
+        var duplicate = await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "ORGANIZER@example.com", "Password1"));
+
+        Assert.True(duplicate.IsFailure);
+        Assert.Equal(AuthErrors.DuplicateEmail, duplicate.Error);
+        Assert.Single(repository.Users);
+    }
+
+    [Fact]
+    public async Task RegisterOrganizer_ShouldAllowReapplyAfterRejection()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1"));
+        var rejected = Assert.Single(repository.Users);
+        rejected.Reject(DateTime.UtcNow);
+
+        var result = await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Reborn", "ORGANIZER@example.com", "Password2"));
+
+        Assert.True(result.IsSuccess);
+        var user = Assert.Single(repository.Users);
+        Assert.Equal(rejected.Id, user.Id);
+        Assert.Equal(AccountStatus.PendingApproval, user.Status);
+        Assert.Equal("Organizer Reborn", user.OrganizerName);
+        Assert.Null(user.RejectedAtUtc);
+        Assert.Equal("PendingApproval", result.Value.User.AccountStatus);
+    }
+
+    [Fact]
     public async Task RegisterPlayer_ShouldRejectDuplicateEmail()
     {
         var repository = new InMemoryAuthUserRepository();
