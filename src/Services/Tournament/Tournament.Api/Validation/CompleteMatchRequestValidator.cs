@@ -10,6 +10,16 @@ public sealed class CompleteMatchRequestValidator : AbstractValidator<CompleteMa
         RuleFor(request => request.WinnerTeamId)
             .NotEmpty();
 
+        RuleFor(request => request.WinnerScore)
+            .NotNull()
+            .When(request => !request.IsTechnicalDefeat)
+            .WithMessage("WinnerScore is required unless the match is a technical defeat.");
+
+        RuleFor(request => request.LoserScore)
+            .NotNull()
+            .When(request => !request.IsTechnicalDefeat)
+            .WithMessage("LoserScore is required unless the match is a technical defeat.");
+
         RuleFor(request => request)
             .Must(request => request.WinnerScore is null || request.LoserScore is null || request.WinnerScore > request.LoserScore)
             .WithMessage("WinnerScore must be greater than LoserScore.");

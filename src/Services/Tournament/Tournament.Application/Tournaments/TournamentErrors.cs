@@ -13,6 +13,7 @@ public static class TournamentErrors
     public static readonly Error InvalidTeamSize = new("Tournaments.InvalidTeamSize", "TeamSize is not allowed for this discipline.");
     public static readonly Error InvalidWinnerTeam = new("Tournaments.InvalidWinnerTeam", "WinnerTeamId must reference one of the match teams.");
     public static readonly Error InvalidMatchScore = new("Tournaments.InvalidMatchScore", "WinnerScore must be greater than LoserScore.");
+    public static readonly Error MatchScoreRequired = new("Tournaments.MatchScoreRequired", "WinnerScore and LoserScore are required unless the match is a technical defeat.");
     public static readonly Error MaxPlayersNotMultipleOfTeamSize = new("Tournaments.MaxPlayersNotMultipleOfTeamSize", "MaxPlayers must be divisible by TeamSize.");
     public static readonly Error DisciplineNotFound = new("Tournaments.DisciplineNotFound", "Discipline does not exist or is inactive.");
     public static readonly Error InvalidSwissRounds = new("Tournaments.InvalidSwissRounds", "SwissRounds must be specified only for Swiss tournaments.");

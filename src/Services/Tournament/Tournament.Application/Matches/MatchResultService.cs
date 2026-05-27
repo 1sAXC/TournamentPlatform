@@ -60,6 +60,12 @@ public sealed class MatchResultService(
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidWinnerTeam);
         }
 
+        if (!request.IsTechnicalDefeat
+            && (request.WinnerScore is null || request.LoserScore is null))
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.MatchScoreRequired);
+        }
+
         if (request.WinnerScore is not null
             && request.LoserScore is not null
             && request.WinnerScore <= request.LoserScore)
@@ -67,13 +73,10 @@ public sealed class MatchResultService(
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidMatchScore);
         }
 
-        var winnerScore = request.WinnerScore ?? 1;
-        var loserScore = request.LoserScore ?? 0;
-
         match.Complete(
             request.WinnerTeamId,
-            winnerScore,
-            loserScore,
+            request.WinnerScore,
+            request.LoserScore,
             request.IsTechnicalDefeat,
             DateTime.UtcNow);
 

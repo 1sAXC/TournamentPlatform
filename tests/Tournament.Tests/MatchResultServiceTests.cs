@@ -102,6 +102,41 @@ public sealed class MatchResultServiceTests
     }
 
     [Fact]
+    public async Task RegularMatchWithoutScore_ReturnsFailure()
+    {
+        var fixture = CreateFixture();
+
+        var result = await fixture.Service.CompleteMatchAsync(
+            fixture.Tournament.Id,
+            fixture.Match.Id,
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, null, null, false),
+            new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(Tournament.Application.Tournaments.TournamentErrors.MatchScoreRequired, result.Error);
+        Assert.Empty(fixture.Outbox.Events.OfType<MatchCompletedEvent>());
+    }
+
+    [Fact]
+    public async Task TechnicalDefeatWithoutScore_Succeeds_AndStoresNullScore()
+    {
+        var fixture = CreateFixture();
+
+        var result = await fixture.Service.CompleteMatchAsync(
+            fixture.Tournament.Id,
+            fixture.Match.Id,
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, null, null, true),
+            new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(MatchStatus.Completed, fixture.Match.Status);
+        Assert.Null(fixture.Match.WinnerScore);
+        Assert.Null(fixture.Match.LoserScore);
+        Assert.True(fixture.Match.IsTechnicalDefeat);
+        Assert.Single(fixture.Outbox.Events.OfType<MatchCompletedEvent>());
+    }
+
+    [Fact]
     public async Task CompletingAlreadyCompletedMatch_ReturnsConflictAndDoesNotPublishTwice()
     {
         var fixture = CreateFixture();

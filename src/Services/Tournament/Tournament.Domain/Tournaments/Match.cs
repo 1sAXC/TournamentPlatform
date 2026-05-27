@@ -51,8 +51,8 @@ public sealed class Match
 
     public void Complete(
         Guid winnerTeamId,
-        int winnerScore,
-        int loserScore,
+        int? winnerScore,
+        int? loserScore,
         bool isTechnicalDefeat,
         DateTime completedAtUtc)
     {
