@@ -167,7 +167,7 @@ export function OrgManagePage() {
         </div>
       </div>
 
-      {bracketRounds.length > 0 && (
+      {data.format !== 'Swiss' && bracketRounds.length > 0 && (
         <>
           <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
             <h3 style={{ fontSize: 14 }}>Турнирная сетка</h3>

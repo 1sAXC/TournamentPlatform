@@ -235,7 +235,7 @@ export function TournamentDetailPage() {
         </div>
       </div>
 
-      {data.rounds.length > 0 && (
+      {data.format !== 'Swiss' && data.rounds.length > 0 && (
         <div style={{ marginTop: 16 }}>
           <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
             <h3 style={{ fontSize: 14 }}>Турнирная сетка</h3>
