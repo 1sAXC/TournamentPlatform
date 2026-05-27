@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { tournamentsApi } from '@/shared/api/tournamentsApi';
 import type {
-  CompleteMatchRequest, CreateTournamentRequest,
+  CompleteMatchRequest, CreateTournamentRequest, UpdateTournamentRequest,
   TournamentDetailsResponse,
 } from '@/shared/api/types';
 
@@ -82,6 +82,17 @@ export function useCancelTournament() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => tournamentsApi.cancel(id),
+    onSuccess: (data) => {
+      qc.setQueryData(qk.detail(data.id), data);
+      invalidateLists(qc);
+    },
+  });
+}
+
+export function useUpdateTournament(tournamentId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (req: UpdateTournamentRequest) => tournamentsApi.update(tournamentId, req),
     onSuccess: (data) => {
       qc.setQueryData(qk.detail(data.id), data);
       invalidateLists(qc);

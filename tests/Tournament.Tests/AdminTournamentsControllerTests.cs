@@ -165,6 +165,9 @@ public sealed class AdminTournamentsControllerTests
         public Task<Result<TournamentDetailsResponse>> LeaveAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
+        public Task<Result<TournamentDetailsResponse>> UpdateAsync(Guid tournamentId, UpdateTournamentRequest request, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
         public Task<Result<TournamentDetailsResponse>> CancelAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 

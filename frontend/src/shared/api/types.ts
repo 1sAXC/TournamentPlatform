@@ -122,6 +122,11 @@ export interface AdminCreateTournamentRequest extends CreateTournamentRequest {
   organizerId: string;
 }
 
+export interface UpdateTournamentRequest {
+  title: string;
+  description?: string | null;
+}
+
 export interface CompleteMatchRequest {
   winnerTeamId: string;
   winnerScore?: number | null;

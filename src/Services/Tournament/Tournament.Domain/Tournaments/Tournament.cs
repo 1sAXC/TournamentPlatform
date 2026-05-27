@@ -91,6 +91,14 @@ public sealed class Tournament
         return participant;
     }
 
+    public void UpdateDetails(string title, string normalizedTitle, string? description)
+    {
+        Title = title;
+        NormalizedTitle = normalizedTitle;
+        Description = description;
+        TouchConcurrencyToken();
+    }
+
     public void MarkFull()
     {
         Status = TournamentStatus.Full;

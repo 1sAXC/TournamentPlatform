@@ -1,0 +1,35 @@
+import type { BracketRound } from '@/shared/ui/TournamentBracket';
+import type { MatchResponse, TournamentDetailsResponse } from '@/shared/api/types';
+import { roundLabel } from '@/shared/lib/bracketLabels';
+
+// Builds the bracket view-model from a tournament's rounds. Pass `onMatchClick`
+// to make editable matches clickable (organizer view); omit it for a
+// read-only bracket (public view).
+export function buildBracketRounds(
+  data: TournamentDetailsResponse,
+  onMatchClick?: (m: MatchResponse) => void,
+): BracketRound[] {
+  const totalRounds = data.rounds.length;
+  return data.rounds.map((r) => ({
+    label: roundLabel(data.format, r.number, totalRounds),
+    current: r.number === data.currentRoundNumber && data.status === 'InProgress',
+    matches: r.matches.map((m) => ({
+      id: m.id,
+      label: `M${r.number}.${m.matchNumber}`,
+      a: data.teams.find(t => t.id === m.teamAId)?.name ?? null,
+      b: data.teams.find(t => t.id === m.teamBId)?.name ?? null,
+      sa: m.winnerTeamId === m.teamAId ? m.winnerScore ?? null
+        : m.winnerTeamId === m.teamBId ? m.loserScore ?? null : null,
+      sb: m.winnerTeamId === m.teamBId ? m.winnerScore ?? null
+        : m.winnerTeamId === m.teamAId ? m.loserScore ?? null : null,
+      win: m.winnerTeamId
+        ? m.winnerTeamId === m.teamAId ? 'a' as const
+          : m.winnerTeamId === m.teamBId ? 'b' as const : null
+        : null,
+      status: m.status === 'Completed' ? 'done' as const
+        : m.teamAId && m.teamBId ? 'pending' as const
+          : 'tbd' as const,
+      onClick: !onMatchClick || m.status === 'Completed' ? undefined : () => onMatchClick(m),
+    })),
+  }));
+}

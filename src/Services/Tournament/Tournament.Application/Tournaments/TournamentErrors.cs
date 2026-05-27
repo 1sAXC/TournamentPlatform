@@ -28,6 +28,7 @@ public static class TournamentErrors
     public static readonly Error CannotCancelCompleted = new("Tournaments.CannotCancelCompleted", "Completed tournament cannot be cancelled.");
     public static readonly Error AdminAccessDenied = new("Tournaments.AdminAccessDenied", "Only admins can perform this action.");
     public static readonly Error MatchAlreadyCompleted = new("Tournaments.MatchAlreadyCompleted", "Match is already completed.");
+    public static readonly Error TournamentEditNotAllowed = new("Tournaments.EditNotAllowed", "Tournament can be edited only before it starts.");
     public static readonly Error OrganizerNotFound = new("Tournaments.OrganizerNotFound", "Organizer was not found.");
     public static readonly Error OrganizerRoleRequired = new("Tournaments.OrganizerRoleRequired", "User must have Organizer role.");
     public static readonly Error OrganizerInactive = new("Tournaments.OrganizerInactive", "Organizer must be active.");

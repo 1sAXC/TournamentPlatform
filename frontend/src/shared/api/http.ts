@@ -107,6 +107,7 @@ const errorCodeMap: Record<string, string> = {
   'Tournaments.CannotCancelCompleted': 'Завершённый турнир нельзя отменить',
   'Tournaments.AdminAccessDenied': 'Это действие доступно только администраторам',
   'Tournaments.MatchAlreadyCompleted': 'Матч уже завершён',
+  'Tournaments.EditNotAllowed': 'Редактировать турнир можно только до его старта',
   'Tournaments.OrganizerNotFound': 'Организатор не найден',
   'Tournaments.OrganizerRoleRequired': 'Пользователь должен иметь роль организатора',
   'Tournaments.OrganizerInactive': 'Организатор должен быть активным',

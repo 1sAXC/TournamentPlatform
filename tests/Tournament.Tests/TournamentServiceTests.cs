@@ -337,6 +337,57 @@ public sealed class TournamentServiceTests
     }
 
     [Fact]
+    public async Task Organizer_CanEditOwnTournamentBeforeStart()
+    {
+        var repository = new InMemoryTournamentRepository();
+        var service = CreateService(repository);
+        var tournament = await CreateTournamentAsync(service, "Editable Cup");
+
+        var result = await service.UpdateAsync(
+            tournament.Id,
+            new UpdateTournamentRequest("Renamed Cup", "Updated description"),
+            ActiveOrganizer);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Renamed Cup", result.Value.Title);
+        Assert.Equal("Updated description", result.Value.Description);
+    }
+
+    [Fact]
+    public async Task Editing_ByForeignOrganizer_IsForbidden()
+    {
+        var repository = new InMemoryTournamentRepository();
+        var service = CreateService(repository);
+        var tournament = await CreateTournamentAsync(service, "Foreign Edit Cup");
+
+        var result = await service.UpdateAsync(
+            tournament.Id,
+            new UpdateTournamentRequest("Hijacked Cup", null),
+            new CurrentTournamentUser(Guid.NewGuid(), "Organizer", "Active"));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TournamentErrors.AccessDenied, result.Error);
+    }
+
+    [Fact]
+    public async Task Editing_AfterStart_IsNotAllowed()
+    {
+        var repository = new InMemoryTournamentRepository();
+        var service = CreateService(repository);
+        var tournamentResponse = await CreateTournamentAsync(service, "Started Edit Cup");
+        var tournament = repository.Tournaments.Single(t => t.Id == tournamentResponse.Id);
+        tournament.Start(DateTime.UtcNow);
+
+        var result = await service.UpdateAsync(
+            tournament.Id,
+            new UpdateTournamentRequest("Too Late Cup", null),
+            ActiveOrganizer);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TournamentErrors.TournamentEditNotAllowed, result.Error);
+    }
+
+    [Fact]
     public async Task Organizer_CanCancelOwnTournament()
     {
         var repository = new InMemoryTournamentRepository();

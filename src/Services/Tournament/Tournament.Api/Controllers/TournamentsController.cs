@@ -129,6 +129,27 @@ public sealed class TournamentsController(
     }
 
     [Authorize(Policy = AuthorizationPolicies.RequireOrganizerOrAdmin)]
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(TournamentDetailsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Update(
+        Guid id,
+        UpdateTournamentRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUser(out var currentUser))
+        {
+            return Unauthorized();
+        }
+
+        var result = await tournamentService.UpdateAsync(id, request, currentUser, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.RequireOrganizerOrAdmin)]
     [HttpPost("{id:guid}/cancel")]
     [ProducesResponseType(typeof(TournamentDetailsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

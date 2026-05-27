@@ -13,6 +13,8 @@ import { Avatar } from '@/shared/ui/Avatar';
 import { Icon } from '@/shared/ui/Icon';
 import { Alert } from '@/shared/ui/Alert';
 import { EmptyState } from '@/shared/ui/EmptyState';
+import { TournamentBracket } from '@/shared/ui/TournamentBracket';
+import { buildBracketRounds } from '@/shared/lib/bracket';
 import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel } from '@/shared/lib/disciplines';
 import { formatDate } from '@/shared/lib/formatters';
 import { showToast } from '@/shared/ui/Toast';
@@ -118,7 +120,7 @@ export function TournamentDetailPage() {
             label="Участников"
             tone="accent"
           />
-          <PStat value={data.swissRounds ?? '—'} label="Раундов" />
+          <PStat value={data.rounds.length || data.swissRounds || '—'} label="Раундов" />
           <PStat
             value={data.startedAtUtc ? formatDate(data.startedAtUtc) : '—'}
             label={data.startedAtUtc ? 'Старт' : 'Регистрация'}
@@ -232,6 +234,18 @@ export function TournamentDetailPage() {
           )}
         </div>
       </div>
+
+      {data.rounds.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+            <h3 style={{ fontSize: 14 }}>Турнирная сетка</h3>
+            <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
+              {data.teams.length} команд · {data.rounds.length} раундов · {formatLabel(data.format)}
+            </span>
+          </div>
+          <TournamentBracket rounds={buildBracketRounds(data)} />
+        </div>
+      )}
     </ScreenFrame>
   );
 }

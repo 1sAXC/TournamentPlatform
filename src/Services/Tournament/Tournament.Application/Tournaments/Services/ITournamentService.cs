@@ -24,6 +24,7 @@ public interface ITournamentService
     Task<Result<IReadOnlyCollection<TournamentListItemResponse>>> GetOrganizerTournamentsAsync(CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
     Task<Result<TournamentDetailsResponse>> RegisterPlayerAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
     Task<Result<TournamentDetailsResponse>> LeaveAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
+    Task<Result<TournamentDetailsResponse>> UpdateAsync(Guid tournamentId, UpdateTournamentRequest request, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
     Task<Result<TournamentDetailsResponse>> CancelAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
     Task<Result> DeleteAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
 }

@@ -237,6 +237,50 @@ public sealed class TournamentService(
         return Result<TournamentDetailsResponse>.Failure(TournamentErrors.RegistrationConflict);
     }
 
+    public async Task<Result<TournamentDetailsResponse>> UpdateAsync(
+        Guid tournamentId,
+        UpdateTournamentRequest request,
+        CurrentTournamentUser currentUser,
+        CancellationToken cancellationToken = default)
+    {
+        var tournament = await tournaments.GetByIdAsync(tournamentId, cancellationToken);
+        if (tournament is null)
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.TournamentNotFound);
+        }
+
+        if (!CanManageTournament(tournament, currentUser))
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.AccessDenied);
+        }
+
+        if (tournament.Status is not (TournamentStatus.Open or TournamentStatus.Full))
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.TournamentEditNotAllowed);
+        }
+
+        var title = request.Title.Trim();
+        if (!TitleRegex.IsMatch(title))
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidTitle);
+        }
+
+        var normalizedTitle = NormalizeTitle(title);
+        if (normalizedTitle != tournament.NormalizedTitle
+            && await tournaments.TitleExistsAsync(normalizedTitle, cancellationToken))
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.DuplicateTitle);
+        }
+
+        tournament.UpdateDetails(
+            title,
+            normalizedTitle,
+            string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim());
+
+        await tournaments.SaveChangesAsync(cancellationToken);
+        return Result<TournamentDetailsResponse>.Success(ToDetailsResponse(tournament));
+    }
+
     public async Task<Result<TournamentDetailsResponse>> CancelAsync(
         Guid tournamentId,
         CurrentTournamentUser currentUser,

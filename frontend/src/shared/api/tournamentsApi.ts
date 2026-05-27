@@ -1,6 +1,6 @@
 import { http } from './http';
 import type {
-  CompleteMatchRequest, CreateTournamentRequest,
+  CompleteMatchRequest, CreateTournamentRequest, UpdateTournamentRequest,
   TournamentDetailsResponse, TournamentListItemResponse,
 } from './types';
 
@@ -19,6 +19,8 @@ export const tournamentsApi = {
     http.get<TournamentListItemResponse[]>('/api/tournaments/my').then(r => r.data),
   create: (req: CreateTournamentRequest) =>
     http.post<TournamentDetailsResponse>('/api/tournaments', req).then(r => r.data),
+  update: (id: string, req: UpdateTournamentRequest) =>
+    http.put<TournamentDetailsResponse>(`/api/tournaments/${id}`, req).then(r => r.data),
   register: (id: string) =>
     http.post<TournamentDetailsResponse>(`/api/tournaments/${id}/registration`).then(r => r.data),
   unregister: (id: string) =>

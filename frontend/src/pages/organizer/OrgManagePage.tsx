@@ -3,16 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { organizerNav } from '@/features/navigation';
 import {
-  useCancelTournament, useNextSwissRound, useTournament,
+  useCancelTournament, useNextSwissRound, useTournament, useUpdateTournament,
 } from '@/features/tournaments/hooks';
 import { Badge } from '@/shared/ui/Badge';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { Icon } from '@/shared/ui/Icon';
 import { Card } from '@/shared/ui/Card';
-import { TournamentBracket, type BracketRound } from '@/shared/ui/TournamentBracket';
-import type { MatchResponse, TournamentDetailsResponse } from '@/shared/api/types';
+import { Modal } from '@/shared/ui/Modal';
+import { Field } from '@/shared/ui/Field';
+import { TournamentBracket } from '@/shared/ui/TournamentBracket';
+import type { MatchResponse } from '@/shared/api/types';
 import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel } from '@/shared/lib/disciplines';
-import { roundLabel } from '@/shared/lib/bracketLabels';
+import { buildBracketRounds } from '@/shared/lib/bracket';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
 import { OrgMatchResultModal } from './OrgMatchResultModal';
@@ -24,6 +26,7 @@ export function OrgManagePage() {
   const nextRound = useNextSwissRound();
   const navigate = useNavigate();
   const [resultFor, setResultFor] = useState<MatchResponse | null>(null);
+  const [editing, setEditing] = useState(false);
 
   if (isLoading || !data || !id) {
     return <ScreenFrame nav={organizerNav}><EmptyState title={isLoading ? 'Загрузка…' : 'Турнир не найден'} /></ScreenFrame>;
@@ -32,6 +35,7 @@ export function OrgManagePage() {
   const tone = STATUS_TONE[data.status] ?? 'open';
   const currentRound = data.rounds.find(r => r.number === data.currentRoundNumber) ?? data.rounds[data.rounds.length - 1];
   const canManage = data.status === 'Open' || data.status === 'Full' || data.status === 'InProgress';
+  const canEdit = data.status === 'Open' || data.status === 'Full';
   const canStartNextSwiss = data.format === 'Swiss'
     && data.status === 'InProgress'
     && currentRound
@@ -74,6 +78,11 @@ export function OrgManagePage() {
             <button className="btn btn-sm" onClick={() => refetch()} disabled={isFetching}>
               {isFetching ? 'Обновляем…' : 'Обновить'}
             </button>
+            {canEdit && (
+              <button className="btn" onClick={() => setEditing(true)}>
+                <Icon name="pen" size={13} /> Редактировать
+              </button>
+            )}
             {canStartNextSwiss && (
               <button className="btn btn-primary" onClick={onNextRound} disabled={nextRound.isPending}>
                 <Icon name="check" size={13} /> Следующий раунд
@@ -177,35 +186,68 @@ export function OrgManagePage() {
           onClose={() => setResultFor(null)}
         />
       )}
+
+      {editing && (
+        <EditTournamentModal
+          tournamentId={id}
+          initialTitle={data.title}
+          initialDescription={data.description ?? ''}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </ScreenFrame>
   );
 }
 
-function buildBracketRounds(
-  data: TournamentDetailsResponse,
-  onMatchClick: (m: MatchResponse) => void,
-): BracketRound[] {
-  const totalRounds = data.rounds.length;
-  return data.rounds.map((r) => ({
-    label: roundLabel(data.format, r.number, totalRounds),
-    current: r.number === data.currentRoundNumber && data.status === 'InProgress',
-    matches: r.matches.map((m) => ({
-      id: m.id,
-      label: `M${r.number}.${m.matchNumber}`,
-      a: data.teams.find(t => t.id === m.teamAId)?.name ?? null,
-      b: data.teams.find(t => t.id === m.teamBId)?.name ?? null,
-      sa: m.winnerTeamId === m.teamAId ? m.winnerScore ?? null
-        : m.winnerTeamId === m.teamBId ? m.loserScore ?? null : null,
-      sb: m.winnerTeamId === m.teamBId ? m.winnerScore ?? null
-        : m.winnerTeamId === m.teamAId ? m.loserScore ?? null : null,
-      win: m.winnerTeamId
-        ? m.winnerTeamId === m.teamAId ? 'a' as const
-          : m.winnerTeamId === m.teamBId ? 'b' as const : null
-        : null,
-      status: m.status === 'Completed' ? 'done' as const
-        : m.teamAId && m.teamBId ? 'pending' as const
-          : 'tbd' as const,
-      onClick: m.status === 'Completed' ? undefined : () => onMatchClick(m),
-    })),
-  }));
+function EditTournamentModal({
+  tournamentId, initialTitle, initialDescription, onClose,
+}: {
+  tournamentId: string;
+  initialTitle: string;
+  initialDescription: string;
+  onClose: () => void;
+}) {
+  const update = useUpdateTournament(tournamentId);
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
+  const [error, setError] = useState<string | null>(null);
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!title.trim()) { setError('Введите название турнира'); return; }
+    update.mutate(
+      { title: title.trim(), description: description.trim() || null },
+      {
+        onSuccess: () => { showToast('success', 'Турнир обновлён'); onClose(); },
+        onError: (err) => setError(toApiError(err).title ?? 'Не удалось сохранить'),
+      },
+    );
+  }
+
+  return (
+    <Modal
+      onClose={onClose}
+      title="Редактировать турнир"
+      footer={<>
+        <button className="btn" onClick={onClose}>Отмена</button>
+        <button className="btn btn-primary" onClick={onSubmit} disabled={update.isPending}>
+          {update.isPending ? 'Сохраняем…' : 'Сохранить'}
+        </button>
+      </>}
+    >
+      <form className="col" style={{ gap: 12 }} onSubmit={onSubmit}>
+        <Field label="Название турнира">
+          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
+        </Field>
+        <Field label="Описание">
+          <textarea
+            className="textarea" value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </Field>
+        {error && <div className="helper hint-error">{error}</div>}
+      </form>
+    </Modal>
+  );
 }
