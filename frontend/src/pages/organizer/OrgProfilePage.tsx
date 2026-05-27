@@ -73,12 +73,12 @@ export function OrgProfilePage() {
         </div>
       </div>
 
-      <Card title="Изменить пароль">
+      <Card title="Изменить пароль" className="pwd-card">
         <form className="col" style={{ gap: 12 }} onSubmit={onSubmit}>
           <Field label="Текущий пароль" error={errors.currentPassword?.message}>
             <input className="input" type="password" autoComplete="current-password" {...register('currentPassword')} />
           </Field>
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="pwd-fields">
             <Field label="Новый пароль" hint="Минимум 8 символов" error={errors.newPassword?.message}>
               <input className="input" type="password" autoComplete="new-password" {...register('newPassword')} />
             </Field>

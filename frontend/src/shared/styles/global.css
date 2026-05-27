@@ -171,6 +171,11 @@
 .col { display: flex; flex-direction: column; gap: 10px; }
 .spacer-x { flex: 1; }
 .grid { display: grid; gap: 12px; }
+.pwd-card { max-width: 480px; }
+.pwd-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) {
+  .pwd-fields { grid-template-columns: 1fr; }
+}
 .divider { height: 1px; background: var(--border); margin: 12px 0; }
 .mono { font-family: var(--font-mono); font-feature-settings: "zero", "ss02"; }
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }

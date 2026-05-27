@@ -6,11 +6,12 @@ interface Props {
   children: ReactNode;
   pad?: boolean;
   style?: CSSProperties;
+  className?: string;
 }
 
-export function Card({ title, actions, children, pad = true, style }: Props) {
+export function Card({ title, actions, children, pad = true, style, className }: Props) {
   return (
-    <div className="card" style={style}>
+    <div className={className ? `card ${className}` : 'card'} style={style}>
       {title && (
         <div className="card-head">
           <h3>{title}</h3>
