@@ -60,6 +60,9 @@ const validationMessageMap: Record<string, string> = {
   "'Email' must not be empty.": 'Введите e-mail',
   "'Nickname' must not be empty.": 'Введите никнейм',
   "'Organizer Name' must not be empty.": 'Введите название организации',
+  'MaxPlayers must be divisible by TeamSize.': 'Максимальное число игроков должно делиться на размер команды',
+  'Format is invalid.': 'Некорректный формат турнира',
+  'TeamSize must be 1, 2 or 5.': 'Размер команды должен быть 1, 2 или 5',
 };
 
 // Maps backend error codes (ProblemDetails.type) to localized titles.
