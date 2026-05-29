@@ -20,6 +20,10 @@ public sealed class UserProjectionConfiguration : IEntityTypeConfiguration<UserP
             .HasMaxLength(32)
             .IsRequired();
 
+        builder.Property(projection => projection.ContactHandle)
+            .HasColumnName("contact_handle")
+            .HasMaxLength(64);
+
         builder.Property(projection => projection.CreatedAtUtc)
             .HasColumnName("created_at_utc")
             .IsRequired();

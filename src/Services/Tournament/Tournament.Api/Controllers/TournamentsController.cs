@@ -222,6 +222,29 @@ public sealed class TournamentsController(
         return ToActionResult(result);
     }
 
+    [Authorize]
+    [HttpGet("{tournamentId:guid}/matches/{matchId:guid}")]
+    [ProducesResponseType(typeof(MatchDetailsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMatchDetails(
+        Guid tournamentId,
+        Guid matchId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUser(out var currentUser))
+        {
+            return Unauthorized();
+        }
+
+        var result = await tournamentService.GetMatchDetailsAsync(
+            tournamentId,
+            matchId,
+            currentUser,
+            cancellationToken);
+
+        return ToActionResult(result);
+    }
+
     private IActionResult ToActionResult<T>(Result<T> result)
     {
         if (result.IsSuccess)

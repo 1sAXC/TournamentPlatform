@@ -75,3 +75,17 @@ public sealed class TournamentUserRoleChangedConsumer(
             integrationEvent.NewRole);
     }
 }
+
+public sealed class TournamentUserContactHandleChangedConsumer(
+    IUserProjectionService userProjectionService,
+    ILogger<TournamentUserContactHandleChangedConsumer> logger)
+    : IIntegrationEventConsumer<UserContactHandleChangedEvent>
+{
+    public async Task ConsumeAsync(UserContactHandleChangedEvent integrationEvent, CancellationToken cancellationToken = default)
+    {
+        await userProjectionService.HandleUserContactHandleChangedAsync(integrationEvent, cancellationToken);
+        logger.LogInformation(
+            "TournamentService projected UserContactHandleChanged for user {UserId}",
+            integrationEvent.UserId);
+    }
+}

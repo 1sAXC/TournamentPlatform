@@ -16,11 +16,13 @@ public sealed class UserProjectionService(IUserProjectionRepository users) : IUs
             users.Add(UserProjection.Create(
                 integrationEvent.UserId,
                 integrationEvent.Role,
+                integrationEvent.ContactHandle,
                 integrationEvent.CreatedAtUtc));
         }
         else
         {
             projection.Restore(integrationEvent.Role);
+            projection.UpdateContactHandle(integrationEvent.ContactHandle);
         }
 
         await users.SaveChangesAsync(cancellationToken);
@@ -45,9 +47,13 @@ public sealed class UserProjectionService(IUserProjectionRepository users) : IUs
         var projection = await users.GetByIdAsync(integrationEvent.UserId, cancellationToken);
         if (projection is null)
         {
+            // Late-arriving role change without a prior UserCreated — record the
+            // user but leave contact handle null; a subsequent ContactHandleChanged
+            // (or a re-emitted UserCreated) will fill it in.
             users.Add(UserProjection.Create(
                 integrationEvent.UserId,
                 integrationEvent.NewRole,
+                contactHandle: null,
                 integrationEvent.ChangedAtUtc));
         }
         else
@@ -55,6 +61,22 @@ public sealed class UserProjectionService(IUserProjectionRepository users) : IUs
             projection.ChangeRole(integrationEvent.NewRole);
         }
 
+        await users.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task HandleUserContactHandleChangedAsync(
+        UserContactHandleChangedEvent integrationEvent,
+        CancellationToken cancellationToken = default)
+    {
+        var projection = await users.GetByIdAsync(integrationEvent.UserId, cancellationToken);
+        if (projection is null)
+        {
+            // Out-of-order delivery — projection has not been created yet. Skip;
+            // when UserCreated arrives it carries the latest handle anyway.
+            return;
+        }
+
+        projection.UpdateContactHandle(integrationEvent.ContactHandle);
         await users.SaveChangesAsync(cancellationToken);
     }
 }

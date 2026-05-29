@@ -183,7 +183,19 @@ public sealed class User
             throw new InvalidOperationException("Admin accounts do not use a contact handle.");
         }
 
-        ContactHandle = NormalizeContactHandle(contactHandle);
+        var normalized = NormalizeContactHandle(contactHandle);
+        if (string.Equals(ContactHandle, normalized, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        ContactHandle = normalized;
+        _domainEvents.Add(new UserContactHandleChangedEvent
+        {
+            UserId = Id,
+            ContactHandle = normalized,
+            ChangedAtUtc = DateTime.UtcNow
+        });
     }
 
     public void Approve(DateTime approvedAtUtc)
@@ -299,7 +311,8 @@ public sealed class User
             CreatedAtUtc = CreatedAtUtc,
             CreationSource = creationSource,
             PlayerNickname = Nickname,
-            OrganizerName = OrganizerName
+            OrganizerName = OrganizerName,
+            ContactHandle = ContactHandle
         });
     }
 

@@ -173,5 +173,8 @@ public sealed class AdminTournamentsControllerTests
 
         public Task<Result> DeleteAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
+
+        public Task<Result<MatchDetailsResponse>> GetMatchDetailsAsync(Guid tournamentId, Guid matchId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
     }
 }

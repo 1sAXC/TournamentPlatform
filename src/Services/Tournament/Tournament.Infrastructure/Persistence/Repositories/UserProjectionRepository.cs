@@ -13,6 +13,20 @@ public sealed class UserProjectionRepository(TournamentDbContext dbContext) : IU
             cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<UserProjection>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (userIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await dbContext.UserProjections
+            .Where(projection => userIds.Contains(projection.UserId))
+            .ToArrayAsync(cancellationToken);
+    }
+
     public void Add(UserProjection projection)
     {
         dbContext.UserProjections.Add(projection);

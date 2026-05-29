@@ -141,6 +141,111 @@ public sealed class TournamentService(
             : Result<TournamentDetailsResponse>.Success(ToDetailsResponse(tournament));
     }
 
+    public async Task<Result<MatchDetailsResponse>> GetMatchDetailsAsync(
+        Guid tournamentId,
+        Guid matchId,
+        CurrentTournamentUser currentUser,
+        CancellationToken cancellationToken = default)
+    {
+        var tournament = await tournaments.GetByIdAsync(tournamentId, cancellationToken);
+        if (tournament is null)
+        {
+            return Result<MatchDetailsResponse>.Failure(TournamentErrors.TournamentNotFound);
+        }
+
+        var round = tournament.Rounds.FirstOrDefault(r => r.Matches.Any(m => m.Id == matchId));
+        var match = round?.Matches.FirstOrDefault(m => m.Id == matchId);
+        if (round is null || match is null)
+        {
+            return Result<MatchDetailsResponse>.Failure(TournamentErrors.TournamentNotFound);
+        }
+
+        var teamA = match.TeamAId is null ? null : tournament.Teams.FirstOrDefault(t => t.Id == match.TeamAId);
+        var teamB = match.TeamBId is null ? null : tournament.Teams.FirstOrDefault(t => t.Id == match.TeamBId);
+
+        // Contact handles are sensitive: visible only to participants of either
+        // team in the match, the organizer who owns the tournament, and admins.
+        // Everyone else sees the page with names/ELO but the handles are null.
+        var viewerIsAdmin = IsAdmin(currentUser);
+        var viewerIsOrganizerOwner = IsOrganizer(currentUser) && tournament.OrganizerId == currentUser.Id;
+        var viewerIsTeamMember = (teamA?.Members.Any(m => m.PlayerId == currentUser.Id) ?? false)
+            || (teamB?.Members.Any(m => m.PlayerId == currentUser.Id) ?? false);
+        var canSeeContacts = viewerIsAdmin || viewerIsOrganizerOwner || viewerIsTeamMember;
+
+        // Single batch lookup against the local UserProjection — no HTTP to
+        // Auth.Api: contact handles are projected via integration events.
+        var contactUserIds = new List<Guid> { tournament.OrganizerId };
+        if (teamA is not null)
+        {
+            contactUserIds.AddRange(teamA.Members.Select(m => m.PlayerId));
+        }
+        if (teamB is not null)
+        {
+            contactUserIds.AddRange(teamB.Members.Select(m => m.PlayerId));
+        }
+
+        var projections = (await users.GetByIdsAsync(contactUserIds.Distinct().ToArray(), cancellationToken))
+            .ToDictionary(projection => projection.UserId);
+
+        string? ResolveContact(Guid userId)
+        {
+            return projections.TryGetValue(userId, out var projection) ? projection.ContactHandle : null;
+        }
+
+        MatchTeamResponse? MapTeam(Domain.Tournaments.Team? team)
+        {
+            if (team is null)
+            {
+                return null;
+            }
+
+            return new MatchTeamResponse(
+                team.Id,
+                team.Name,
+                team.CaptainPlayerId,
+                team.Seed,
+                team.AverageElo,
+                team.Members
+                    .Select(member => new MatchTeamMemberResponse(
+                        member.PlayerId,
+                        member.Nickname,
+                        member.Elo,
+                        member.PlayerId == team.CaptainPlayerId,
+                        canSeeContacts ? ResolveContact(member.PlayerId) : null))
+                    .ToArray());
+        }
+
+        var organizer = new MatchOrganizerResponse(
+            tournament.OrganizerId,
+            // Organizer's display name is not stored on tournament; we keep it
+            // null here. Frontend resolves it from the organizer's own profile
+            // surface (already available via Auth lookups elsewhere if needed).
+            OrganizerName: null,
+            ContactHandle: ResolveContact(tournament.OrganizerId));
+
+        return Result<MatchDetailsResponse>.Success(new MatchDetailsResponse(
+            tournament.Id,
+            tournament.Title,
+            tournament.Description,
+            tournament.DisciplineCode,
+            tournament.Format.ToString(),
+            tournament.TeamSize,
+            tournament.Status.ToString(),
+            match.Id,
+            match.MatchNumber,
+            round.Number,
+            match.Status.ToString(),
+            match.WinnerScore,
+            match.LoserScore,
+            match.WinnerTeamId,
+            match.CreatedAtUtc,
+            match.CompletedAtUtc,
+            organizer,
+            MapTeam(teamA),
+            MapTeam(teamB),
+            canSeeContacts));
+    }
+
     public async Task<Result<IReadOnlyCollection<TournamentListItemResponse>>> GetAvailableAsync(
         CancellationToken cancellationToken = default)
     {

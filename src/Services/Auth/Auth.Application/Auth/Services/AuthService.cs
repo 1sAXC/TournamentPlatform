@@ -181,6 +181,7 @@ public sealed class AuthService(
             return Result<CurrentUserResponse>.Failure(AuthErrors.AccessDenied);
         }
 
+        AddDomainEventsToOutbox(user);
         await users.SaveChangesAsync(cancellationToken);
         return Result<CurrentUserResponse>.Success(CreateCurrentUserResponse(user));
     }

@@ -46,7 +46,7 @@ public sealed class TournamentServiceTests
         var organizerId = Guid.NewGuid();
         var repository = new InMemoryTournamentRepository();
         var users = new InMemoryUserProjectionRepository();
-        users.Users.Add(UserProjection.Create(organizerId, "Organizer", DateTime.UtcNow));
+        users.Users.Add(UserProjection.Create(organizerId, "Organizer", "@org_contact", DateTime.UtcNow));
         var service = CreateService(repository, users: users);
 
         var result = await service.CreateByAdminAsync(AdminValidRequest("Admin Cup", organizerId), Admin);
@@ -72,7 +72,7 @@ public sealed class TournamentServiceTests
     {
         var playerId = Guid.NewGuid();
         var users = new InMemoryUserProjectionRepository();
-        users.Users.Add(UserProjection.Create(playerId, "Player", DateTime.UtcNow));
+        users.Users.Add(UserProjection.Create(playerId, "Player", "@player_contact", DateTime.UtcNow));
         var service = CreateService(new InMemoryTournamentRepository(), users: users);
 
         var result = await service.CreateByAdminAsync(AdminValidRequest("Player Owner Cup", playerId), Admin);
@@ -85,7 +85,7 @@ public sealed class TournamentServiceTests
     public async Task AdminCreate_WithDeletedOrganizer_GetsOrganizerInactive()
     {
         var organizerId = Guid.NewGuid();
-        var organizer = UserProjection.Create(organizerId, "Organizer", DateTime.UtcNow);
+        var organizer = UserProjection.Create(organizerId, "Organizer", "@org_contact", DateTime.UtcNow);
         organizer.MarkDeleted(DateTime.UtcNow);
         var users = new InMemoryUserProjectionRepository();
         users.Users.Add(organizer);
@@ -102,7 +102,7 @@ public sealed class TournamentServiceTests
     {
         var organizerId = Guid.NewGuid();
         var users = new InMemoryUserProjectionRepository();
-        users.Users.Add(UserProjection.Create(organizerId, "Organizer", DateTime.UtcNow));
+        users.Users.Add(UserProjection.Create(organizerId, "Organizer", "@org_contact", DateTime.UtcNow));
         var service = CreateService(new InMemoryTournamentRepository(), users: users);
 
         var result = await service.CreateByAdminAsync(AdminValidRequest("Forbidden Cup", organizerId), ActiveOrganizer);
@@ -657,6 +657,12 @@ public sealed class TournamentServiceTests
         public Task<UserProjection?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Users.FirstOrDefault(user => user.UserId == userId));
+        }
+
+        public Task<IReadOnlyCollection<UserProjection>> GetByIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<UserProjection>>(
+                Users.Where(user => userIds.Contains(user.UserId)).ToArray());
         }
 
         public void Add(UserProjection projection)

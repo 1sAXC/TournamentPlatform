@@ -27,4 +27,5 @@ public interface ITournamentService
     Task<Result<TournamentDetailsResponse>> UpdateAsync(Guid tournamentId, UpdateTournamentRequest request, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
     Task<Result<TournamentDetailsResponse>> CancelAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
     Task<Result> DeleteAsync(Guid tournamentId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
+    Task<Result<MatchDetailsResponse>> GetMatchDetailsAsync(Guid tournamentId, Guid matchId, CurrentTournamentUser currentUser, CancellationToken cancellationToken = default);
 }

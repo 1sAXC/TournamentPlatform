@@ -38,6 +38,7 @@ public static class TournamentInfrastructureServiceCollectionExtensions
         services.AddRabbitMqConsumer<RatingUpdatedEvent, TournamentRatingUpdatedConsumer>("tournament.rating-updated");
         services.AddRabbitMqConsumer<UserDeletedEvent, TournamentUserDeletedConsumer>("tournament.user-deleted");
         services.AddRabbitMqConsumer<UserRoleChangedEvent, TournamentUserRoleChangedConsumer>("tournament.user-role-changed");
+        services.AddRabbitMqConsumer<UserContactHandleChangedEvent, TournamentUserContactHandleChangedConsumer>("tournament.user-contact-handle-changed");
 
         return services;
     }
