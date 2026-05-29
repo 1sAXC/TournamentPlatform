@@ -92,6 +92,60 @@ public sealed class BracketGeneratorTests
     }
 
     [Fact]
+    public async Task SingleElimination_EmitsRoundCreatedEventForInitialAndSubsequentRound()
+    {
+        var outbox = new InMemoryOutboxWriter();
+        var generator = new SingleEliminationBracketGenerator(outbox);
+        var tournament = TournamentWithTeams(TournamentFormat.SingleElimination, 4);
+
+        await generator.GenerateInitialAsync(tournament, tournament.Teams.ToArray(), CancellationToken.None);
+
+        var firstEvent = Assert.Single(outbox.Events.OfType<RoundCreatedEvent>());
+        Assert.Equal(1, firstEvent.RoundNumber);
+        Assert.Equal(tournament.Id, firstEvent.TournamentId);
+        Assert.Equal(tournament.Title, firstEvent.TournamentTitle);
+        Assert.Equal(2, firstEvent.Matches.Count);
+        Assert.Equal(4, firstEvent.Teams.Count);
+        Assert.All(firstEvent.Teams, team => Assert.NotEmpty(team.Members));
+
+        foreach (var match in tournament.Rounds.Single().Matches)
+        {
+            match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+            await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
+        }
+
+        var secondEvent = outbox.Events.OfType<RoundCreatedEvent>().ElementAt(1);
+        Assert.Equal(2, secondEvent.RoundNumber);
+        Assert.Single(secondEvent.Matches);
+        Assert.Equal(2, secondEvent.Teams.Count);
+    }
+
+    [Fact]
+    public async Task Swiss_EmitsRoundCreatedEventOnInitialAndManualNextRound()
+    {
+        var outbox = new InMemoryOutboxWriter();
+        var generator = new SwissBracketGenerator(outbox);
+        var tournament = TournamentWithTeams(TournamentFormat.Swiss, 4);
+
+        await generator.GenerateInitialAsync(tournament, tournament.Teams.ToArray(), CancellationToken.None);
+        Assert.Single(outbox.Events.OfType<RoundCreatedEvent>());
+
+        foreach (var match in tournament.Rounds.Single().Matches)
+        {
+            match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+            await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
+        }
+
+        generator.CreateNextRound(tournament);
+
+        var events = outbox.Events.OfType<RoundCreatedEvent>().ToArray();
+        Assert.Equal(2, events.Length);
+        Assert.Equal(1, events[0].RoundNumber);
+        Assert.Equal(2, events[1].RoundNumber);
+        Assert.NotEqual(events[0].EventId, events[1].EventId);
+    }
+
+    [Fact]
     public async Task DoubleElimination_TeamEliminatedAfterSecondLoss()
     {
         var generator = new DoubleEliminationBracketGenerator(new InMemoryOutboxWriter());

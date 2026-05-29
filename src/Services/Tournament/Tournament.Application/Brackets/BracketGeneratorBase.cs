@@ -72,7 +72,64 @@ public abstract class BracketGeneratorBase(IOutboxWriter outboxWriter) : IBracke
 
         tournament.AddRound(round);
         tournament.AdvanceToRound(roundNumber);
+        EmitRoundCreatedEvent(tournament, round);
         return round;
+    }
+
+    // Called after a new round has been added to the tournament aggregate.
+    // Publishes a RoundCreatedEvent carrying enough data for downstream
+    // consumers (notifications) to fan out per-match without any extra
+    // calls back into Tournament.Api.
+    protected void EmitRoundCreatedEvent(Domain.Tournaments.Tournament tournament, Round round)
+    {
+        var teamIds = round.Matches
+            .SelectMany(match => new[] { match.TeamAId, match.TeamBId })
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToHashSet();
+
+        var teams = tournament.Teams
+            .Where(team => teamIds.Contains(team.Id))
+            .OrderBy(team => team.Seed)
+            .Select(team => new EventTeamDto
+            {
+                TeamId = team.Id,
+                Name = team.Name,
+                CaptainUserId = team.CaptainPlayerId,
+                Members = team.Members.Select(member => new EventTeamMemberDto
+                {
+                    UserId = member.PlayerId,
+                    Nickname = member.Nickname,
+                    Elo = member.Elo,
+                    IsCaptain = member.PlayerId == team.CaptainPlayerId
+                }).ToArray()
+            })
+            .ToArray();
+
+        var matches = round.Matches
+            .OrderBy(match => match.MatchNumber)
+            .Select(match => new EventMatchDto
+            {
+                MatchId = match.Id,
+                MatchNumber = match.MatchNumber,
+                TeamAId = match.TeamAId,
+                TeamBId = match.TeamBId
+            })
+            .ToArray();
+
+        outboxWriter.Add(new RoundCreatedEvent
+        {
+            TournamentId = tournament.Id,
+            TournamentTitle = tournament.Title,
+            DisciplineCode = tournament.DisciplineCode,
+            OrganizerId = tournament.OrganizerId,
+            RoundId = round.Id,
+            RoundNumber = round.Number,
+            BracketType = round.BracketType.ToString(),
+            Teams = teams,
+            Matches = matches
+        });
     }
 
     protected void CompleteTournament(
