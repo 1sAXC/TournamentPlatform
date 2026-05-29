@@ -26,6 +26,7 @@ public sealed class BracketGeneratorTests
         }
 
         Assert.Equal(2, tournament.Rounds.Count);
+        Assert.Equal(2, tournament.CurrentRoundNumber);
         var final = tournament.Rounds.Single(round => round.Number == 2);
         var finalMatch = final.Matches.Single();
         finalMatch.Complete(finalMatch.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
@@ -87,6 +88,7 @@ public sealed class BracketGeneratorTests
 
         generator.CreateNextRound(tournament);
         Assert.Equal(2, tournament.Rounds.Count);
+        Assert.Equal(2, tournament.CurrentRoundNumber);
     }
 
     [Fact]

@@ -111,6 +111,7 @@ const errorCodeMap: Record<string, string> = {
   'Tournaments.OrganizerNotFound': 'Организатор не найден',
   'Tournaments.OrganizerRoleRequired': 'Пользователь должен иметь роль организатора',
   'Tournaments.OrganizerInactive': 'Организатор должен быть активным',
+  'Tournaments.CurrentRoundNotCompleted': 'Текущий раунд ещё не завершён',
 };
 
 function translateValidationMessage(message: string): string {

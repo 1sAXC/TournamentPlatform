@@ -71,6 +71,7 @@ public abstract class BracketGeneratorBase(IOutboxWriter outboxWriter) : IBracke
         }
 
         tournament.AddRound(round);
+        tournament.AdvanceToRound(roundNumber);
         return round;
     }
 

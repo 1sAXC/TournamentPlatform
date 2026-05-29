@@ -40,7 +40,7 @@ public sealed class SwissRoundService(
             .FirstOrDefault();
         if (currentRound is null || currentRound.Status != RoundStatus.Completed)
         {
-            return Result.Failure(TournamentErrors.TournamentRegistrationClosed);
+            return Result.Failure(TournamentErrors.CurrentRoundNotCompleted);
         }
 
         if (currentRound.Number >= tournament.SwissRounds)

@@ -118,5 +118,6 @@ public sealed class SwissBracketGenerator(IOutboxWriter outboxWriter)
         }
 
         tournament.AddRound(round);
+        tournament.AdvanceToRound(roundNumber);
     }
 }

@@ -32,4 +32,5 @@ public static class TournamentErrors
     public static readonly Error OrganizerNotFound = new("Tournaments.OrganizerNotFound", "Organizer was not found.");
     public static readonly Error OrganizerRoleRequired = new("Tournaments.OrganizerRoleRequired", "User must have Organizer role.");
     public static readonly Error OrganizerInactive = new("Tournaments.OrganizerInactive", "Organizer must be active.");
+    public static readonly Error CurrentRoundNotCompleted = new("Tournaments.CurrentRoundNotCompleted", "Current round has not been completed yet.");
 }

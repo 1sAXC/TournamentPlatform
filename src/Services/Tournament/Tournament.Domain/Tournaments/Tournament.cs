@@ -131,6 +131,17 @@ public sealed class Tournament
         TouchConcurrencyToken();
     }
 
+    public void AdvanceToRound(int roundNumber)
+    {
+        if (roundNumber <= CurrentRoundNumber)
+        {
+            return;
+        }
+
+        CurrentRoundNumber = roundNumber;
+        TouchConcurrencyToken();
+    }
+
     public void AddSwissStanding(SwissStanding standing)
     {
         _swissStandings.Add(standing);
