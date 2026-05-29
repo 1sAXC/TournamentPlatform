@@ -19,7 +19,6 @@ public sealed class RatingService(
     private static readonly IReadOnlyCollection<string> InitialDisciplines =
     [
         DisciplineCodes.CS2,
-        DisciplineCodes.PUBG,
         DisciplineCodes.Valorant,
         DisciplineCodes.Standoff2
     ];

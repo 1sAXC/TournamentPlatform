@@ -25,7 +25,7 @@ public sealed class RatingServiceTests
             PlayerNickname = "PlayerOne"
         });
 
-        Assert.Equal(4, repository.PlayerRatings.Count);
+        Assert.Equal(3, repository.PlayerRatings.Count);
         Assert.All(repository.PlayerRatings, rating =>
         {
             Assert.Equal(playerId, rating.PlayerId);
@@ -33,7 +33,6 @@ public sealed class RatingServiceTests
             Assert.False(rating.IsDeleted);
         });
         Assert.Contains(repository.PlayerRatings, rating => rating.DisciplineCode == DisciplineCodes.CS2);
-        Assert.Contains(repository.PlayerRatings, rating => rating.DisciplineCode == DisciplineCodes.PUBG);
         Assert.Contains(repository.PlayerRatings, rating => rating.DisciplineCode == DisciplineCodes.Valorant);
         Assert.Contains(repository.PlayerRatings, rating => rating.DisciplineCode == DisciplineCodes.Standoff2);
     }
@@ -77,8 +76,8 @@ public sealed class RatingServiceTests
         await service.HandleUserCreatedAsync(integrationEvent);
         await service.HandleUserCreatedAsync(integrationEvent);
 
-        Assert.Equal(4, repository.PlayerRatings.Count);
-        Assert.Equal(4, repository.RatingHistories.Count);
+        Assert.Equal(3, repository.PlayerRatings.Count);
+        Assert.Equal(3, repository.RatingHistories.Count);
     }
 
     [Fact]
@@ -105,7 +104,7 @@ public sealed class RatingServiceTests
         });
 
         Assert.All(repository.PlayerRatings, rating => Assert.True(rating.IsDeleted));
-        Assert.Equal(4, repository.RatingHistories.Count);
+        Assert.Equal(3, repository.RatingHistories.Count);
     }
 
     [Fact]
@@ -124,8 +123,8 @@ public sealed class RatingServiceTests
             ChangedAtUtc = DateTime.UtcNow
         });
 
-        Assert.Equal(4, repository.PlayerRatings.Count);
-        Assert.Equal(4, repository.RatingHistories.Count);
+        Assert.Equal(3, repository.PlayerRatings.Count);
+        Assert.Equal(3, repository.RatingHistories.Count);
         Assert.All(repository.PlayerRatings, rating =>
         {
             Assert.Equal(playerId, rating.PlayerId);
@@ -151,8 +150,8 @@ public sealed class RatingServiceTests
         await service.HandleUserRoleChangedAsync(integrationEvent);
         await service.HandleUserRoleChangedAsync(integrationEvent);
 
-        Assert.Equal(4, repository.PlayerRatings.Count);
-        Assert.Equal(4, repository.RatingHistories.Count);
+        Assert.Equal(3, repository.PlayerRatings.Count);
+        Assert.Equal(3, repository.RatingHistories.Count);
     }
 
     [Fact]

@@ -19,6 +19,7 @@ import type { MatchResponse, TournamentDetailsResponse } from '@/shared/api/type
 import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel } from '@/shared/lib/disciplines';
 import { buildBracketRounds } from '@/shared/lib/bracket';
 import { formatDate } from '@/shared/lib/formatters';
+import { formatMatchScore } from '@/shared/lib/matchScore';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
 import { OrgMatchResultModal } from './OrgMatchResultModal';
@@ -227,12 +228,17 @@ export function OrgManagePage() {
                       </div>
                       <div className="mc-teams">
                         <span className={`mc-team ${done && m.winnerTeamId === m.teamAId ? 'win' : done ? 'loss' : ''}`}>{teamA}</span>
-                        <span className={`mc-score ${done ? 'done' : ''}`}>
-                          {done
-                            ? (m.winnerTeamId === m.teamAId
-                              ? `${m.winnerScore ?? '-'}–${m.loserScore ?? '-'}`
-                              : `${m.loserScore ?? '-'}–${m.winnerScore ?? '-'}`)
-                            : 'VS'}
+                        <span className={`mc-score ${done ? 'done' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                          {done ? (
+                            <>
+                              <span>{formatMatchScore(m).primary}</span>
+                              {formatMatchScore(m).secondary && (
+                                <span className="mono" style={{ fontSize: 10, color: 'var(--muted)' }}>
+                                  раунды {formatMatchScore(m).secondary}
+                                </span>
+                              )}
+                            </>
+                          ) : 'VS'}
                         </span>
                         <span className={`mc-team ${done && m.winnerTeamId === m.teamBId ? 'win' : done ? 'loss' : ''}`}>{teamB}</span>
                       </div>

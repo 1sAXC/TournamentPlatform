@@ -68,6 +68,8 @@ public static class TournamentResponseMapper
                             match.Status.ToString(),
                             match.WinnerScore,
                             match.LoserScore,
+                            match.WinnerMaps,
+                            match.LoserMaps,
                             match.IsTechnicalDefeat,
                             match.CreatedAtUtc,
                             match.CompletedAtUtc))

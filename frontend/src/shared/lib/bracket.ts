@@ -18,10 +18,12 @@ export function buildBracketRounds(
       label: `M${r.number}.${m.matchNumber}`,
       a: data.teams.find(t => t.id === m.teamAId)?.name ?? null,
       b: data.teams.find(t => t.id === m.teamBId)?.name ?? null,
-      sa: m.winnerTeamId === m.teamAId ? m.winnerScore ?? null
-        : m.winnerTeamId === m.teamBId ? m.loserScore ?? null : null,
-      sb: m.winnerTeamId === m.teamBId ? m.winnerScore ?? null
-        : m.winnerTeamId === m.teamAId ? m.loserScore ?? null : null,
+      // Bracket cells are compact — show maps (2-1) rather than rounds (26-20).
+      // Fall back to rounds for older records where maps are not populated.
+      sa: m.winnerTeamId === m.teamAId ? (m.winnerMaps ?? m.winnerScore ?? null)
+        : m.winnerTeamId === m.teamBId ? (m.loserMaps ?? m.loserScore ?? null) : null,
+      sb: m.winnerTeamId === m.teamBId ? (m.winnerMaps ?? m.winnerScore ?? null)
+        : m.winnerTeamId === m.teamAId ? (m.loserMaps ?? m.loserScore ?? null) : null,
       win: m.winnerTeamId
         ? m.winnerTeamId === m.teamAId ? 'a' as const
           : m.winnerTeamId === m.teamBId ? 'b' as const : null

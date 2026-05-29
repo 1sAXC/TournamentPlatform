@@ -24,7 +24,7 @@ public sealed class PlayerRatingProjectionServiceTests
             CreationSource = "Test"
         });
 
-        Assert.Equal(4, repository.Projections.Count);
+        Assert.Equal(3, repository.Projections.Count);
         Assert.All(repository.Projections, projection => Assert.Equal(1000, projection.Elo));
     }
 
@@ -63,7 +63,7 @@ public sealed class PlayerRatingProjectionServiceTests
         await service.HandleUserCreatedAsync(integrationEvent);
         await service.HandleUserCreatedAsync(integrationEvent);
 
-        Assert.Equal(4, repository.Projections.Count);
+        Assert.Equal(3, repository.Projections.Count);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public sealed class PlayerRatingProjectionServiceTests
 
         var projection = repository.Projections.Single(projection => projection.DisciplineCode == DisciplineCodes.CS2);
         Assert.Equal(1130, projection.Elo);
-        Assert.Equal(4, repository.Projections.Count);
+        Assert.Equal(3, repository.Projections.Count);
     }
 
     [Fact]

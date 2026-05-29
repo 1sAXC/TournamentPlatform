@@ -15,7 +15,11 @@ public sealed record MatchCompletedEvent : IntegrationEvent
     public Guid LoserTeamId { get; init; }
     public IReadOnlyCollection<MatchCompletedPlayerDto> WinnerPlayers { get; init; } = [];
     public IReadOnlyCollection<MatchCompletedPlayerDto> LoserPlayers { get; init; } = [];
+    /// <summary>Rounds — sum across all maps in the series. Used by Rating.</summary>
     public int? WinnerScore { get; init; }
     public int? LoserScore { get; init; }
+    /// <summary>Maps won in the series (e.g. 2 / 1 for Bo3). Display-only.</summary>
+    public int? WinnerMaps { get; init; }
+    public int? LoserMaps { get; init; }
     public bool IsTechnicalDefeat { get; init; }
 }

@@ -31,7 +31,6 @@ public sealed class DisciplineConfiguration : IEntityTypeConfiguration<Disciplin
 
         builder.HasData(
             Discipline.Create(DisciplineCodes.CS2, "CS2", [1, 2, 5]),
-            Discipline.Create(DisciplineCodes.PUBG, "PUBG", [1, 2, 5]),
             Discipline.Create(DisciplineCodes.Valorant, "Valorant", [1, 2, 5]),
             Discipline.Create(DisciplineCodes.Standoff2, "Standoff2", [1, 2, 5]));
     }

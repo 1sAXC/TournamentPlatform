@@ -237,6 +237,8 @@ public sealed class TournamentService(
             match.Status.ToString(),
             match.WinnerScore,
             match.LoserScore,
+            match.WinnerMaps,
+            match.LoserMaps,
             match.WinnerTeamId,
             match.CreatedAtUtc,
             match.CompletedAtUtc,

@@ -70,8 +70,12 @@ export interface MatchDetailsResponse {
   matchNumber: number;
   roundNumber: number;
   matchStatus: string;
+  /** Rounds — sum across all maps. Used for ELO weighting. */
   winnerScore: number | null;
   loserScore: number | null;
+  /** Maps won in the series (e.g. 2 / 1 for Bo3). Display-only. */
+  winnerMaps: number | null;
+  loserMaps: number | null;
   winnerTeamId: string | null;
   createdAtUtc: string;
   completedAtUtc: string | null;
@@ -153,8 +157,12 @@ export interface MatchResponse {
   winnerTeamId?: string | null;
   loserTeamId?: string | null;
   status: string;
+  /** Rounds — sum across all maps. Used for ELO weighting. */
   winnerScore?: number | null;
   loserScore?: number | null;
+  /** Maps won in the series (e.g. 2 / 1 for Bo3). Display-only. */
+  winnerMaps?: number | null;
+  loserMaps?: number | null;
   isTechnicalDefeat: boolean;
   createdAtUtc: string;
   completedAtUtc?: string | null;
@@ -208,8 +216,12 @@ export interface UpdateTournamentRequest {
 
 export interface CompleteMatchRequest {
   winnerTeamId: string;
+  /** Rounds — sum across all maps. Required unless isTechnicalDefeat. */
   winnerScore?: number | null;
   loserScore?: number | null;
+  /** Maps won in the series. Required unless isTechnicalDefeat. */
+  winnerMaps?: number | null;
+  loserMaps?: number | null;
   isTechnicalDefeat: boolean;
 }
 

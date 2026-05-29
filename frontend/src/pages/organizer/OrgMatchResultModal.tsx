@@ -18,8 +18,14 @@ export function OrgMatchResultModal({ tournament, match, onClose }: Props) {
   const teamB = tournament.teams.find(t => t.id === match.teamBId);
   const candidates = [teamA, teamB].filter(Boolean) as TeamResponse[];
   const [winnerId, setWinnerId] = useState<string>(teamA?.id ?? '');
-  const [winnerScore, setWinnerScore] = useState<string>('2');
-  const [loserScore, setLoserScore] = useState<string>('1');
+  // Score by maps (display): e.g. 2-1 for Bo3. Defaults reflect the most
+  // common Bo3 outcome.
+  const [winnerMaps, setWinnerMaps] = useState<string>('2');
+  const [loserMaps, setLoserMaps] = useState<string>('1');
+  // Score by rounds (sum across all maps). Feeds the Rating service's
+  // margin-of-victory coefficient. Defaults assume two ~13-9 maps.
+  const [winnerRounds, setWinnerRounds] = useState<string>('26');
+  const [loserRounds, setLoserRounds] = useState<string>('20');
   const [isTechnical, setIsTechnical] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,15 +35,46 @@ export function OrgMatchResultModal({ tournament, match, onClose }: Props) {
     e.preventDefault();
     setError(null);
     if (!winnerId) { setError('Выберите победителя'); return; }
-    const w = isTechnical ? null : Number(winnerScore);
-    const l = isTechnical ? null : Number(loserScore);
-    if (!isTechnical && (Number.isNaN(w!) || Number.isNaN(l!))) {
+    if (isTechnical) {
+      complete.mutate({
+        matchId: match.id,
+        req: {
+          winnerTeamId: winnerId,
+          winnerScore: null, loserScore: null,
+          winnerMaps: null, loserMaps: null,
+          isTechnicalDefeat: true,
+        },
+      }, {
+        onSuccess: () => { showToast('success', 'Результат сохранён'); onClose(); },
+        onError: (err) => setError(toApiError(err).title ?? 'Не удалось сохранить результат'),
+      });
+      return;
+    }
+
+    const wMaps = Number(winnerMaps);
+    const lMaps = Number(loserMaps);
+    const wRounds = Number(winnerRounds);
+    const lRounds = Number(loserRounds);
+    if (Number.isNaN(wMaps) || Number.isNaN(lMaps) || Number.isNaN(wRounds) || Number.isNaN(lRounds)) {
       setError('Введите числовой счёт');
+      return;
+    }
+    if (wMaps <= lMaps) {
+      setError('У победителя должно быть больше выигранных карт');
+      return;
+    }
+    if (wRounds <= lRounds) {
+      setError('У победителя серии должно быть больше суммарных раундов');
       return;
     }
     complete.mutate({
       matchId: match.id,
-      req: { winnerTeamId: winnerId, winnerScore: w, loserScore: l, isTechnicalDefeat: isTechnical },
+      req: {
+        winnerTeamId: winnerId,
+        winnerScore: wRounds, loserScore: lRounds,
+        winnerMaps: wMaps, loserMaps: lMaps,
+        isTechnicalDefeat: false,
+      },
     }, {
       onSuccess: () => { showToast('success', 'Результат сохранён'); onClose(); },
       onError: (err) => setError(toApiError(err).title ?? 'Не удалось сохранить результат'),
@@ -67,22 +104,40 @@ export function OrgMatchResultModal({ tournament, match, onClose }: Props) {
           </select>
         </Field>
         {!isTechnical && (
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Счёт победителя">
-              <input
-                className="input" type="number" min={0}
-                value={winnerScore} onChange={(e) => setWinnerScore(e.target.value)}
-                style={{ fontSize: 20, fontFamily: 'var(--font-mono)', textAlign: 'center' }}
-              />
+          <>
+            <Field label="Счёт по картам" hint="Например, 2-1 для Bo3. Отображается в карточке матча.">
+              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <input
+                  className="input" type="number" min={0}
+                  value={winnerMaps} onChange={(e) => setWinnerMaps(e.target.value)}
+                  style={{ fontSize: 20, fontFamily: 'var(--font-mono)', textAlign: 'center' }}
+                  aria-label="Карты победителя"
+                />
+                <input
+                  className="input" type="number" min={0}
+                  value={loserMaps} onChange={(e) => setLoserMaps(e.target.value)}
+                  style={{ fontSize: 20, fontFamily: 'var(--font-mono)', textAlign: 'center' }}
+                  aria-label="Карты проигравшего"
+                />
+              </div>
             </Field>
-            <Field label="Счёт проигравшего">
-              <input
-                className="input" type="number" min={0}
-                value={loserScore} onChange={(e) => setLoserScore(e.target.value)}
-                style={{ fontSize: 20, fontFamily: 'var(--font-mono)', textAlign: 'center' }}
-              />
+            <Field label="Счёт по раундам (сумма по всем картам)" hint="Используется для расчёта изменения ELO. Например, 13-9 + 13-11 = 26-20.">
+              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <input
+                  className="input" type="number" min={0}
+                  value={winnerRounds} onChange={(e) => setWinnerRounds(e.target.value)}
+                  style={{ fontSize: 20, fontFamily: 'var(--font-mono)', textAlign: 'center' }}
+                  aria-label="Раунды победителя"
+                />
+                <input
+                  className="input" type="number" min={0}
+                  value={loserRounds} onChange={(e) => setLoserRounds(e.target.value)}
+                  style={{ fontSize: 20, fontFamily: 'var(--font-mono)', textAlign: 'center' }}
+                  aria-label="Раунды проигравшего"
+                />
+              </div>
             </Field>
-          </div>
+          </>
         )}
         <label className="row" style={{ gap: 8, fontSize: 12.5, color: 'var(--text-dim)', cursor: 'pointer' }}>
           <span className={`check ${isTechnical ? 'on' : ''}`} onClick={() => setIsTechnical(v => !v)} />

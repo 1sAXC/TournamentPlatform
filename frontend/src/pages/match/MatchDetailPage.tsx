@@ -42,10 +42,17 @@ export function MatchDetailPage() {
   }
 
   const matchDone = data.matchStatus === 'Completed';
-  const scoreA = matchDone
+  // Maps for the headline score (e.g. "2 : 1"), rounds for the tooltip.
+  const mapsA = matchDone
+    ? (data.winnerTeamId === data.teamA?.id ? data.winnerMaps : data.loserMaps)
+    : null;
+  const mapsB = matchDone
+    ? (data.winnerTeamId === data.teamB?.id ? data.winnerMaps : data.loserMaps)
+    : null;
+  const roundsA = matchDone
     ? (data.winnerTeamId === data.teamA?.id ? data.winnerScore : data.loserScore)
     : null;
-  const scoreB = matchDone
+  const roundsB = matchDone
     ? (data.winnerTeamId === data.teamB?.id ? data.winnerScore : data.loserScore)
     : null;
 
@@ -103,12 +110,20 @@ export function MatchDetailPage() {
       )}
 
       <div className="grid" style={{ gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'stretch', marginTop: 16 }}>
-        <TeamCard team={data.teamA} score={scoreA} canSeeContacts={data.canSeeContacts} />
-        <div className="col" style={{ alignItems: 'center', justifyContent: 'center', minWidth: 80 }}>
+        <TeamCard team={data.teamA} mapScore={mapsA} canSeeContacts={data.canSeeContacts} />
+        <div className="col" style={{ alignItems: 'center', justifyContent: 'center', minWidth: 90 }}>
           {matchDone ? (
-            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
-              {scoreA ?? '–'} : {scoreB ?? '–'}
-            </div>
+            <>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 2 }}>по картам</div>
+              <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                {mapsA ?? '–'} : {mapsB ?? '–'}
+              </div>
+              {(roundsA !== null || roundsB !== null) && (
+                <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
+                  раунды {roundsA ?? '–'} : {roundsB ?? '–'}
+                </div>
+              )}
+            </>
           ) : (
             <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--muted)' }}>VS</div>
           )}
@@ -118,7 +133,7 @@ export function MatchDetailPage() {
             </div>
           )}
         </div>
-        <TeamCard team={data.teamB} score={scoreB} canSeeContacts={data.canSeeContacts} />
+        <TeamCard team={data.teamB} mapScore={mapsB} canSeeContacts={data.canSeeContacts} />
       </div>
 
       <div style={{ marginTop: 16 }}>
@@ -156,11 +171,11 @@ export function MatchDetailPage() {
 
 function TeamCard({
   team,
-  score,
+  mapScore,
   canSeeContacts,
 }: {
   team: MatchTeamDetails | null;
-  score: number | null;
+  mapScore: number | null;
   canSeeContacts: boolean;
 }) {
   if (!team) {
@@ -182,9 +197,9 @@ function TeamCard({
         <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
           Средний ELO: {Math.round(team.averageElo)}
         </span>
-        {score !== null && (
+        {mapScore !== null && (
           <span className="mono" style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)' }}>
-            {score}
+            {mapScore} карт
           </span>
         )}
       </div>

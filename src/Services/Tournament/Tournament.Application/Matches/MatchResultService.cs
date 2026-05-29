@@ -61,7 +61,8 @@ public sealed class MatchResultService(
         }
 
         if (!request.IsTechnicalDefeat
-            && (request.WinnerScore is null || request.LoserScore is null))
+            && (request.WinnerScore is null || request.LoserScore is null
+                || request.WinnerMaps is null || request.LoserMaps is null))
         {
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.MatchScoreRequired);
         }
@@ -73,10 +74,19 @@ public sealed class MatchResultService(
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidMatchScore);
         }
 
+        if (request.WinnerMaps is not null
+            && request.LoserMaps is not null
+            && request.WinnerMaps <= request.LoserMaps)
+        {
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidMatchScore);
+        }
+
         match.Complete(
             request.WinnerTeamId,
             request.WinnerScore,
             request.LoserScore,
+            request.WinnerMaps,
+            request.LoserMaps,
             request.IsTechnicalDefeat,
             DateTime.UtcNow);
 
@@ -112,6 +122,8 @@ public sealed class MatchResultService(
             LoserTeamId = loser.Id,
             WinnerScore = match.WinnerScore,
             LoserScore = match.LoserScore,
+            WinnerMaps = match.WinnerMaps,
+            LoserMaps = match.LoserMaps,
             IsTechnicalDefeat = match.IsTechnicalDefeat,
             WinnerPlayers = winner.Members.Select(member => new MatchCompletedPlayerDto
             {

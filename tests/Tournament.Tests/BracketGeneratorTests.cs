@@ -21,7 +21,7 @@ public sealed class BracketGeneratorTests
 
         foreach (var match in semiFinal.Matches)
         {
-            match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+            match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
             await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
         }
 
@@ -29,7 +29,7 @@ public sealed class BracketGeneratorTests
         Assert.Equal(2, tournament.CurrentRoundNumber);
         var final = tournament.Rounds.Single(round => round.Number == 2);
         var finalMatch = final.Matches.Single();
-        finalMatch.Complete(finalMatch.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+        finalMatch.Complete(finalMatch.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
         await generator.HandleMatchCompletedAsync(tournament, finalMatch, CancellationToken.None);
 
         Assert.Equal(TournamentStatus.Completed, tournament.Status);
@@ -47,7 +47,7 @@ public sealed class BracketGeneratorTests
 
         Assert.Contains(round.Matches, match => match.TeamBId is null && match.Status == MatchStatus.Completed);
         var playable = round.Matches.Single(match => match.TeamBId is not null);
-        playable.Complete(playable.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+        playable.Complete(playable.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
         await generator.HandleMatchCompletedAsync(tournament, playable, CancellationToken.None);
 
         Assert.Equal(2, tournament.Rounds.Count);
@@ -62,7 +62,7 @@ public sealed class BracketGeneratorTests
         await generator.GenerateInitialAsync(tournament, tournament.Teams.ToArray(), CancellationToken.None);
         var match = tournament.Rounds.Single().Matches.First();
 
-        match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+        match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
         await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
 
         Assert.Single(tournament.Rounds);
@@ -78,7 +78,7 @@ public sealed class BracketGeneratorTests
         var round = tournament.Rounds.Single();
         foreach (var match in round.Matches)
         {
-            match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+            match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
             await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
         }
 
@@ -110,7 +110,7 @@ public sealed class BracketGeneratorTests
 
         foreach (var match in tournament.Rounds.Single().Matches)
         {
-            match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+            match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
             await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
         }
 
@@ -132,7 +132,7 @@ public sealed class BracketGeneratorTests
 
         foreach (var match in tournament.Rounds.Single().Matches)
         {
-            match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+            match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
             await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
         }
 
@@ -155,7 +155,7 @@ public sealed class BracketGeneratorTests
 
         tournament.DoubleEliminationStandings.Single(s => s.TeamId == loser).AddLoss();
         var match = tournament.Rounds.Single().Matches.Single();
-        match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+        match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
         await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
 
         Assert.True(tournament.DoubleEliminationStandings.Single(s => s.TeamId == loser).IsEliminated);

@@ -12,8 +12,12 @@ public sealed record MatchDetailsResponse(
     int MatchNumber,
     int RoundNumber,
     string MatchStatus,
+    /// <summary>Rounds — sum across all maps. ELO weighting input.</summary>
     int? WinnerScore,
     int? LoserScore,
+    /// <summary>Maps won in the series (e.g. 2 / 1 for Bo3). Display-only.</summary>
+    int? WinnerMaps,
+    int? LoserMaps,
     Guid? WinnerTeamId,
     DateTime CreatedAtUtc,
     DateTime? CompletedAtUtc,

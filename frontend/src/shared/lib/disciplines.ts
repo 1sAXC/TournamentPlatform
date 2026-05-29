@@ -1,9 +1,11 @@
+// Platform supports only round-based shooter disciplines. The match score
+// is captured both by maps-in-series (for display) and total rounds (for
+// ELO weighting), so a non-round discipline like Dota would need a
+// different score model.
 export const DISCIPLINES = [
   { code: 'CS2', label: 'CS2' },
   { code: 'Valorant', label: 'Valorant' },
   { code: 'Standoff2', label: 'Standoff 2' },
-  { code: 'PUBG', label: 'PUBG' },
-  { code: 'Dota2', label: 'Dota 2' },
 ] as const;
 
 export function disciplineLabel(code: string): string {

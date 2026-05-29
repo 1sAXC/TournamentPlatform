@@ -19,7 +19,7 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, 2, 0, false),
             new CurrentTournamentUser(fixture.Tournament.OrganizerId, "Organizer", "Active"));
 
         Assert.True(result.IsSuccess);
@@ -35,7 +35,7 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, 2, 0, false),
             new CurrentTournamentUser(Guid.NewGuid(), "Organizer", "Active"));
 
         Assert.True(result.IsFailure);
@@ -50,7 +50,7 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, 2, 0, false),
             new CurrentTournamentUser(Guid.NewGuid(), "Player", "Active"));
 
         Assert.True(result.IsFailure);
@@ -65,7 +65,7 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, 2, 0, false),
             new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
 
         Assert.True(result.IsSuccess);
@@ -79,7 +79,7 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(Guid.NewGuid(), 2, 0, false),
+            new CompleteMatchRequest(Guid.NewGuid(), 2, 0, 2, 0, false),
             new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
 
         Assert.True(result.IsFailure);
@@ -94,11 +94,46 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 1, 1, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 1, 1, 1, 1, false),
             new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
 
         Assert.True(result.IsFailure);
         Assert.Equal(Tournament.Application.Tournaments.TournamentErrors.InvalidMatchScore, result.Error);
+    }
+
+    [Fact]
+    public async Task WinnerMapsMustBeGreaterThanLoserMaps()
+    {
+        var fixture = CreateFixture();
+
+        // Rounds are valid (37-29), but maps say it's a draw — service rejects.
+        var result = await fixture.Service.CompleteMatchAsync(
+            fixture.Tournament.Id,
+            fixture.Match.Id,
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 37, 29, 1, 1, false),
+            new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(Tournament.Application.Tournaments.TournamentErrors.InvalidMatchScore, result.Error);
+    }
+
+    [Fact]
+    public async Task ValidMapsAndRoundsScore_StoresBoth()
+    {
+        var fixture = CreateFixture();
+
+        // Bo3 sweep 2-0 by maps, rounds 26-8 total.
+        var result = await fixture.Service.CompleteMatchAsync(
+            fixture.Tournament.Id,
+            fixture.Match.Id,
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 26, 8, 2, 0, false),
+            new CurrentTournamentUser(fixture.Tournament.OrganizerId, "Organizer", "Active"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(26, fixture.Match.WinnerScore);
+        Assert.Equal(8, fixture.Match.LoserScore);
+        Assert.Equal(2, fixture.Match.WinnerMaps);
+        Assert.Equal(0, fixture.Match.LoserMaps);
     }
 
     [Fact]
@@ -109,7 +144,7 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, null, null, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, null, null, null, null, false),
             new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
 
         Assert.True(result.IsFailure);
@@ -125,7 +160,7 @@ public sealed class MatchResultServiceTests
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, null, null, true),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, null, null, null, null, true),
             new CurrentTournamentUser(Guid.NewGuid(), "Admin", "Active"));
 
         Assert.True(result.IsSuccess);
@@ -145,12 +180,12 @@ public sealed class MatchResultServiceTests
         await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, 2, 0, false),
             admin);
         var result = await fixture.Service.CompleteMatchAsync(
             fixture.Tournament.Id,
             fixture.Match.Id,
-            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, false),
+            new CompleteMatchRequest(fixture.Match.TeamAId!.Value, 2, 0, 2, 0, false),
             admin);
 
         Assert.True(result.IsFailure);

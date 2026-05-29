@@ -139,7 +139,7 @@ public sealed class SwissRoundServiceTests
 
         foreach (var match in round.Matches.Where(m => m.Status != MatchStatus.Completed))
         {
-            match.Complete(match.TeamAId!.Value, 1, 0, false, DateTime.UtcNow);
+            match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
             fixture.Generator.HandleMatchCompletedAsync(fixture.Tournament, match, CancellationToken.None)
                 .GetAwaiter().GetResult();
         }
