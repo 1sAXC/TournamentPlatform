@@ -114,6 +114,8 @@ const errorCodeMap: Record<string, string> = {
   'Tournaments.OrganizerRoleRequired': 'Пользователь должен иметь роль организатора',
   'Tournaments.OrganizerInactive': 'Организатор должен быть активным',
   'Tournaments.CurrentRoundNotCompleted': 'Текущий раунд ещё не завершён',
+  'Notifications.NotFound': 'Уведомление не найдено',
+  'Notifications.AccessDenied': 'Это уведомление вам недоступно',
 };
 
 function translateValidationMessage(message: string): string {

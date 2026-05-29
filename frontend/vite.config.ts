@@ -5,6 +5,7 @@ import path from 'node:path';
 const AUTH = 'http://localhost:5240';
 const TOURNAMENT = 'http://localhost:5015';
 const RATING = 'http://localhost:5196';
+const NOTIFICATION = 'http://localhost:5210';
 
 export default defineConfig({
   plugins: [react()],
@@ -21,6 +22,7 @@ export default defineConfig({
       '/api/tournaments': TOURNAMENT,
       '/api/organizer': TOURNAMENT,
       '/api/ratings': RATING,
+      '/api/notifications': NOTIFICATION,
     },
   },
   preview: { host: '0.0.0.0', port: 3000 },

@@ -34,6 +34,28 @@ export interface UserLookupItem {
   email: string;
 }
 
+// ===== Notifications =====
+export type NotificationKind = 'MatchCreated';
+
+export interface NotificationResponse {
+  id: string;
+  type: NotificationKind | string;
+  title: string;
+  body: string;
+  linkUrl: string;
+  payloadJson: string;
+  createdAtUtc: string;
+  readAtUtc: string | null;
+}
+
+export interface NotificationListResponse {
+  items: NotificationResponse[];
+  totalCount: number;
+  unreadCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
 // ===== Tournament =====
 export type TournamentStatus =
   | 'Open'

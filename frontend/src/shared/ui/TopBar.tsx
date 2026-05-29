@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Icon, type IconName } from './Icon';
 import { Avatar } from './Avatar';
+import { NotificationBell } from './NotificationBell';
 import { RoleBadge } from './RoleBadge';
 import { useAuth } from '@/shared/auth/useAuth';
 
@@ -61,6 +62,7 @@ export function TopBar({ nav, showProfile = true }: Props) {
         ))}
       </nav>
       <div className="spacer" />
+      {showProfile && user && user.accountStatus === 'Active' && <NotificationBell />}
       {showProfile && user && (
         <div className="user-wrap" ref={wrapRef}>
           <button
