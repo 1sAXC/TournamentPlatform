@@ -12,6 +12,7 @@ import { toApiError } from '@/shared/api/http';
 const schema = z.object({
   nickname: z.string().min(3, 'Минимум 3 символа').max(30, 'Максимум 30'),
   email: z.string().email('Некорректный e-mail'),
+  contactHandle: z.string().min(1, 'Укажите контакт').max(64, 'Максимум 64 символа'),
   password: z.string()
     .min(8, 'Минимум 8 символов')
     .regex(/[A-Za-z]/, 'Нужна хотя бы одна латинская буква')
@@ -23,15 +24,15 @@ type FormValues = z.infer<typeof schema>;
 export function RegisterPlayerPage() {
   const { register, handleSubmit, setError: setFieldError, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { nickname: '', email: '', password: '', confirm: '' },
+    defaultValues: { nickname: '', email: '', contactHandle: '', password: '', confirm: '' },
   });
   const mutation = useRegisterPlayerMutation();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = handleSubmit(({ nickname, email, password }) => {
+  const onSubmit = handleSubmit(({ nickname, email, contactHandle, password }) => {
     setError(null);
-    mutation.mutate({ nickname, email, password }, {
+    mutation.mutate({ nickname, email, password, contactHandle: contactHandle.trim() }, {
       onSuccess: () => navigate('/', { replace: true }),
       onError: (err) => {
         const e = toApiError(err);
@@ -65,6 +66,9 @@ export function RegisterPlayerPage() {
         </Field>
         <Field label="E-mail" error={errors.email?.message}>
           <input className="input" type="email" {...register('email')} />
+        </Field>
+        <Field label="Контакт для связи" hint="Telegram, Discord и т.п. — увидят соперники в матчах" error={errors.contactHandle?.message}>
+          <input className="input" placeholder="@your_handle" {...register('contactHandle')} />
         </Field>
         <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <Field label="Пароль" error={errors.password?.message}>

@@ -98,5 +98,11 @@ public sealed class AuthControllerChangePasswordTests
             ChangedUserId = userId;
             return Task.FromResult(ChangePasswordResult);
         }
+
+        public Task<Result<CurrentUserResponse>> UpdateContactHandleAsync(Guid userId, UpdateContactHandleRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<IReadOnlyCollection<UserLookupItem>> LookupUsersAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
     }
 }

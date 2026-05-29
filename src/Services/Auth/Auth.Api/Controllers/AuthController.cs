@@ -79,6 +79,36 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
         return result.IsSuccess ? NoContent() : ToErrorActionResult(result.Error);
     }
 
+    [Authorize]
+    [HttpPut("contact-handle")]
+    [ProducesResponseType(typeof(CurrentUserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdateContactHandle(
+        UpdateContactHandleRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetCurrentUser(out var currentUser))
+        {
+            return Unauthorized();
+        }
+
+        var result = await authService.UpdateContactHandleAsync(currentUser.UserId, request, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    [Authorize]
+    [HttpPost("users/lookup")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<UserLookupItem>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> LookupUsers(
+        UserLookupRequest request,
+        CancellationToken cancellationToken)
+    {
+        var items = await authService.LookupUsersAsync(request.Ids ?? [], cancellationToken);
+        return Ok(items);
+    }
+
     private IActionResult ToActionResult<T>(Result<T> result)
     {
         if (result.IsSuccess)

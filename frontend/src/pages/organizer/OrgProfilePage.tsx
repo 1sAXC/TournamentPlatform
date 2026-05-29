@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { organizerNav } from '@/features/navigation';
 import { useAuth } from '@/shared/auth/useAuth';
-import { useChangePasswordMutation } from '@/features/auth/hooks';
+import { useChangePasswordMutation, useUpdateContactHandleMutation } from '@/features/auth/hooks';
 import { useOrganizerTournaments } from '@/features/tournaments/hooks';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Badge } from '@/shared/ui/Badge';
@@ -73,6 +73,12 @@ export function OrgProfilePage() {
         </div>
       </div>
 
+      <div style={{ maxWidth: 520 }}>
+        <Card title="Контакт для связи" className="pwd-card">
+          <ContactHandleEditor initial={user?.contactHandle ?? ''} />
+        </Card>
+      </div>
+
       <Card title="Изменить пароль" className="pwd-card">
         <form className="col" style={{ gap: 12 }} onSubmit={onSubmit}>
           <Field label="Текущий пароль" error={errors.currentPassword?.message}>
@@ -96,5 +102,54 @@ export function OrgProfilePage() {
         </form>
       </Card>
     </ScreenFrame>
+  );
+}
+
+function ContactHandleEditor({ initial }: { initial: string }) {
+  const [value, setValue] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const mutation = useUpdateContactHandleMutation();
+
+  function onSave() {
+    setError(null);
+    const trimmed = value.trim();
+    if (!trimmed) { setError('Укажите контакт'); return; }
+    if (trimmed.length > 64) { setError('Не больше 64 символов'); return; }
+    mutation.mutate({ contactHandle: trimmed }, {
+      onSuccess: () => showToast('success', 'Контакт обновлён'),
+      onError: (err) => setError(toApiError(err).title ?? 'Не удалось сохранить'),
+    });
+  }
+
+  return (
+    <div className="col" style={{ gap: 10 }}>
+      <Field
+        label="Telegram / Discord / etc"
+        hint="Этот контакт увидят капитаны команд в ваших турнирах"
+        error={error ?? undefined}
+      >
+        <input
+          className="input"
+          placeholder="@your_handle"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      </Field>
+      <div className="row" style={{ gap: 8 }}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={onSave}
+          disabled={mutation.isPending || value.trim() === initial.trim()}
+        >
+          {mutation.isPending ? 'Сохраняем…' : 'Сохранить'}
+        </button>
+        {value.trim() !== initial.trim() && (
+          <button type="button" className="btn" onClick={() => { setValue(initial); setError(null); }}>
+            Отмена
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

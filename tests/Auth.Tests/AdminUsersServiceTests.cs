@@ -18,14 +18,16 @@ public sealed class AdminUsersServiceTests
             "pending@example.com",
             "hash",
             "Pending Org",
+            "@pending_org",
             DateTime.UtcNow.AddMinutes(-1));
         var approvedOrganizer = User.CreateOrganizerSelfRegistration(
             "approved@example.com",
             "hash",
             "Approved Org",
+            "@approved_org",
             DateTime.UtcNow);
         approvedOrganizer.Approve(DateTime.UtcNow);
-        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow);
+        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", "@player_one", DateTime.UtcNow);
         repository.Users.AddRange([pendingOrganizer, approvedOrganizer, player]);
 
         var service = CreateService(repository, new InMemoryOutboxWriter());
@@ -43,7 +45,7 @@ public sealed class AdminUsersServiceTests
     public async Task GetOrganizerApplications_ShouldReturnEmptyPage_WhenNoPendingOrganizers()
     {
         var repository = new InMemoryAuthUserRepository();
-        repository.Users.Add(User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow));
+        repository.Users.Add(User.CreatePlayer("player@example.com", "hash", "PlayerOne", "@player_one", DateTime.UtcNow));
 
         var service = CreateService(repository, new InMemoryOutboxWriter());
         var result = await service.GetOrganizerApplicationsAsync(new OrganizerApplicationsQuery());
@@ -62,26 +64,30 @@ public sealed class AdminUsersServiceTests
             "pending@example.com",
             "hash",
             "Pending Org",
+            "@pending_org",
             DateTime.UtcNow.AddMinutes(-3));
         var approvedOrganizer = User.CreateOrganizerSelfRegistration(
             "approved@example.com",
             "hash",
             "Approved Org",
+            "@approved_org",
             DateTime.UtcNow.AddMinutes(-2));
         approvedOrganizer.Approve(DateTime.UtcNow);
         var rejectedOrganizer = User.CreateOrganizerSelfRegistration(
             "rejected@example.com",
             "hash",
             "Rejected Org",
+            "@rejected_org",
             DateTime.UtcNow.AddMinutes(-1));
         rejectedOrganizer.Reject(DateTime.UtcNow);
         var adminCreatedOrganizer = User.CreateOrganizerByAdmin(
             "byadmin@example.com",
             "hash",
             "Admin-created Org",
+            "@admin_created_org",
             createdByAdminId: Guid.NewGuid(),
             DateTime.UtcNow);
-        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow);
+        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", "@player_one", DateTime.UtcNow);
         repository.Users.AddRange([pendingOrganizer, approvedOrganizer, rejectedOrganizer, adminCreatedOrganizer, player]);
 
         var service = CreateService(repository, new InMemoryOutboxWriter());
@@ -104,6 +110,7 @@ public sealed class AdminUsersServiceTests
             "pending@example.com",
             "hash",
             "Pending Org",
+            "@pending_org",
             DateTime.UtcNow);
         repository.Users.Add(pendingOrganizer);
 
@@ -123,6 +130,7 @@ public sealed class AdminUsersServiceTests
             "organizer@example.com",
             "hash",
             "Organizer Inc",
+            "@organizer_inc",
             DateTime.UtcNow);
         repository.Users.Add(organizer);
 
@@ -139,7 +147,7 @@ public sealed class AdminUsersServiceTests
     public async Task GetOrganizerApplication_ShouldFail_WhenApplicationDoesNotExist()
     {
         var repository = new InMemoryAuthUserRepository();
-        repository.Users.Add(User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow));
+        repository.Users.Add(User.CreatePlayer("player@example.com", "hash", "PlayerOne", "@player_one", DateTime.UtcNow));
 
         var service = CreateService(repository, new InMemoryOutboxWriter());
         var result = await service.GetOrganizerApplicationAsync(repository.Users.Single().Id);
@@ -157,6 +165,7 @@ public sealed class AdminUsersServiceTests
             "organizer@example.com",
             "hash",
             "Organizer Inc",
+            "@organizer_inc",
             DateTime.UtcNow);
         repository.Users.Add(organizer);
 
@@ -179,6 +188,7 @@ public sealed class AdminUsersServiceTests
             "organizer@example.com",
             "hash",
             "Organizer Inc",
+            "@organizer_inc",
             DateTime.UtcNow);
         repository.Users.Add(organizer);
 
@@ -200,6 +210,7 @@ public sealed class AdminUsersServiceTests
             "organizer@example.com",
             "hash",
             "Organizer Inc",
+            "@organizer_inc",
             DateTime.UtcNow);
         repository.Users.Add(organizer);
 
@@ -221,6 +232,7 @@ public sealed class AdminUsersServiceTests
             "organizer@example.com",
             "hash",
             "Organizer Inc",
+            "@organizer_inc",
             DateTime.UtcNow);
         repository.Users.Add(organizer);
 
@@ -239,7 +251,7 @@ public sealed class AdminUsersServiceTests
         var repository = new InMemoryAuthUserRepository();
         var outbox = new InMemoryOutboxWriter();
         var admin = User.CreateAdmin(Guid.NewGuid(), "admin@example.com", "hash", DateTime.UtcNow);
-        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", DateTime.UtcNow);
+        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", "@player_one", DateTime.UtcNow);
         player.ClearDomainEvents();
         repository.Users.Add(admin);
         repository.Users.Add(player);
@@ -371,6 +383,12 @@ public sealed class AdminUsersServiceTests
         public Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Users.Count(user => user.Role == UserRole.Admin && user.Status == AccountStatus.Active));
+        }
+
+        public Task<IReadOnlyCollection<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<User>>(
+                Users.Where(user => ids.Contains(user.Id)).ToArray());
         }
 
         public void Add(User user)

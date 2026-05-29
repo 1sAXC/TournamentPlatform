@@ -5,6 +5,7 @@ public sealed record OrganizerApplicationResponse(
     string Email,
     string Status,
     string OrganizerName,
+    string? ContactHandle,
     DateTime CreatedAtUtc,
     DateTime? ApprovedAtUtc,
     DateTime? RejectedAtUtc);

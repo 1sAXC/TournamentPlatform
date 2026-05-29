@@ -107,6 +107,7 @@ public sealed class OrganizerApplicationsControllerTests
             "organizer@example.com",
             status,
             "Organizer Inc",
+            "@organizer_inc",
             DateTime.UtcNow,
             null,
             null);

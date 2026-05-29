@@ -7,6 +7,7 @@ public sealed record AdminUserResponse(
     string Status,
     string? Nickname,
     string? OrganizerName,
+    string? ContactHandle,
     DateTime CreatedAtUtc,
     DateTime? ApprovedAtUtc,
     DateTime? RejectedAtUtc,

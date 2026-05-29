@@ -296,11 +296,16 @@ public sealed class AdminUsersService(
             {
                 return Result<User>.Failure(validation.Error);
             }
+            if (string.IsNullOrWhiteSpace(request.ContactHandle))
+            {
+                return Result<User>.Failure(AdminErrors.ContactHandleRequired);
+            }
 
             return Result<User>.Success(User.CreatePlayer(
                 request.Email.Trim(),
                 passwordHash: "temporary",
                 request.Nickname!.Trim(),
+                request.ContactHandle,
                 now));
         }
 
@@ -311,11 +316,16 @@ public sealed class AdminUsersService(
             {
                 return Result<User>.Failure(validation.Error);
             }
+            if (string.IsNullOrWhiteSpace(request.ContactHandle))
+            {
+                return Result<User>.Failure(AdminErrors.ContactHandleRequired);
+            }
 
             return Result<User>.Success(User.CreateOrganizerByAdmin(
                 request.Email.Trim(),
                 passwordHash: "temporary",
                 request.OrganizerName!.Trim(),
+                request.ContactHandle,
                 adminUserId,
                 now));
         }
@@ -375,6 +385,7 @@ public sealed class AdminUsersService(
             user.Status.ToString(),
             user.Nickname,
             user.OrganizerName,
+            user.ContactHandle,
             user.CreatedAtUtc,
             user.ApprovedAtUtc,
             user.RejectedAtUtc,
@@ -389,6 +400,7 @@ public sealed class AdminUsersService(
             user.Email,
             user.Status.ToString(),
             user.OrganizerName ?? string.Empty,
+            user.ContactHandle,
             user.CreatedAtUtc,
             user.ApprovedAtUtc,
             user.RejectedAtUtc);
@@ -401,6 +413,7 @@ public sealed class AdminUsersService(
             user.Email,
             user.Status,
             user.OrganizerName ?? string.Empty,
+            user.ContactHandle,
             user.CreatedAtUtc,
             user.ApprovedAtUtc,
             user.RejectedAtUtc);

@@ -11,6 +11,7 @@ export interface CurrentUserResponse {
   accountStatus: string;
   nickname?: string | null;
   organizerName?: string | null;
+  contactHandle?: string | null;
 }
 
 export interface AuthResponse {
@@ -20,9 +21,18 @@ export interface AuthResponse {
 }
 
 export interface LoginRequest { login: string; password: string; }
-export interface RegisterPlayerRequest { nickname: string; email: string; password: string; }
-export interface RegisterOrganizerRequest { organizerName: string; email: string; password: string; }
+export interface RegisterPlayerRequest { nickname: string; email: string; password: string; contactHandle: string; }
+export interface RegisterOrganizerRequest { organizerName: string; email: string; password: string; contactHandle: string; }
 export interface ChangePasswordRequest { currentPassword: string; newPassword: string; }
+export interface UpdateContactHandleRequest { contactHandle: string; }
+
+export interface UserLookupItem {
+  id: string;
+  nickname?: string | null;
+  organizerName?: string | null;
+  contactHandle?: string | null;
+  email: string;
+}
 
 // ===== Tournament =====
 export type TournamentStatus =

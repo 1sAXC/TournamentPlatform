@@ -32,6 +32,7 @@ public sealed class AuthService(
             request.Email.Trim(),
             passwordHash: "temporary",
             request.Nickname.Trim(),
+            request.ContactHandle,
             DateTime.UtcNow);
 
         user.SetPasswordHash(passwordHashingService.HashPassword(user, request.Password));
@@ -58,6 +59,7 @@ public sealed class AuthService(
             {
                 existing.ResubmitOrganizerApplication(
                     request.OrganizerName.Trim(),
+                    request.ContactHandle,
                     passwordHashingService.HashPassword(existing, request.Password),
                     DateTime.UtcNow);
                 AddDomainEventsToOutbox(existing);
@@ -73,6 +75,7 @@ public sealed class AuthService(
             request.Email.Trim(),
             passwordHash: "temporary",
             request.OrganizerName.Trim(),
+            request.ContactHandle,
             DateTime.UtcNow);
 
         user.SetPasswordHash(passwordHashingService.HashPassword(user, request.Password));
@@ -148,6 +151,55 @@ public sealed class AuthService(
         return Result.Success();
     }
 
+    public async Task<Result<CurrentUserResponse>> UpdateContactHandleAsync(
+        Guid userId,
+        UpdateContactHandleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return Result<CurrentUserResponse>.Failure(AuthErrors.UserNotFound);
+        }
+
+        if (user.Status is AccountStatus.Deleted or AccountStatus.Rejected)
+        {
+            return Result<CurrentUserResponse>.Failure(AuthErrors.AccessDenied);
+        }
+
+        try
+        {
+            user.UpdateContactHandle(request.ContactHandle);
+        }
+        catch (ArgumentException)
+        {
+            return Result<CurrentUserResponse>.Failure(AuthErrors.InvalidContactHandle);
+        }
+        catch (InvalidOperationException)
+        {
+            // Admin account — contact handle does not apply.
+            return Result<CurrentUserResponse>.Failure(AuthErrors.AccessDenied);
+        }
+
+        await users.SaveChangesAsync(cancellationToken);
+        return Result<CurrentUserResponse>.Success(CreateCurrentUserResponse(user));
+    }
+
+    public async Task<IReadOnlyCollection<UserLookupItem>> LookupUsersAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var found = await users.GetByIdsAsync(ids, cancellationToken);
+        return found
+            .Select(u => new UserLookupItem(u.Id, u.Nickname, u.OrganizerName, u.ContactHandle, u.Email))
+            .ToArray();
+    }
+
     private AuthResponse CreateAuthResponse(User user)
     {
         var token = jwtTokenGenerator.Generate(user);
@@ -162,7 +214,8 @@ public sealed class AuthService(
             user.Role.ToString(),
             user.Status.ToString(),
             user.Nickname,
-            user.OrganizerName);
+            user.OrganizerName,
+            user.ContactHandle);
     }
 
     private void AddDomainEventsToOutbox(User user)

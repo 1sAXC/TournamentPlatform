@@ -6,7 +6,8 @@ public sealed record CurrentUserResponse(
     string Role,
     string AccountStatus,
     string? Nickname,
-    string? OrganizerName)
+    string? OrganizerName,
+    string? ContactHandle)
 {
     public Guid Id => UserId;
 }

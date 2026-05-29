@@ -2,6 +2,7 @@ import { http } from './http';
 import type {
   AuthResponse, ChangePasswordRequest, CurrentUserResponse,
   LoginRequest, RegisterOrganizerRequest, RegisterPlayerRequest,
+  UpdateContactHandleRequest, UserLookupItem,
 } from './types';
 
 export const authApi = {
@@ -15,4 +16,8 @@ export const authApi = {
     http.get<CurrentUserResponse>('/api/auth/me').then(r => r.data),
   changePassword: (req: ChangePasswordRequest) =>
     http.post<void>('/api/auth/change-password', req).then(r => r.data),
+  updateContactHandle: (req: UpdateContactHandleRequest) =>
+    http.put<CurrentUserResponse>('/api/auth/contact-handle', req).then(r => r.data),
+  lookupUsers: (ids: string[]) =>
+    http.post<UserLookupItem[]>('/api/auth/users/lookup', { ids }).then(r => r.data),
 };

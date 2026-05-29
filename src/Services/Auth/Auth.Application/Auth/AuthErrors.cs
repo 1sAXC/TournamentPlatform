@@ -10,4 +10,5 @@ public static class AuthErrors
     public static readonly Error InvalidCurrentPassword = new("Auth.InvalidCurrentPassword", "Current password is invalid.");
     public static readonly Error AccessDenied = new("Auth.AccessDenied", "Account is not allowed to sign in.");
     public static readonly Error UserNotFound = new("Auth.UserNotFound", "User was not found.");
+    public static readonly Error InvalidContactHandle = new("Auth.InvalidContactHandle", "Contact handle is required and must be 1-64 characters.");
 }

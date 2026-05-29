@@ -13,6 +13,7 @@ public sealed class UserTests
             "player@example.com",
             "hashed-password",
             "PlayerOne",
+            "@player_one",
             DateTime.UtcNow);
 
         Assert.Equal(UserRole.Player, user.Role);
@@ -29,6 +30,7 @@ public sealed class UserTests
             "organizer@example.com",
             "hashed-password",
             "Organizer Inc",
+            "@org_inc",
             DateTime.UtcNow);
 
         Assert.Equal(UserRole.Organizer, user.Role);
@@ -45,6 +47,7 @@ public sealed class UserTests
             "player@example.com",
             "hashed-password",
             "PlayerOne",
+            "@player_one",
             DateTime.UtcNow);
 
         var deletedAtUtc = DateTime.UtcNow;
@@ -52,5 +55,60 @@ public sealed class UserTests
 
         Assert.Equal(AccountStatus.Deleted, user.Status);
         Assert.Equal(deletedAtUtc, user.DeletedAtUtc);
+    }
+
+    [Fact]
+    public void CreatePlayer_ShouldStoreTrimmedContactHandle()
+    {
+        var user = User.CreatePlayer(
+            "player@example.com",
+            "hashed-password",
+            "PlayerOne",
+            "  @player_one  ",
+            DateTime.UtcNow);
+
+        Assert.Equal("@player_one", user.ContactHandle);
+    }
+
+    [Fact]
+    public void CreatePlayer_ShouldRejectEmptyContactHandle()
+    {
+        Assert.Throws<ArgumentException>(() => User.CreatePlayer(
+            "player@example.com",
+            "hashed-password",
+            "PlayerOne",
+            "   ",
+            DateTime.UtcNow));
+    }
+
+    [Fact]
+    public void CreateAdmin_ShouldHaveNullContactHandle()
+    {
+        var admin = User.CreateAdmin(Guid.NewGuid(), "admin@example.com", "hash", DateTime.UtcNow);
+
+        Assert.Null(admin.ContactHandle);
+    }
+
+    [Fact]
+    public void UpdateContactHandle_ShouldChangeValueForPlayer()
+    {
+        var user = User.CreatePlayer(
+            "player@example.com",
+            "hashed-password",
+            "PlayerOne",
+            "@old",
+            DateTime.UtcNow);
+
+        user.UpdateContactHandle("@new_handle");
+
+        Assert.Equal("@new_handle", user.ContactHandle);
+    }
+
+    [Fact]
+    public void UpdateContactHandle_ShouldThrowForAdmin()
+    {
+        var admin = User.CreateAdmin(Guid.NewGuid(), "admin@example.com", "hash", DateTime.UtcNow);
+
+        Assert.Throws<InvalidOperationException>(() => admin.UpdateContactHandle("@whatever"));
     }
 }

@@ -5,4 +5,5 @@ public sealed record CreateAdminUserRequest(
     string Email,
     string Password,
     string? Nickname,
-    string? OrganizerName);
+    string? OrganizerName,
+    string? ContactHandle);

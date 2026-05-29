@@ -6,7 +6,7 @@ import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { playerNav } from '@/features/navigation';
 import { useAuth } from '@/shared/auth/useAuth';
 import { usePlayerRatings, useRatingHistory } from '@/features/ratings/hooks';
-import { useChangePasswordMutation } from '@/features/auth/hooks';
+import { useChangePasswordMutation, useUpdateContactHandleMutation } from '@/features/auth/hooks';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Badge } from '@/shared/ui/Badge';
 import { RoleBadge } from '@/shared/ui/RoleBadge';
@@ -167,6 +167,10 @@ export function PlayerProfilePage() {
               <Row label="Статус" value={<Badge tone={user?.accountStatus === 'Active' ? 'success' : 'pending'}>{accountStatusLabel(user?.accountStatus)}</Badge>} />
             </div>
           </Card>
+
+          <Card title="Контакт для связи">
+            <ContactHandleEditor initial={user?.contactHandle ?? ''} />
+          </Card>
         </div>
       </div>
     </ScreenFrame>
@@ -178,6 +182,55 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="row" style={{ justifyContent: 'space-between' }}>
       <span style={{ color: 'var(--muted)' }}>{label}</span>
       <span className="mono">{value}</span>
+    </div>
+  );
+}
+
+function ContactHandleEditor({ initial }: { initial: string }) {
+  const [value, setValue] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const mutation = useUpdateContactHandleMutation();
+
+  function onSave() {
+    setError(null);
+    const trimmed = value.trim();
+    if (!trimmed) { setError('Укажите контакт'); return; }
+    if (trimmed.length > 64) { setError('Не больше 64 символов'); return; }
+    mutation.mutate({ contactHandle: trimmed }, {
+      onSuccess: () => showToast('success', 'Контакт обновлён'),
+      onError: (err) => setError(toApiError(err).title ?? 'Не удалось сохранить'),
+    });
+  }
+
+  return (
+    <div className="col" style={{ gap: 10 }}>
+      <Field
+        label="Telegram / Discord / etc"
+        hint="Этот контакт увидят соперники в ваших матчах"
+        error={error ?? undefined}
+      >
+        <input
+          className="input"
+          placeholder="@your_handle"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      </Field>
+      <div className="row" style={{ gap: 8 }}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={onSave}
+          disabled={mutation.isPending || value.trim() === initial.trim()}
+        >
+          {mutation.isPending ? 'Сохраняем…' : 'Сохранить'}
+        </button>
+        {value.trim() !== initial.trim() && (
+          <button type="button" className="btn" onClick={() => { setValue(initial); setError(null); }}>
+            Отмена
+          </button>
+        )}
+      </div>
     </div>
   );
 }

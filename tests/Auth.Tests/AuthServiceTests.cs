@@ -20,7 +20,8 @@ public sealed class AuthServiceTests
         var result = await service.RegisterPlayerAsync(new RegisterPlayerRequest(
             "PlayerOne",
             "player@example.com",
-            "Password1"));
+            "Password1",
+            "@player_one"));
 
         Assert.True(result.IsSuccess);
         var user = Assert.Single(repository.Users);
@@ -40,7 +41,8 @@ public sealed class AuthServiceTests
         var result = await service.RegisterOrganizerAsync(new RegisterOrganizerRequest(
             "Organizer Inc",
             "organizer@example.com",
-            "Password1"));
+            "Password1",
+            "@organizer_inc"));
 
         Assert.True(result.IsSuccess);
         var user = Assert.Single(repository.Users);
@@ -55,8 +57,8 @@ public sealed class AuthServiceTests
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
 
-        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1"));
-        var duplicate = await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "ORGANIZER@example.com", "Password1"));
+        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1", "@organizer_inc"));
+        var duplicate = await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "ORGANIZER@example.com", "Password1", "@organizer_inc_dup"));
 
         Assert.True(duplicate.IsFailure);
         Assert.Equal(AuthErrors.DuplicateEmail, duplicate.Error);
@@ -68,11 +70,11 @@ public sealed class AuthServiceTests
     {
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
-        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1"));
+        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1", "@organizer_inc"));
         var rejected = Assert.Single(repository.Users);
         rejected.Reject(DateTime.UtcNow);
 
-        var result = await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Reborn", "ORGANIZER@example.com", "Password2"));
+        var result = await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Reborn", "ORGANIZER@example.com", "Password2", "@organizer_reborn"));
 
         Assert.True(result.IsSuccess);
         var user = Assert.Single(repository.Users);
@@ -89,8 +91,8 @@ public sealed class AuthServiceTests
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
 
-        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1"));
-        var duplicate = await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerTwo", "PLAYER@example.com", "Password1"));
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1", "@player_one"));
+        var duplicate = await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerTwo", "PLAYER@example.com", "Password1", "@player_two"));
 
         Assert.True(duplicate.IsFailure);
         Assert.Equal(AuthErrors.DuplicateEmail, duplicate.Error);
@@ -102,8 +104,8 @@ public sealed class AuthServiceTests
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
 
-        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player1@example.com", "Password1"));
-        var duplicate = await service.RegisterPlayerAsync(new RegisterPlayerRequest("playerone", "player2@example.com", "Password1"));
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player1@example.com", "Password1", "@player_one"));
+        var duplicate = await service.RegisterPlayerAsync(new RegisterPlayerRequest("playerone", "player2@example.com", "Password1", "@player_one_lower"));
 
         Assert.True(duplicate.IsFailure);
         Assert.Equal(AuthErrors.DuplicateNickname, duplicate.Error);
@@ -114,7 +116,7 @@ public sealed class AuthServiceTests
     {
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
-        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1"));
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1", "@player_one"));
 
         var result = await service.LoginAsync(new LoginRequest("playerone", "Password1"));
 
@@ -128,7 +130,7 @@ public sealed class AuthServiceTests
     {
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
-        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1"));
+        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1", "@organizer_inc"));
 
         var result = await service.LoginAsync(new LoginRequest("organizer@example.com", "Password1"));
 
@@ -142,7 +144,7 @@ public sealed class AuthServiceTests
     {
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
-        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1"));
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1", "@player_one"));
         var player = Assert.Single(repository.Users);
 
         var result = await service.ChangePasswordAsync(player.Id, new ChangePasswordRequest("Password1", "NewPassword1"));
@@ -161,7 +163,7 @@ public sealed class AuthServiceTests
     {
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
-        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1"));
+        await service.RegisterOrganizerAsync(new RegisterOrganizerRequest("Organizer Inc", "organizer@example.com", "Password1", "@organizer_inc"));
         var organizer = Assert.Single(repository.Users);
 
         var result = await service.ChangePasswordAsync(organizer.Id, new ChangePasswordRequest("Password1", "NewPassword1"));
@@ -194,7 +196,7 @@ public sealed class AuthServiceTests
     {
         var repository = new InMemoryAuthUserRepository();
         var service = CreateService(repository, new InMemoryOutboxWriter());
-        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1"));
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1", "@player_one"));
         var player = Assert.Single(repository.Users);
 
         var result = await service.ChangePasswordAsync(player.Id, new ChangePasswordRequest("WrongPassword1", "NewPassword1"));
@@ -205,6 +207,63 @@ public sealed class AuthServiceTests
         Assert.Equal(AuthErrors.InvalidCurrentPassword, result.Error);
         Assert.True(oldLogin.IsSuccess);
         Assert.True(newLogin.IsFailure);
+    }
+
+    [Fact]
+    public async Task UpdateContactHandle_ShouldPersistNewValue()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1", "@player_one"));
+        var player = Assert.Single(repository.Users);
+
+        var result = await service.UpdateContactHandleAsync(player.Id, new UpdateContactHandleRequest("@updated_handle"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("@updated_handle", result.Value.ContactHandle);
+        Assert.Equal("@updated_handle", player.ContactHandle);
+    }
+
+    [Fact]
+    public async Task UpdateContactHandle_ShouldFailWithInvalidContactHandle_WhenEmpty()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player@example.com", "Password1", "@player_one"));
+        var player = Assert.Single(repository.Users);
+
+        var result = await service.UpdateContactHandleAsync(player.Id, new UpdateContactHandleRequest("   "));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(AuthErrors.InvalidContactHandle, result.Error);
+    }
+
+    [Fact]
+    public async Task LookupUsers_ShouldReturnNicknameAndContactHandleForRequestedIds()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player1@example.com", "Password1", "@p1"));
+        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerTwo", "player2@example.com", "Password1", "@p2"));
+        var ids = repository.Users.Select(u => u.Id).ToArray();
+
+        var items = await service.LookupUsersAsync(ids);
+
+        Assert.Equal(2, items.Count);
+        Assert.All(items, item => Assert.NotNull(item.ContactHandle));
+        Assert.Contains(items, item => item.Nickname == "PlayerOne" && item.ContactHandle == "@p1");
+        Assert.Contains(items, item => item.Nickname == "PlayerTwo" && item.ContactHandle == "@p2");
+    }
+
+    [Fact]
+    public async Task LookupUsers_WithEmptyIds_ShouldReturnEmpty()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+
+        var items = await service.LookupUsersAsync([]);
+
+        Assert.Empty(items);
     }
 
     private static AuthService CreateService(
@@ -303,6 +362,12 @@ public sealed class AuthServiceTests
         public Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Users.Count(user => user.Role == UserRole.Admin && user.Status == AccountStatus.Active));
+        }
+
+        public Task<IReadOnlyCollection<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<User>>(
+                Users.Where(user => ids.Contains(user.Id)).ToArray());
         }
 
         public void Add(User user)

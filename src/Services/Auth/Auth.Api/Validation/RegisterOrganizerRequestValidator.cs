@@ -22,5 +22,10 @@ public sealed class RegisterOrganizerRequestValidator : AbstractValidator<Regist
             .WithMessage("Password must contain at least one letter.")
             .Matches("[0-9]")
             .WithMessage("Password must contain at least one digit.");
+
+        RuleFor(request => request.ContactHandle)
+            .NotEmpty()
+            .Length(1, 64)
+            .WithMessage("Contact handle must be 1-64 characters.");
     }
 }

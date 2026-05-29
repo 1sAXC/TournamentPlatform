@@ -10,4 +10,6 @@ public interface IAuthService
     Task<Result<AuthResponse>> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
     Task<Result<CurrentUserResponse>> GetCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<Result> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default);
+    Task<Result<CurrentUserResponse>> UpdateContactHandleAsync(Guid userId, UpdateContactHandleRequest request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<UserLookupItem>> LookupUsersAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
 }

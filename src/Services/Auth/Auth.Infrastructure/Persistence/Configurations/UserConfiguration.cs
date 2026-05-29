@@ -58,6 +58,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.NormalizedOrganizerName)
             .HasMaxLength(128);
 
+        builder.Property(user => user.ContactHandle)
+            .HasMaxLength(64);
+
         builder.Property(user => user.CreatedAtUtc)
             .IsRequired();
 

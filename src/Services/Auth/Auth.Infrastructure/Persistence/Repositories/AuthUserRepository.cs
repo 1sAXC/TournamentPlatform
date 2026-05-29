@@ -91,6 +91,23 @@ public sealed class AuthUserRepository(AuthDbContext dbContext) : IAuthUserRepos
             cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<User>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        // EF Core translates Contains() over a Guid array into a parameterised
+        // IN clause, which is fine for the few-dozen-id lookups we expect from
+        // the Tournament service (match team rosters).
+        return await dbContext.Users
+            .Where(user => ids.Contains(user.Id))
+            .ToArrayAsync(cancellationToken);
+    }
+
     // Organizer "history" = self-registered organizers whose application has
     // been decided on — either approved (ApprovedAtUtc set) or rejected
     // (RejectedAtUtc set). Excludes pending applications (still in the inbox)

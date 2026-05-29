@@ -20,6 +20,7 @@ public sealed class User
         AccountStatus status,
         string? nickname,
         string? organizerName,
+        string? contactHandle,
         Guid? createdByAdminId,
         DateTime createdAtUtc)
     {
@@ -33,6 +34,7 @@ public sealed class User
         NormalizedNickname = NormalizeOptional(nickname);
         OrganizerName = organizerName;
         NormalizedOrganizerName = NormalizeOptional(organizerName);
+        ContactHandle = contactHandle;
         CreatedByAdminId = createdByAdminId;
         CreatedAtUtc = createdAtUtc;
 
@@ -52,6 +54,12 @@ public sealed class User
     public string? NormalizedNickname { get; private set; }
     public string? OrganizerName { get; private set; }
     public string? NormalizedOrganizerName { get; private set; }
+    /// <summary>
+    /// Contact handle (Telegram/Discord/etc) the user provides at registration.
+    /// Required for Player and Organizer (so opponents can reach captains
+    /// outside the platform); null for Admin accounts which don't need it.
+    /// </summary>
+    public string? ContactHandle { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime? ApprovedAtUtc { get; private set; }
     public DateTime? RejectedAtUtc { get; private set; }
@@ -65,6 +73,7 @@ public sealed class User
         string email,
         string passwordHash,
         string nickname,
+        string contactHandle,
         DateTime createdAtUtc)
     {
         return new User(
@@ -76,6 +85,7 @@ public sealed class User
             AccountStatus.Active,
             nickname,
             organizerName: null,
+            contactHandle: NormalizeContactHandle(contactHandle),
             createdByAdminId: null,
             createdAtUtc);
     }
@@ -84,6 +94,7 @@ public sealed class User
         string email,
         string passwordHash,
         string organizerName,
+        string contactHandle,
         DateTime createdAtUtc)
     {
         return new User(
@@ -95,6 +106,7 @@ public sealed class User
             AccountStatus.PendingApproval,
             nickname: null,
             organizerName,
+            contactHandle: NormalizeContactHandle(contactHandle),
             createdByAdminId: null,
             createdAtUtc);
     }
@@ -103,6 +115,7 @@ public sealed class User
         string email,
         string passwordHash,
         string organizerName,
+        string contactHandle,
         Guid createdByAdminId,
         DateTime createdAtUtc)
     {
@@ -115,6 +128,7 @@ public sealed class User
             AccountStatus.Active,
             nickname: null,
             organizerName,
+            contactHandle: NormalizeContactHandle(contactHandle),
             createdByAdminId,
             createdAtUtc);
 
@@ -137,6 +151,7 @@ public sealed class User
             AccountStatus.Active,
             nickname: null,
             organizerName: null,
+            contactHandle: null,
             createdByAdminId: null,
             createdAtUtc);
     }
@@ -156,8 +171,19 @@ public sealed class User
             AccountStatus.Active,
             nickname: null,
             organizerName: null,
+            contactHandle: null,
             createdByAdminId,
             createdAtUtc);
+    }
+
+    public void UpdateContactHandle(string contactHandle)
+    {
+        if (Role == UserRole.Admin)
+        {
+            throw new InvalidOperationException("Admin accounts do not use a contact handle.");
+        }
+
+        ContactHandle = NormalizeContactHandle(contactHandle);
     }
 
     public void Approve(DateTime approvedAtUtc)
@@ -184,7 +210,11 @@ public sealed class User
         RejectedAtUtc = rejectedAtUtc;
     }
 
-    public void ResubmitOrganizerApplication(string organizerName, string passwordHash, DateTime resubmittedAtUtc)
+    public void ResubmitOrganizerApplication(
+        string organizerName,
+        string contactHandle,
+        string passwordHash,
+        DateTime resubmittedAtUtc)
     {
         if (Role != UserRole.Organizer || Status != AccountStatus.Rejected)
         {
@@ -194,6 +224,7 @@ public sealed class User
         Status = AccountStatus.PendingApproval;
         OrganizerName = organizerName;
         NormalizedOrganizerName = NormalizeOptional(organizerName);
+        ContactHandle = NormalizeContactHandle(contactHandle);
         RejectedAtUtc = null;
         CreatedAtUtc = resubmittedAtUtc;
         SetPasswordHash(passwordHash);
@@ -287,5 +318,21 @@ public sealed class User
         return string.IsNullOrWhiteSpace(value)
             ? null
             : value.Trim().ToUpperInvariant();
+    }
+
+    private static string NormalizeContactHandle(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("Contact handle cannot be empty.", nameof(value));
+        }
+
+        var trimmed = value.Trim();
+        if (trimmed.Length > 64)
+        {
+            throw new ArgumentException("Contact handle is too long (max 64 chars).", nameof(value));
+        }
+
+        return trimmed;
     }
 }

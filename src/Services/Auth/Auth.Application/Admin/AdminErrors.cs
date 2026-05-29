@@ -14,4 +14,5 @@ public static class AdminErrors
     public static readonly Error LastAdminDeleteNotAllowed = new("Admin.LastAdminDeleteNotAllowed", "The last active admin cannot be deleted.");
     public static readonly Error PlayerNicknameRequired = new("Admin.PlayerNicknameRequired", "Player nickname is required.");
     public static readonly Error OrganizerNameRequired = new("Admin.OrganizerNameRequired", "Organizer name is required.");
+    public static readonly Error ContactHandleRequired = new("Admin.ContactHandleRequired", "Contact handle is required for player and organizer accounts.");
 }
