@@ -103,6 +103,36 @@ services:
       auth-api:
         condition: service_started
 
+  notification-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: src/Services/Notification/Notification.Api/Notification.Api.csproj
+        DLL_NAME: Notification.Api.dll
+    container_name: tournamentplatform-notification-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ApplyMigrations: "true"
+      ConnectionStrings__NotificationDb: Host=notification-db;Port=5432;Database=notification_db;Username=postgres;Password=postgres
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+      RabbitMq__VirtualHost: /
+      Jwt__Issuer: TournamentPlatform.Auth
+      Jwt__Audience: TournamentPlatform.Services
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET must be set in the environment or local .env file}
+    ports:
+      - "5210:8080"
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth-api:
+        condition: service_started
+
   auth-db:
     image: postgres:16
     container_name: tournamentplatform-auth-db
@@ -154,6 +184,23 @@ services:
       timeout: 5s
       retries: 5
 
+  notification-db:
+    image: postgres:16
+    container_name: tournamentplatform-notification-db
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d notification_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   frontend:
     build:
       context: ./frontend
@@ -165,9 +212,11 @@ services:
       - auth-api
       - tournament-api
       - rating-api
+      - notification-api
     restart: unless-stopped
 
 volumes:
   auth-db-data:
   tournament-db-data:
   rating-db-data:
+  notification-db-data:
