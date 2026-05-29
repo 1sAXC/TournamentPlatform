@@ -14,6 +14,8 @@ export const qk = {
   my: () => [...qk.all, 'my'] as const,
   organizerMine: () => [...qk.all, 'organizer-mine'] as const,
   detail: (id: string) => [...qk.all, 'detail', id] as const,
+  matchDetail: (tournamentId: string, matchId: string) =>
+    [...qk.all, 'match-detail', tournamentId, matchId] as const,
 };
 
 export const useAllTournaments = () =>
@@ -39,6 +41,13 @@ export const useTournament = (id: string | undefined) =>
     queryKey: qk.detail(id ?? ''),
     queryFn: () => tournamentsApi.getById(id!),
     enabled: !!id,
+  });
+
+export const useMatchDetails = (tournamentId: string | undefined, matchId: string | undefined) =>
+  useQuery({
+    queryKey: qk.matchDetail(tournamentId ?? '', matchId ?? ''),
+    queryFn: () => tournamentsApi.getMatchDetails(tournamentId!, matchId!),
+    enabled: !!tournamentId && !!matchId,
   });
 
 function invalidateLists(qc: ReturnType<typeof useQueryClient>) {

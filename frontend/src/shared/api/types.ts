@@ -34,6 +34,53 @@ export interface UserLookupItem {
   email: string;
 }
 
+// ===== Match details (single match view) =====
+export interface MatchTeamMemberDetails {
+  playerId: string;
+  nickname: string;
+  elo: number;
+  isCaptain: boolean;
+  contactHandle: string | null;
+}
+
+export interface MatchTeamDetails {
+  id: string;
+  name: string;
+  captainPlayerId: string;
+  seed: number;
+  averageElo: number;
+  members: MatchTeamMemberDetails[];
+}
+
+export interface MatchOrganizerDetails {
+  organizerId: string;
+  organizerName: string | null;
+  contactHandle: string | null;
+}
+
+export interface MatchDetailsResponse {
+  tournamentId: string;
+  tournamentTitle: string;
+  tournamentDescription: string | null;
+  disciplineCode: string;
+  format: string;
+  teamSize: number;
+  tournamentStatus: TournamentStatus | string;
+  matchId: string;
+  matchNumber: number;
+  roundNumber: number;
+  matchStatus: string;
+  winnerScore: number | null;
+  loserScore: number | null;
+  winnerTeamId: string | null;
+  createdAtUtc: string;
+  completedAtUtc: string | null;
+  organizer: MatchOrganizerDetails;
+  teamA: MatchTeamDetails | null;
+  teamB: MatchTeamDetails | null;
+  canSeeContacts: boolean;
+}
+
 // ===== Notifications =====
 export type NotificationKind = 'MatchCreated';
 

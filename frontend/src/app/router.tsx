@@ -24,6 +24,9 @@ import { AdminApplicationsPage } from '@/pages/admin/AdminApplicationsPage';
 import { AdminTournamentsPage } from '@/pages/admin/AdminTournamentsPage';
 import { AdminProfilePage } from '@/pages/admin/AdminProfilePage';
 
+import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
+import { MatchDetailPage } from '@/pages/match/MatchDetailPage';
+
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 const router = createBrowserRouter([
@@ -51,6 +54,8 @@ const router = createBrowserRouter([
     children: [
       { path: '/tournaments', element: <TournamentsCatalogPage /> },
       { path: '/tournaments/:id', element: <TournamentDetailPage /> },
+      { path: '/tournaments/:tournamentId/matches/:matchId', element: <MatchDetailPage /> },
+      { path: '/notifications', element: <NotificationsPage /> },
     ],
   },
   {

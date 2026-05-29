@@ -83,9 +83,19 @@ export function NotificationBell() {
           {isLoading ? (
             <div style={{ padding: 16, fontSize: 12, color: 'var(--muted)' }}>Загрузка…</div>
           ) : items.length === 0 ? (
-            <div style={{ padding: 16, fontSize: 12, color: 'var(--muted)' }}>
-              Здесь будут появляться уведомления о новых матчах и других событиях.
-            </div>
+            <>
+              <div style={{ padding: 16, fontSize: 12, color: 'var(--muted)' }}>
+                Здесь будут появляться уведомления о новых матчах и других событиях.
+              </div>
+              <div className="user-menu-foot">
+                <button
+                  className="user-menu-item"
+                  onClick={() => { setOpen(false); navigate('/notifications'); }}
+                >
+                  <span>Посмотреть все</span>
+                </button>
+              </div>
+            </>
           ) : (
             <div className="col" style={{ gap: 0 }}>
               {items.map((item) => {
@@ -138,6 +148,14 @@ export function NotificationBell() {
                   </button>
                 );
               })}
+              <div className="user-menu-foot">
+                <button
+                  className="user-menu-item"
+                  onClick={() => { setOpen(false); navigate('/notifications'); }}
+                >
+                  <span>Посмотреть все</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
