@@ -3,9 +3,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Application.Notifications.Abstractions;
 using Notification.Application.Notifications.Services;
+using Notification.Infrastructure.Messaging;
 using Notification.Infrastructure.Persistence;
 using Notification.Infrastructure.Persistence.Repositories;
+using TournamentPlatform.Contracts.Events;
 using TournamentPlatform.Messaging.Abstractions;
+using TournamentPlatform.Messaging.DependencyInjection;
 
 namespace Notification.Infrastructure.DependencyInjection;
 
@@ -26,10 +29,10 @@ public static class NotificationInfrastructureServiceCollectionExtensions
         services.AddScoped<IInboxMessageStore, NotificationInboxMessageStore>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IRoundCreatedFanout, RoundCreatedFanout>();
 
-        // Note: RoundCreatedEvent consumer is registered in Phase 5. For now
-        // the service exposes only the read API; no integration consumers
-        // are wired so the message bus is connected but idle for this DB.
+        // RabbitMQ consumers
+        services.AddRabbitMqConsumer<RoundCreatedEvent, NotificationRoundCreatedConsumer>("notification.round-created");
 
         return services;
     }
