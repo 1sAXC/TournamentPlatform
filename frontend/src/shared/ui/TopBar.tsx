@@ -62,7 +62,10 @@ export function TopBar({ nav, showProfile = true }: Props) {
         ))}
       </nav>
       <div className="spacer" />
-      {showProfile && user && user.accountStatus === 'Active' && <NotificationBell />}
+      {/* Notifications are only ever sent to match participants (see
+          RoundCreatedFanout on the backend) — organizers and admins are
+          never recipients, so we don't render the bell for them. */}
+      {showProfile && user && user.accountStatus === 'Active' && role === 'Player' && <NotificationBell />}
       {showProfile && user && (
         <div className="user-wrap" ref={wrapRef}>
           <button

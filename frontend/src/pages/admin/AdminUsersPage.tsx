@@ -128,7 +128,7 @@ export function AdminUsersPage() {
           items.length === 0 ? <EmptyState title="Ничего не найдено" /> : (
             <table className="tbl">
               <thead>
-                <tr><th>Пользователь</th><th>E-mail</th><th>Роль</th><th>Статус</th><th>Создан</th><th /></tr>
+                <tr><th>Пользователь</th><th>E-mail</th><th>Контакт</th><th>Роль</th><th>Статус</th><th>Создан</th><th /></tr>
               </thead>
               <tbody>
                 {items.map((u) => {
@@ -148,6 +148,9 @@ export function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="mono" style={{ fontSize: 11.5 }}>{u.email}</td>
+                      <td className="mono" style={{ fontSize: 11.5 }}>
+                        {u.contactHandle ?? <span style={{ color: 'var(--muted-2)' }}>—</span>}
+                      </td>
                       <td><RoleBadge role={u.role} /></td>
                       <td>
                         <Badge tone={statusTone}>
