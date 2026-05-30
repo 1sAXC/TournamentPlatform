@@ -159,7 +159,7 @@ export function TournamentDetailPage() {
             {data.participants.length === 0 ? (
               <EmptyState title="Пока никого нет">Будьте первым</EmptyState>
             ) : (
-              <div className="col" style={{ gap: 6 }}>
+              <div className="col" style={{ gap: 6, maxHeight: 360, overflowY: 'auto' }}>
                 {data.participants.filter(p => p.isActive).map((p) => (
                   <div key={p.id} className="row" style={{ padding: '8px 10px', background: 'var(--surface-2)', borderRadius: 5, gap: 10 }}>
                     <Avatar name={p.playerNickname} size="sm" variant="plr" />
@@ -173,7 +173,7 @@ export function TournamentDetailPage() {
 
           {data.teams.length > 0 && (
             <Card title={`Команды (${data.teams.length})`}>
-              <div className="col" style={{ gap: 8 }}>
+              <div className="col" style={{ gap: 8, maxHeight: 420, overflowY: 'auto' }}>
                 {data.teams.map((team) => (
                   <div key={team.id} style={{ padding: 10, background: 'var(--surface-2)', borderRadius: 5 }}>
                     <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
