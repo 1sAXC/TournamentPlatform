@@ -203,22 +203,24 @@ export function OrgManagePage() {
                 <Alert kind="info" icon="cal">Турнир ещё не начался. Таблица появится после старта.</Alert>
               </div>
             ) : (
-              <table className="tbl">
-                <thead>
-                  <tr><th>#</th><th>Команда</th><th>В</th><th>П</th><th>Раунды</th></tr>
-                </thead>
-                <tbody>
-                  {standings.map((s, i) => (
-                    <tr key={s.teamId}>
-                      <td className="mono" style={{ color: i === 0 ? 'var(--accent)' : 'var(--muted)' }}>{i + 1}</td>
-                      <td className="strong">{s.name}</td>
-                      <td className="mono" style={{ color: 'var(--success)' }}>{s.wins}</td>
-                      <td className="mono">{s.losses}</td>
-                      <td className="mono">{s.roundsFor}–{s.roundsAgainst}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div style={{ maxHeight: 480, overflowY: 'auto' }}>
+                <table className="tbl">
+                  <thead>
+                    <tr><th>#</th><th>Команда</th><th>В</th><th>П</th><th>Раунды</th></tr>
+                  </thead>
+                  <tbody>
+                    {standings.map((s, i) => (
+                      <tr key={s.teamId}>
+                        <td className="mono" style={{ color: i === 0 ? 'var(--accent)' : 'var(--muted)' }}>{i + 1}</td>
+                        <td className="strong">{s.name}</td>
+                        <td className="mono" style={{ color: 'var(--success)' }}>{s.wins}</td>
+                        <td className="mono">{s.losses}</td>
+                        <td className="mono">{s.roundsFor}–{s.roundsAgainst}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Card>
 
