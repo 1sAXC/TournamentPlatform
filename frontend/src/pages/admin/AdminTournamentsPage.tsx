@@ -14,6 +14,7 @@ import { STATUS_LABEL, STATUS_TONE, disciplineLabel } from '@/shared/lib/discipl
 import { formatDate } from '@/shared/lib/formatters';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
+import { AdminCreateTournamentModal } from './AdminCreateTournamentModal';
 
 export function AdminTournamentsPage() {
   const { data, isLoading } = useAllTournaments();
@@ -24,6 +25,7 @@ export function AdminTournamentsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [discipline, setDiscipline] = useState('all');
+  const [createOpen, setCreateOpen] = useState(false);
 
   const all = data ?? [];
   const counts = useMemo(() => ({
@@ -65,7 +67,14 @@ export function AdminTournamentsPage() {
           <h1>Все турниры</h1>
           <div className="sub">Администрирование турниров платформы</div>
         </div>
+        <div className="actions">
+          <button className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+            <Icon name="plus" size={14} /> Создать турнир
+          </button>
+        </div>
       </div>
+
+      {createOpen && <AdminCreateTournamentModal onClose={() => setCreateOpen(false)} />}
 
       <div className="stat-row" style={{ marginBottom: 18 }}>
         <Stat label="Всего" value={counts.total} />
