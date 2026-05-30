@@ -13,9 +13,9 @@ import { Avatar } from '@/shared/ui/Avatar';
 import { Icon } from '@/shared/ui/Icon';
 import { Alert } from '@/shared/ui/Alert';
 import { EmptyState } from '@/shared/ui/EmptyState';
-import { TournamentBracket } from '@/shared/ui/TournamentBracket';
-import { buildBracketRounds } from '@/shared/lib/bracket';
-import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel } from '@/shared/lib/disciplines';
+import { TournamentBracketView } from '@/shared/ui/TournamentBracketView';
+import { buildBracketSections } from '@/shared/lib/bracket';
+import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel, plannedRoundCount } from '@/shared/lib/disciplines';
 import { formatDate } from '@/shared/lib/formatters';
 import { formatMatchScore } from '@/shared/lib/matchScore';
 import { showToast } from '@/shared/ui/Toast';
@@ -45,10 +45,13 @@ export function TournamentDetailPage() {
   const currentRound = data.rounds.find(r => r.number === data.currentRoundNumber);
   const standings = computeStandings(data);
 
-  // Backend's `canLeave` flag is too permissive (it's based on tournament
-  // status only and doesn't check whether the current user is actually
-  // registered). Gate the leave button on the participant list instead.
+  // Show the leave button only when both conditions hold: the user is
+  // actually in the active participant list (backend's `canLeave` doesn't
+  // check that) AND the tournament is in a state where leaving is meaningful
+  // (`canLeave` covers this — false once status moves past Full, e.g. into
+  // InProgress, Completed, or Cancelled).
   const isRegistered = !!user && data.participants.some(p => p.playerId === user.userId && p.isActive);
+  const canLeave = isRegistered && data.canLeave;
 
   async function onRefresh() {
     setRefreshing(true);
@@ -115,7 +118,7 @@ export function TournamentDetailPage() {
                 {register.isPending ? 'Записываем…' : 'Записаться на турнир'}
               </button>
             )}
-            {role === 'Player' && isRegistered && (
+            {role === 'Player' && canLeave && (
               <button className="btn btn-danger btn-lg" onClick={onLeave} disabled={unregister.isPending}>
                 Покинуть турнир
               </button>
@@ -128,12 +131,17 @@ export function TournamentDetailPage() {
             label="Участников"
             tone="accent"
           />
-          <PStat value={data.rounds.length || data.swissRounds || '—'} label="Раундов" />
           <PStat
-            value={data.startedAtUtc ? formatDate(data.startedAtUtc) : '—'}
-            label={data.startedAtUtc ? 'Старт' : 'Регистрация'}
-            tone={data.startedAtUtc ? 'warning' : undefined}
+            value={
+              data.rounds.length
+              || plannedRoundCount(data.format, data.maxPlayers, data.teamSize, data.swissRounds)
+              || '—'
+            }
+            label="Раундов"
           />
+          {data.startedAtUtc && (
+            <PStat value={formatDate(data.startedAtUtc)} label="Старт" tone="warning" />
+          )}
         </div>
       </div>
 
@@ -271,7 +279,7 @@ export function TournamentDetailPage() {
               {data.teams.length} команд · {data.rounds.length} раундов · {formatLabel(data.format)}
             </span>
           </div>
-          <TournamentBracket rounds={buildBracketRounds(data, (m) => goToMatch(m.id))} />
+          <TournamentBracketView sections={buildBracketSections(data, (m) => goToMatch(m.id))} />
         </div>
       )}
     </ScreenFrame>

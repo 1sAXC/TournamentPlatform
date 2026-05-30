@@ -6,5 +6,6 @@ public enum BracketType
     Upper,
     Lower,
     Swiss,
-    GrandFinal
+    GrandFinal,
+    ThirdPlace
 }

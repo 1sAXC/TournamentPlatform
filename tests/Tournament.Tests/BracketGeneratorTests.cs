@@ -25,12 +25,24 @@ public sealed class BracketGeneratorTests
             await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
         }
 
-        Assert.Equal(2, tournament.Rounds.Count);
+        // Completing the semifinal produces both the final and the 3rd-place
+        // match in parallel (same Number, different BracketType).
+        Assert.Equal(3, tournament.Rounds.Count);
         Assert.Equal(2, tournament.CurrentRoundNumber);
-        var final = tournament.Rounds.Single(round => round.Number == 2);
+        var final = tournament.Rounds.Single(round => round.Number == 2 && round.BracketType == BracketType.Main);
+        var thirdPlace = tournament.Rounds.Single(round => round.Number == 2 && round.BracketType == BracketType.ThirdPlace);
+
         var finalMatch = final.Matches.Single();
         finalMatch.Complete(finalMatch.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
         await generator.HandleMatchCompletedAsync(tournament, finalMatch, CancellationToken.None);
+
+        // The tournament only completes once both the final and the 3rd-place
+        // match are done.
+        Assert.NotEqual(TournamentStatus.Completed, tournament.Status);
+
+        var thirdMatch = thirdPlace.Matches.Single();
+        thirdMatch.Complete(thirdMatch.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
+        await generator.HandleMatchCompletedAsync(tournament, thirdMatch, CancellationToken.None);
 
         Assert.Equal(TournamentStatus.Completed, tournament.Status);
         Assert.Single(outbox.Events.OfType<TournamentCompletedEvent>());
@@ -146,19 +158,30 @@ public sealed class BracketGeneratorTests
     }
 
     [Fact]
-    public async Task DoubleElimination_TeamEliminatedAfterSecondLoss()
+    public async Task DoubleElimination_TwoTeams_UpperWinnerTakesTournamentInGrandFinal()
     {
         var generator = new DoubleEliminationBracketGenerator(new InMemoryOutboxWriter());
         var tournament = TournamentWithTeams(TournamentFormat.DoubleElimination, 2);
         await generator.GenerateInitialAsync(tournament, tournament.Teams.ToArray(), CancellationToken.None);
-        var loser = tournament.Rounds.Single().Matches.Single().TeamBId!.Value;
 
-        tournament.DoubleEliminationStandings.Single(s => s.TeamId == loser).AddLoss();
-        var match = tournament.Rounds.Single().Matches.Single();
-        match.Complete(match.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
-        await generator.HandleMatchCompletedAsync(tournament, match, CancellationToken.None);
+        // Play UB R1. The loser drops to the LB position (which, for N=2, is
+        // empty) and goes straight into the Grand Final as the LB champion.
+        var ubMatch = tournament.Rounds.Single(r => r.BracketType == BracketType.Upper).Matches.Single();
+        var loserId = ubMatch.TeamBId!.Value;
+        ubMatch.Complete(ubMatch.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
+        await generator.HandleMatchCompletedAsync(tournament, ubMatch, CancellationToken.None);
 
-        Assert.True(tournament.DoubleEliminationStandings.Single(s => s.TeamId == loser).IsEliminated);
+        Assert.False(tournament.DoubleEliminationStandings.Single(s => s.TeamId == loserId).IsEliminated);
+
+        var grandFinal = tournament.Rounds.Single(r => r.BracketType == BracketType.GrandFinal && r.Number == 1);
+        var gfMatch = grandFinal.Matches.Single();
+        // The UB champion is seeded first (TeamA). When they win the GF the
+        // LB champion takes their second loss and the tournament is over —
+        // no reset is needed.
+        gfMatch.Complete(gfMatch.TeamAId!.Value, 1, 0, 1, 0, false, DateTime.UtcNow);
+        await generator.HandleMatchCompletedAsync(tournament, gfMatch, CancellationToken.None);
+
+        Assert.True(tournament.DoubleEliminationStandings.Single(s => s.TeamId == loserId).IsEliminated);
         Assert.Equal(TournamentStatus.Completed, tournament.Status);
     }
 

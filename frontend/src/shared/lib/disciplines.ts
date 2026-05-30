@@ -22,6 +22,28 @@ export function formatLabel(code: string): string {
   return FORMATS.find(f => f.code === code)?.label ?? code;
 }
 
+// Planned round count derived from capacity, used before a tournament starts
+// and its bracket is generated. Counts the number of distinct rounds played:
+//   SE: log2(N) main rounds + a 3rd-place match (same number as the final
+//       but a separate round); we count it once since it's a real round.
+//   DE: R UB rounds + 2(R-1) LB rounds + 1 GF (the optional reset isn't
+//       counted — it depends on who wins).
+//   Swiss: configured separately.
+export function plannedRoundCount(
+  format: string,
+  maxPlayers: number,
+  teamSize: number,
+  swissRounds?: number | null,
+): number | null {
+  if (format === 'Swiss') return swissRounds ?? null;
+  const teams = Math.floor(maxPlayers / Math.max(teamSize, 1));
+  if (teams < 2) return null;
+  const r = Math.ceil(Math.log2(teams));
+  if (format === 'SingleElimination') return r + (r >= 2 ? 1 : 0);
+  if (format === 'DoubleElimination') return r + Math.max(0, 2 * (r - 1)) + 1;
+  return null;
+}
+
 export const STATUS_LABEL: Record<string, string> = {
   Open: 'Открыт',
   Full: 'Заполнен',

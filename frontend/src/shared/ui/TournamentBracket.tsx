@@ -16,9 +16,17 @@ export interface BracketRound {
   matches: BracketMatch[];
 }
 
-interface Props { rounds: BracketRound[]; }
+interface Props {
+  rounds: BracketRound[];
+  // 'fold' draws fold-style connectors assuming each round halves the previous
+  //   (classic SE / DE upper bracket).
+  // 'linear' just lays out columns evenly with no connectors — for tracks
+  //   where round-to-round size doesn't follow halving (DE lower bracket
+  //   absorption rounds, single-match Grand Final / 3rd-place tracks).
+  layout?: 'fold' | 'linear';
+}
 
-export function TournamentBracket({ rounds }: Props) {
+export function TournamentBracket({ rounds, layout = 'fold' }: Props) {
   if (rounds.length === 0) return null;
 
   const matchH = 64;
@@ -28,19 +36,30 @@ export function TournamentBracket({ rounds }: Props) {
   const headH = 32;
   const pad = 16;
 
-  const baseCount = rounds[0].matches.length || 1;
-  const innerH = baseCount * matchH + (baseCount - 1) * matchGap;
+  const maxCount = rounds.reduce((acc, r) => Math.max(acc, r.matches.length), 1);
+  const innerH = maxCount * matchH + (maxCount - 1) * matchGap;
   const totalH = headH + innerH + pad * 2;
   const totalW = rounds.length * colW + (rounds.length - 1) * colGap + pad * 2;
 
   const positions: number[][] = [];
-  positions[0] = rounds[0].matches.map((_, i) => pad + headH + i * (matchH + matchGap) + matchH / 2);
-  for (let r = 1; r < rounds.length; r++) {
-    positions[r] = rounds[r].matches.map((_, i) => {
-      const p0 = positions[r - 1][i * 2];
-      const p1 = positions[r - 1][i * 2 + 1] ?? p0;
-      return (p0 + p1) / 2;
-    });
+  if (layout === 'fold') {
+    positions[0] = rounds[0].matches.map((_, i) => pad + headH + i * (matchH + matchGap) + matchH / 2);
+    for (let r = 1; r < rounds.length; r++) {
+      positions[r] = rounds[r].matches.map((_, i) => {
+        const p0 = positions[r - 1][i * 2];
+        const p1 = positions[r - 1][i * 2 + 1] ?? p0;
+        return (p0 + p1) / 2;
+      });
+    }
+  } else {
+    // Linear: each column's matches are evenly spaced and vertically centered
+    // around the section height. No connectors get drawn.
+    for (let r = 0; r < rounds.length; r++) {
+      const n = rounds[r].matches.length;
+      const colH = n * matchH + (n - 1) * matchGap;
+      const top = pad + headH + (innerH - colH) / 2;
+      positions[r] = rounds[r].matches.map((_, i) => top + i * (matchH + matchGap) + matchH / 2);
+    }
   }
 
   const xLeft = (r: number) => pad + r * (colW + colGap);
@@ -57,7 +76,7 @@ export function TournamentBracket({ rounds }: Props) {
           </defs>
           <rect width={totalW} height={totalH} fill="url(#bracket-grid)" color="var(--border)" />
 
-          {rounds.slice(1).map((round, rIdx) => {
+          {layout === 'fold' && rounds.slice(1).map((round, rIdx) => {
             const r = rIdx + 1;
             return round.matches.map((m, i) => {
               const childY = positions[r][i];

@@ -14,10 +14,10 @@ import { Card } from '@/shared/ui/Card';
 import { Modal } from '@/shared/ui/Modal';
 import { Field } from '@/shared/ui/Field';
 import { PStat } from '@/shared/ui/PStat';
-import { TournamentBracket } from '@/shared/ui/TournamentBracket';
+import { TournamentBracketView } from '@/shared/ui/TournamentBracketView';
 import type { MatchResponse, TournamentDetailsResponse } from '@/shared/api/types';
-import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel } from '@/shared/lib/disciplines';
-import { buildBracketRounds } from '@/shared/lib/bracket';
+import { STATUS_LABEL, STATUS_TONE, disciplineLabel, formatLabel, plannedRoundCount } from '@/shared/lib/disciplines';
+import { buildBracketSections } from '@/shared/lib/bracket';
 import { formatDate } from '@/shared/lib/formatters';
 import { formatMatchScore } from '@/shared/lib/matchScore';
 import { showToast } from '@/shared/ui/Toast';
@@ -60,7 +60,7 @@ export function OrgManagePage() {
     });
   }
 
-  const bracketRounds = buildBracketRounds(data, (m) => {
+  const bracketSections = buildBracketSections(data, (m) => {
     // For organizer: clicking an active match opens the result modal;
     // clicking a completed match navigates to the public match page so
     // the organizer can see contacts and rosters without leaving the
@@ -128,12 +128,17 @@ export function OrgManagePage() {
             label="Участников"
             tone="accent"
           />
-          <PStat value={data.rounds.length || data.swissRounds || '—'} label="Раундов" />
           <PStat
-            value={data.startedAtUtc ? formatDate(data.startedAtUtc) : '—'}
-            label={data.startedAtUtc ? 'Старт' : 'Регистрация'}
-            tone={data.startedAtUtc ? 'warning' : undefined}
+            value={
+              data.rounds.length
+              || plannedRoundCount(data.format, data.maxPlayers, data.teamSize, data.swissRounds)
+              || '—'
+            }
+            label="Раундов"
           />
+          {data.startedAtUtc && (
+            <PStat value={formatDate(data.startedAtUtc)} label="Старт" tone="warning" />
+          )}
         </div>
       </div>
 
@@ -264,7 +269,7 @@ export function OrgManagePage() {
         </div>
       </div>
 
-      {data.format !== 'Swiss' && bracketRounds.length > 0 && (
+      {data.format !== 'Swiss' && bracketSections.length > 0 && (
         <>
           <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
             <h3 style={{ fontSize: 14 }}>Турнирная сетка</h3>
@@ -272,7 +277,7 @@ export function OrgManagePage() {
               {data.teams.length} команд · {data.rounds.length} раундов · {formatLabel(data.format)}
             </span>
           </div>
-          <TournamentBracket rounds={bracketRounds} />
+          <TournamentBracketView sections={bracketSections} />
         </>
       )}
 
