@@ -277,6 +277,7 @@ export interface AdminUserResponse {
   status: string;
   nickname?: string | null;
   organizerName?: string | null;
+  contactHandle?: string | null;
   createdAtUtc: string;
   approvedAtUtc?: string | null;
   rejectedAtUtc?: string | null;
