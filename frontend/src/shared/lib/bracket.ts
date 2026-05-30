@@ -3,8 +3,10 @@ import type { MatchResponse, TournamentDetailsResponse } from '@/shared/api/type
 import { roundLabel } from '@/shared/lib/bracketLabels';
 
 // Builds the bracket view-model from a tournament's rounds. Pass `onMatchClick`
-// to make editable matches clickable (organizer view); omit it for a
-// read-only bracket (public view).
+// to make cells clickable — receivers can navigate to the match page (public
+// view) or open an editor modal (organizer view). The callback decides what
+// to do per match; this helper just wires it through. Cells with no teams
+// yet (status 'tbd') are never clickable.
 export function buildBracketRounds(
   data: TournamentDetailsResponse,
   onMatchClick?: (m: MatchResponse) => void,
@@ -31,7 +33,7 @@ export function buildBracketRounds(
       status: m.status === 'Completed' ? 'done' as const
         : m.teamAId && m.teamBId ? 'pending' as const
           : 'tbd' as const,
-      onClick: !onMatchClick || m.status === 'Completed' ? undefined : () => onMatchClick(m),
+      onClick: !onMatchClick || !m.teamAId || !m.teamBId ? undefined : () => onMatchClick(m),
     })),
   }));
 }

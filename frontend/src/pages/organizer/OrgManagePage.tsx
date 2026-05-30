@@ -61,7 +61,15 @@ export function OrgManagePage() {
   }
 
   const bracketRounds = buildBracketRounds(data, (m) => {
-    if (canManage && m.status !== 'Completed' && m.teamAId && m.teamBId) setResultFor(m);
+    // For organizer: clicking an active match opens the result modal;
+    // clicking a completed match navigates to the public match page so
+    // the organizer can see contacts and rosters without leaving the
+    // tournament context.
+    if (canManage && m.status !== 'Completed' && m.teamAId && m.teamBId) {
+      setResultFor(m);
+    } else if (m.status === 'Completed' && id) {
+      navigate(`/tournaments/${id}/matches/${m.id}`);
+    }
   });
 
   const standings = computeStandings(data);

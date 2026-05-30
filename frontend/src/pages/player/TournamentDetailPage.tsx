@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { playerNav, organizerNav, adminNav } from '@/features/navigation';
 import {
@@ -25,9 +25,16 @@ export function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError, refetch, isFetching } = useTournament(id);
   const { role, user } = useAuth();
+  const navigate = useNavigate();
   const register = useRegisterForTournament();
   const unregister = useUnregisterFromTournament();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Navigation to the detailed match page is identical from any "click a
+  // match" surface — bracket cell or "Текущий раунд" card.
+  const goToMatch = (matchId: string) => {
+    if (id) navigate(`/tournaments/${id}/matches/${matchId}`);
+  };
 
   const nav = role === 'Admin' ? adminNav : role === 'Organizer' ? organizerNav : playerNav;
 
@@ -213,8 +220,19 @@ export function TournamentDetailPage() {
                     const teamA = data.teams.find(t => t.id === m.teamAId)?.name ?? '—';
                     const teamB = data.teams.find(t => t.id === m.teamBId)?.name ?? '—';
                     const done = m.status === 'Completed';
+                    const clickable = !!(m.teamAId && m.teamBId);
                     return (
-                      <div key={m.id} className="match-card" style={{ marginBottom: 0 }}>
+                      <div
+                        key={m.id}
+                        className="match-card"
+                        style={{
+                          marginBottom: 0,
+                          cursor: clickable ? 'pointer' : 'default',
+                        }}
+                        onClick={clickable ? () => goToMatch(m.id) : undefined}
+                        role={clickable ? 'button' : undefined}
+                        tabIndex={clickable ? 0 : undefined}
+                      >
                         <div className="mc-head">
                           <span className="mc-id">Матч {m.matchNumber}</span>
                           <Badge tone={done ? 'done' : 'pending'} />
@@ -253,7 +271,7 @@ export function TournamentDetailPage() {
               {data.teams.length} команд · {data.rounds.length} раундов · {formatLabel(data.format)}
             </span>
           </div>
-          <TournamentBracket rounds={buildBracketRounds(data)} />
+          <TournamentBracket rounds={buildBracketRounds(data, (m) => goToMatch(m.id))} />
         </div>
       )}
     </ScreenFrame>

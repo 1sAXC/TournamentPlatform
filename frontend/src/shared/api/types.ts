@@ -290,6 +290,7 @@ export interface CreateAdminUserRequest {
   password: string;
   nickname?: string | null;
   organizerName?: string | null;
+  contactHandle?: string | null;
 }
 
 export interface UpdateUserRoleRequest {

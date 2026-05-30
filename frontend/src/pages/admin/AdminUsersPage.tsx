@@ -28,14 +28,25 @@ const userSchema = z.object({
     .regex(/[0-9]/, 'Нужна хотя бы одна цифра'),
   nickname: z.string().optional(),
   organizerName: z.string().optional(),
+  contactHandle: z.string().optional(),
 }).superRefine((d, ctx) => {
   if (d.role === 'Organizer') {
     if (!d.organizerName || d.organizerName.trim().length < 3) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['organizerName'], message: 'Минимум 3 символа' });
     }
-  } else {
+  } else if (d.role === 'Player') {
     if (!d.nickname || d.nickname.trim().length < 3) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['nickname'], message: 'Минимум 3 символа' });
+    }
+  }
+  // Player and Organizer require a contact handle (mirrors the backend
+  // Admin.ContactHandleRequired validation in AdminUsersService).
+  // Admin accounts have no contact handle by design.
+  if (d.role !== 'Admin') {
+    if (!d.contactHandle || d.contactHandle.trim().length < 1) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contactHandle'], message: 'Укажите контакт' });
+    } else if (d.contactHandle.trim().length > 64) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contactHandle'], message: 'Максимум 64 символа' });
     }
   }
 });
@@ -207,7 +218,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, watch, setValue, setError: setFieldError, formState: { errors } } = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
-    defaultValues: { role: 'Player', email: '', password: '', nickname: '', organizerName: '' },
+    defaultValues: { role: 'Player', email: '', password: '', nickname: '', organizerName: '', contactHandle: '' },
   });
   const role = watch('role');
 
@@ -219,6 +230,10 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
       password: values.password,
       nickname: values.role === 'Organizer' ? null : values.nickname || null,
       organizerName: values.role === 'Organizer' ? values.organizerName || null : null,
+      // Backend requires a non-empty contact handle for Player and Organizer
+      // accounts (see Admin.ContactHandleRequired). Admin accounts must have
+      // null — sending an empty string would still trigger validation.
+      contactHandle: values.role === 'Admin' ? null : (values.contactHandle ?? '').trim() || null,
     };
     create.mutate(payload, {
       onSuccess: () => { showToast('success', 'Пользователь создан'); onClose(); },
@@ -279,14 +294,23 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
           <Field label="Название организации" error={errors.organizerName?.message}>
             <input className="input" {...register('organizerName')} />
           </Field>
-        ) : (
+        ) : role === 'Player' ? (
           <Field label="Никнейм" hint="3–24 символа" error={errors.nickname?.message}>
             <input className="input" {...register('nickname')} />
           </Field>
-        )}
+        ) : null}
         <Field label="E-mail" error={errors.email?.message}>
           <input className="input" type="email" {...register('email')} />
         </Field>
+        {role !== 'Admin' && (
+          <Field
+            label="Контакт для связи"
+            hint="Telegram, Discord и т.п. — увидят участники матча"
+            error={errors.contactHandle?.message}
+          >
+            <input className="input" placeholder="@handle" {...register('contactHandle')} />
+          </Field>
+        )}
         <Field label="Пароль" error={errors.password?.message}>
           <div className="row" style={{ gap: 6 }}>
             <input className="input" type="text" style={{ flex: 1 }} {...register('password')} />
