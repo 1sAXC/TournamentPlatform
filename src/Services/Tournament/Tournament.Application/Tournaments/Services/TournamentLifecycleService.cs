@@ -2,7 +2,6 @@ using Tournament.Application.Brackets;
 using Tournament.Application.TeamBalancer;
 using Tournament.Application.Tournaments.Abstractions;
 using Tournament.Domain.Tournaments;
-using TournamentPlatform.Contracts.Events;
 using TournamentPlatform.Contracts.Enums;
 
 namespace Tournament.Application.Tournaments.Services;
@@ -10,8 +9,7 @@ namespace Tournament.Application.Tournaments.Services;
 public sealed class TournamentLifecycleService(
     IPlayerRatingProjectionRepository ratingProjections,
     ITeamBalancer teamBalancer,
-    IBracketGeneratorFactory bracketGeneratorFactory,
-    IOutboxWriter outboxWriter) : ITournamentLifecycleService
+    IBracketGeneratorFactory bracketGeneratorFactory) : ITournamentLifecycleService
 {
     private const int DefaultElo = 1000;
 
@@ -44,9 +42,7 @@ public sealed class TournamentLifecycleService(
             await generator.GenerateInitialAsync(tournament, teams, cancellationToken);
         }
 
-        var startedAtUtc = DateTime.UtcNow;
-        tournament.Start(startedAtUtc);
-        outboxWriter.Add(ToTournamentStartedEvent(tournament, startedAtUtc));
+        tournament.Start(DateTime.UtcNow);
     }
 
     private async Task<IReadOnlyList<Team>> EnsureTeamsAsync(
@@ -101,56 +97,5 @@ public sealed class TournamentLifecycleService(
 
         tournament.AddTeams(teams);
         return teams;
-    }
-
-    private static TournamentStartedEvent ToTournamentStartedEvent(
-        Domain.Tournaments.Tournament tournament,
-        DateTime startedAtUtc)
-    {
-        return new TournamentStartedEvent
-        {
-            TournamentId = tournament.Id,
-            OrganizerId = tournament.OrganizerId,
-            TournamentName = tournament.Title,
-            DisciplineCode = tournament.DisciplineCode,
-            Format = tournament.Format.ToString(),
-            TournamentFormat = tournament.Format.ToString(),
-            TeamSize = tournament.TeamSize,
-            StartedAtUtc = startedAtUtc,
-            Teams = tournament.Teams
-                .OrderBy(team => team.Seed)
-                .Select(team => new EventTeamDto
-                {
-                    TeamId = team.Id,
-                    Name = team.Name,
-                    CaptainUserId = team.CaptainPlayerId,
-                    Members = team.Members.Select(member => new EventTeamMemberDto
-                    {
-                        UserId = member.PlayerId,
-                        Nickname = member.Nickname,
-                        Elo = member.Elo,
-                        IsCaptain = member.PlayerId == team.CaptainPlayerId
-                    }).ToArray()
-                }).ToArray(),
-            Rounds = tournament.Rounds
-                .OrderBy(round => round.Number)
-                .Select(round => new EventRoundDto
-                {
-                    RoundId = round.Id,
-                    Number = round.Number,
-                    BracketType = round.BracketType.ToString(),
-                    Matches = round.Matches
-                        .OrderBy(match => match.MatchNumber)
-                        .Select(match => new EventMatchDto
-                        {
-                            MatchId = match.Id,
-                            MatchNumber = match.MatchNumber,
-                            TeamAId = match.TeamAId,
-                            TeamBId = match.TeamBId
-                        })
-                        .ToArray()
-                })
-                .ToArray()
-        };
     }
 }

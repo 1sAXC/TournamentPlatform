@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 using Tournament.Application.Tournaments.Abstractions;
 using Tournament.Application.Tournaments.Dto;
 using Tournament.Application.Tournaments.Exceptions;
-using TournamentPlatform.Contracts.Events;
 using TournamentPlatform.Contracts.Enums;
 using TournamentPlatform.Shared.Common;
 
@@ -11,7 +10,6 @@ namespace Tournament.Application.Tournaments.Services;
 public sealed class TournamentService(
     ITournamentRepository tournaments,
     IUserProjectionRepository users,
-    IOutboxWriter outboxWriter,
     ITournamentLifecycleService lifecycleService) : ITournamentService
 {
     private const int MaxTournamentPlayers = 120;
@@ -421,14 +419,6 @@ public sealed class TournamentService(
             match.Cancel();
         }
 
-        outboxWriter.Add(new TournamentCancelledEvent
-        {
-            TournamentId = tournament.Id,
-            TournamentName = tournament.Title,
-            DisciplineCode = tournament.DisciplineCode,
-            CancelledAtUtc = now
-        });
-
         await tournaments.SaveChangesAsync(cancellationToken);
         return Result<TournamentDetailsResponse>.Success(ToDetailsResponse(tournament));
     }
@@ -542,15 +532,6 @@ public sealed class TournamentService(
             var now = DateTime.UtcNow;
             tournament.RegisterParticipant(currentUser.Id, currentUser.Nickname!, now);
 
-            outboxWriter.Add(new PlayerRegisteredToTournamentEvent
-            {
-                TournamentId = tournament.Id,
-                PlayerId = currentUser.Id,
-                PlayerNickname = currentUser.Nickname!,
-                DisciplineCode = tournament.DisciplineCode,
-                RegisteredAtUtc = now
-            });
-
             if (tournament.ActiveParticipantsCount == tournament.MaxPlayers)
             {
                 await lifecycleService.TryStartTournamentAsync(tournament, cancellationToken);
@@ -596,14 +577,6 @@ public sealed class TournamentService(
             var now = DateTime.UtcNow;
             participant.Leave(now);
             tournament.TouchConcurrencyToken();
-
-            outboxWriter.Add(new PlayerLeftTournamentEvent
-            {
-                TournamentId = tournament.Id,
-                PlayerId = currentUser.Id,
-                DisciplineCode = tournament.DisciplineCode,
-                LeftAtUtc = now
-            });
 
             if (tournament.Status == TournamentStatus.Full && tournament.ActiveParticipantsCount < tournament.MaxPlayers)
             {

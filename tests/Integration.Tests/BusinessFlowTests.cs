@@ -53,8 +53,7 @@ public sealed class BusinessFlowTests
         var lifecycle = new TournamentLifecycleService(
             projections,
             new GreedyTeamBalancer(new FirstRandom()),
-            GeneratorFactory(outbox),
-            outbox);
+            GeneratorFactory(outbox));
 
         await lifecycle.TryStartTournamentAsync(tournament);
 
@@ -62,7 +61,6 @@ public sealed class BusinessFlowTests
         Assert.Equal(2, tournament.Teams.Count);
         Assert.Single(tournament.Rounds);
         Assert.Single(tournament.Rounds.Single().Matches);
-        Assert.Single(outbox.Events.OfType<TournamentStartedEvent>());
     }
 
     [Fact]

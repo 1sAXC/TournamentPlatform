@@ -249,7 +249,6 @@ public sealed class TournamentServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(1, result.Value.CurrentPlayersCount);
         Assert.Single(result.Value.Participants);
-        Assert.Contains(outbox.Events, integrationEvent => integrationEvent is PlayerRegisteredToTournamentEvent);
     }
 
     [Fact]
@@ -316,7 +315,6 @@ public sealed class TournamentServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.Value.CurrentPlayersCount);
-        Assert.Contains(outbox.Events, integrationEvent => integrationEvent is PlayerLeftTournamentEvent);
     }
 
     [Fact]
@@ -399,7 +397,6 @@ public sealed class TournamentServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Cancelled", result.Value.Status);
-        Assert.Contains(outbox.Events, integrationEvent => integrationEvent is TournamentCancelledEvent);
     }
 
     [Fact]
@@ -455,7 +452,7 @@ public sealed class TournamentServiceTests
         var result = await service.CancelAsync(tournament.Id, ActiveOrganizer);
 
         Assert.True(result.IsSuccess);
-        Assert.Single(outbox.Events.OfType<TournamentCancelledEvent>());
+        Assert.Equal("Cancelled", result.Value.Status);
     }
 
     [Fact]
@@ -502,10 +499,10 @@ public sealed class TournamentServiceTests
         ITournamentLifecycleService? lifecycleService = null,
         InMemoryUserProjectionRepository? users = null)
     {
+        _ = outboxWriter; // kept for legacy call sites; outbox is no longer used by TournamentService.
         return new TournamentService(
             repository,
             users ?? new InMemoryUserProjectionRepository(),
-            outboxWriter ?? new InMemoryOutboxWriter(),
             lifecycleService ?? new TestTournamentLifecycleService());
     }
 

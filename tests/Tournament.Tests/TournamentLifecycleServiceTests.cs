@@ -31,7 +31,6 @@ public sealed class TournamentLifecycleServiceTests
         Assert.Equal(2, tournament.Teams.Count);
         Assert.Single(tournament.Rounds);
         Assert.Single(tournament.Rounds.Single().Matches);
-        Assert.Single(outbox.Events.OfType<TournamentStartedEvent>());
     }
 
     [Fact]
@@ -64,7 +63,6 @@ public sealed class TournamentLifecycleServiceTests
         Assert.Equal(2, tournament.Teams.Count);
         Assert.Single(tournament.Rounds);
         Assert.Single(tournament.Rounds.Single().Matches);
-        Assert.Single(outbox.Events.OfType<TournamentStartedEvent>());
     }
 
     private static TournamentLifecycleService CreateService(
@@ -82,8 +80,7 @@ public sealed class TournamentLifecycleServiceTests
         return new TournamentLifecycleService(
             ratings,
             new GreedyTeamBalancer(new DeterministicRandomProvider()),
-            new BracketGeneratorFactory(generators),
-            outbox);
+            new BracketGeneratorFactory(generators));
     }
 
     private static Domain.Tournaments.Tournament CreateReadyTournament(
