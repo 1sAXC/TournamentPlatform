@@ -86,11 +86,7 @@ public sealed class TournamentLifecycleService(
             return new PlayerForBalancing(participant.PlayerId, participant.PlayerNickname, rating.Elo);
         }).ToArray();
 
-        var balancedTeams = teamBalancer.BuildTeams(
-            players,
-            tournament.TeamSize,
-            tournament.DisciplineCode,
-            tournament.Id);
+        var balancedTeams = teamBalancer.BuildTeams(players, tournament.TeamSize);
 
         var teams = balancedTeams.Select((team, index) => Team.Create(
             tournament.Id,

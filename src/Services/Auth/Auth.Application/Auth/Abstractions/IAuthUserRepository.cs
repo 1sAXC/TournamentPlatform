@@ -31,7 +31,6 @@ public interface IAuthUserRepository
         string? normalizedSearch,
         CancellationToken cancellationToken = default);
     Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyCollection<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
     void Add(User user);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

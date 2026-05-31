@@ -238,34 +238,6 @@ public sealed class AuthServiceTests
         Assert.Equal(AuthErrors.InvalidContactHandle, result.Error);
     }
 
-    [Fact]
-    public async Task LookupUsers_ShouldReturnNicknameAndContactHandleForRequestedIds()
-    {
-        var repository = new InMemoryAuthUserRepository();
-        var service = CreateService(repository, new InMemoryOutboxWriter());
-        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerOne", "player1@example.com", "Password1", "@p1"));
-        await service.RegisterPlayerAsync(new RegisterPlayerRequest("PlayerTwo", "player2@example.com", "Password1", "@p2"));
-        var ids = repository.Users.Select(u => u.Id).ToArray();
-
-        var items = await service.LookupUsersAsync(ids);
-
-        Assert.Equal(2, items.Count);
-        Assert.All(items, item => Assert.NotNull(item.ContactHandle));
-        Assert.Contains(items, item => item.Nickname == "PlayerOne" && item.ContactHandle == "@p1");
-        Assert.Contains(items, item => item.Nickname == "PlayerTwo" && item.ContactHandle == "@p2");
-    }
-
-    [Fact]
-    public async Task LookupUsers_WithEmptyIds_ShouldReturnEmpty()
-    {
-        var repository = new InMemoryAuthUserRepository();
-        var service = CreateService(repository, new InMemoryOutboxWriter());
-
-        var items = await service.LookupUsersAsync([]);
-
-        Assert.Empty(items);
-    }
-
     private static AuthService CreateService(
         InMemoryAuthUserRepository repository,
         InMemoryOutboxWriter outbox)
@@ -362,12 +334,6 @@ public sealed class AuthServiceTests
         public Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Users.Count(user => user.Role == UserRole.Admin && user.Status == AccountStatus.Active));
-        }
-
-        public Task<IReadOnlyCollection<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult<IReadOnlyCollection<User>>(
-                Users.Where(user => ids.Contains(user.Id)).ToArray());
         }
 
         public void Add(User user)

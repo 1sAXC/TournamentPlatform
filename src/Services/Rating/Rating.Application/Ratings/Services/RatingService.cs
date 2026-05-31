@@ -173,17 +173,6 @@ public sealed class RatingService(
         return Result<IReadOnlyCollection<PlayerRatingResponse>>.Success(playerRatings.Select(ToResponse).ToArray());
     }
 
-    public async Task<Result<PlayerRatingResponse>> GetPlayerRatingAsync(
-        Guid playerId,
-        string disciplineCode,
-        CancellationToken cancellationToken = default)
-    {
-        var playerRating = await ratings.GetPlayerRatingAsync(playerId, disciplineCode, cancellationToken);
-        return playerRating is null
-            ? Result<PlayerRatingResponse>.Failure(RatingErrors.RatingNotFound)
-            : Result<PlayerRatingResponse>.Success(ToResponse(playerRating));
-    }
-
     public async Task<Result<IReadOnlyCollection<RatingHistoryResponse>>> GetPlayerHistoryAsync(
         Guid playerId,
         CancellationToken cancellationToken = default)

@@ -26,7 +26,5 @@ public static class AuthorizationPolicies
                     context.User.FindFirst("account_status")?.Value,
                     "Active",
                     StringComparison.OrdinalIgnoreCase))));
-
-        options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     }
 }

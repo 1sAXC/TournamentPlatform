@@ -422,12 +422,6 @@ public sealed class AdminUsersServiceTests
             return Task.FromResult(Users.Count(user => user.Role == UserRole.Admin && user.Status == AccountStatus.Active));
         }
 
-        public Task<IReadOnlyCollection<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult<IReadOnlyCollection<User>>(
-                Users.Where(user => ids.Contains(user.Id)).ToArray());
-        }
-
         public void Add(User user)
         {
             Users.Add(user);

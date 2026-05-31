@@ -12,7 +12,7 @@ public sealed class CpSatAverageEloTeamBalancerTests
         var players = Players([1000, 1001, 2000, 2001]);
         const int teamSize = 2;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         AssertValidBalancedTeams(teams, players, teamSize);
         Assert.Equal(0, CalculateTeamTotalGap(teams));
@@ -25,7 +25,7 @@ public sealed class CpSatAverageEloTeamBalancerTests
         var players = Players([1000, 1200, 1400, 1600]);
         const int teamSize = 2;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         AssertValidBalancedTeams(teams, players, teamSize);
         Assert.Equal(0, CalculateTeamTotalGap(teams));
@@ -41,7 +41,7 @@ public sealed class CpSatAverageEloTeamBalancerTests
         var players = Players(ratings);
         var expectedGap = CalculateBruteForceOptimalGap(ratings, teamSize);
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         AssertValidBalancedTeams(teams, players, teamSize);
         Assert.Equal(expectedGap, CalculateTeamTotalGap(teams));
@@ -54,7 +54,7 @@ public sealed class CpSatAverageEloTeamBalancerTests
         var players = Players([1000, 1100, 1200]);
         const int teamSize = 1;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         Assert.Equal(players.Count, teams.Count);
         AssertValidBalancedTeams(teams, players, teamSize);
@@ -66,7 +66,7 @@ public sealed class CpSatAverageEloTeamBalancerTests
         var balancer = CreateBalancer();
 
         Assert.Throws<TeamBalancingException>(() =>
-            balancer.BuildTeams(Players([1000, 1100, 1200]), 2, "CS2", Guid.NewGuid()));
+            balancer.BuildTeams(Players([1000, 1100, 1200]), 2));
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public sealed class CpSatAverageEloTeamBalancerTests
         };
 
         Assert.Throws<TeamBalancingException>(() =>
-            balancer.BuildTeams(players, 2, "CS2", Guid.NewGuid()));
+            balancer.BuildTeams(players, 2));
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class CpSatAverageEloTeamBalancerTests
         };
 
         Assert.Throws<TeamBalancingException>(() =>
-            balancer.BuildTeams(players, 2, "CS2", Guid.NewGuid()));
+            balancer.BuildTeams(players, 2));
     }
 
     private static CpSatAverageEloTeamBalancer CreateBalancer(TeamBalancingOptions? options = null)

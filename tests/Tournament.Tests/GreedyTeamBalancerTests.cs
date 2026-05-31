@@ -11,7 +11,7 @@ public sealed class GreedyTeamBalancerTests
         var players = Players([910, 920, 930]);
         const int teamSize = 1;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         Assert.Equal(players.Count, teams.Count);
         AssertValidBalancedTeams(teams, players, teamSize);
@@ -24,7 +24,7 @@ public sealed class GreedyTeamBalancerTests
         var players = Players([910, 920, 930, 940]);
         const int teamSize = 2;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         Assert.Equal(2, teams.Count);
         AssertValidBalancedTeams(teams, players, teamSize);
@@ -37,7 +37,7 @@ public sealed class GreedyTeamBalancerTests
         var players = Players([900, 910, 920, 930, 940, 950, 960, 970, 980, 990]);
         const int teamSize = 5;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         Assert.Equal(2, teams.Count);
         AssertValidBalancedTeams(teams, players, teamSize);
@@ -53,7 +53,7 @@ public sealed class GreedyTeamBalancerTests
             new PlayerForBalancing(Guid.NewGuid(), "High", 1200)
         };
 
-        var teams = balancer.BuildTeams(players, 2, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, 2);
 
         AssertValidBalancedTeams(teams, players, 2);
     }
@@ -69,7 +69,7 @@ public sealed class GreedyTeamBalancerTests
             new PlayerForBalancing(Guid.NewGuid(), "HighB", 1200)
         };
 
-        var team = balancer.BuildTeams(players, 3, "CS2", Guid.NewGuid()).Single();
+        var team = balancer.BuildTeams(players, 3).Single();
         var captain = team.Members.Single(member => member.PlayerId == team.CaptainPlayerId);
 
         AssertValidBalancedTeams([team], players, 3);
@@ -83,7 +83,7 @@ public sealed class GreedyTeamBalancerTests
         var balancer = new GreedyTeamBalancer(new DeterministicRandomProvider(0));
 
         Assert.Throws<TeamBalancingException>(() =>
-            balancer.BuildTeams(Players([900, 1000, 1100]), 2, "CS2", Guid.NewGuid()));
+            balancer.BuildTeams(Players([900, 1000, 1100]), 2));
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public sealed class GreedyTeamBalancerTests
         var players = Players([1000, 1001, 2000, 2001]);
         const int teamSize = 2;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         AssertValidBalancedTeams(teams, players, teamSize);
         Assert.Equal(0, CalculateTeamTotalGap(teams));
@@ -106,7 +106,7 @@ public sealed class GreedyTeamBalancerTests
         var players = Players([1000, 1200, 1400, 1600]);
         const int teamSize = 2;
 
-        var teams = balancer.BuildTeams(players, teamSize, "CS2", Guid.NewGuid());
+        var teams = balancer.BuildTeams(players, teamSize);
 
         AssertValidBalancedTeams(teams, players, teamSize);
         Assert.Equal(0, CalculateTeamTotalGap(teams));

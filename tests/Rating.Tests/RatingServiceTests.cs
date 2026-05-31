@@ -174,17 +174,6 @@ public sealed class RatingServiceTests
     }
 
     [Fact]
-    public async Task GetPlayerRatingAsync_ShouldReturnNotFoundForMissingRating()
-    {
-        var service = CreateService(new InMemoryRatingRepository());
-
-        var result = await service.GetPlayerRatingAsync(Guid.NewGuid(), DisciplineCodes.CS2);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal(Rating.Application.Ratings.RatingErrors.RatingNotFound, result.Error);
-    }
-
-    [Fact]
     public async Task HandleMatchCompletedAsync_ShouldUpdateRatingsCreateHistoryAndPublishEvents()
     {
         var repository = new InMemoryRatingRepository();
@@ -474,17 +463,6 @@ public sealed class RatingServiceTests
             return Task.FromResult<IReadOnlyCollection<PlayerRating>>(PlayerRatings
                 .Where(rating => rating.PlayerId == playerId)
                 .ToArray());
-        }
-
-        public Task<PlayerRating?> GetPlayerRatingAsync(
-            Guid playerId,
-            string disciplineCode,
-            CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(PlayerRatings.FirstOrDefault(rating =>
-                rating.PlayerId == playerId
-                && rating.DisciplineCode == disciplineCode
-                && !rating.IsDeleted));
         }
 
         public Task<PlayerRating?> GetPlayerRatingIncludingDeletedAsync(

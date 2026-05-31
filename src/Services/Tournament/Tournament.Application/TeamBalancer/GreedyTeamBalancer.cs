@@ -22,9 +22,7 @@ public sealed class GreedyTeamBalancer : ITeamBalancer
 
     public IReadOnlyList<BalancedTeam> BuildTeams(
         IReadOnlyCollection<PlayerForBalancing> players,
-        int teamSize,
-        string disciplineCode,
-        Guid tournamentId)
+        int teamSize)
     {
         TeamBalancerBuilder.Validate(players, teamSize);
 

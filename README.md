@@ -101,7 +101,7 @@ docker compose up -d --build
 |---|---|---|---|
 | `UserCreatedEvent` | `auth-api` | `tournament-api`, `rating-api` | Создание проекций пользователя (роль, никнейм, contact handle, начальные рейтинги). |
 | `UserContactHandleChangedEvent` | `auth-api` | `tournament-api` | Обновление `UserProjection.ContactHandle` для актуальных контактов на странице матча. |
-| `UserDeletedEvent`, `UserRoleChangedEvent` | `auth-api` | `tournament-api`, `rating-api` | Синхронизация состояния проекций. |
+| `UserBlockedEvent`, `UserRoleChangedEvent` | `auth-api` | `tournament-api`, `rating-api` | Синхронизация состояния проекций. |
 | `TournamentStartedEvent` | `tournament-api` | (исторически — внутренние нужды) | Сигнал о старте турнира. |
 | `RoundCreatedEvent` | `tournament-api` | `notification-api` | На каждый матч раунда — фан-аут уведомления членам команд. |
 | `MatchCompletedEvent` | `tournament-api` | `rating-api` | Обновление ELO с учётом разрыва по раундам. |

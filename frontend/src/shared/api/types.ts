@@ -26,14 +26,6 @@ export interface RegisterOrganizerRequest { organizerName: string; email: string
 export interface ChangePasswordRequest { currentPassword: string; newPassword: string; }
 export interface UpdateContactHandleRequest { contactHandle: string; }
 
-export interface UserLookupItem {
-  id: string;
-  nickname?: string | null;
-  organizerName?: string | null;
-  contactHandle?: string | null;
-  email: string;
-}
-
 // ===== Match details (single match view) =====
 export interface MatchTeamMemberDetails {
   playerId: string;

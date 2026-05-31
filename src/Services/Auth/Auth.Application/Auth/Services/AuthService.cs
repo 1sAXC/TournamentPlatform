@@ -186,21 +186,6 @@ public sealed class AuthService(
         return Result<CurrentUserResponse>.Success(CreateCurrentUserResponse(user));
     }
 
-    public async Task<IReadOnlyCollection<UserLookupItem>> LookupUsersAsync(
-        IReadOnlyCollection<Guid> ids,
-        CancellationToken cancellationToken = default)
-    {
-        if (ids.Count == 0)
-        {
-            return [];
-        }
-
-        var found = await users.GetByIdsAsync(ids, cancellationToken);
-        return found
-            .Select(u => new UserLookupItem(u.Id, u.Nickname, u.OrganizerName, u.ContactHandle, u.Email))
-            .ToArray();
-    }
-
     private AuthResponse CreateAuthResponse(User user)
     {
         var token = jwtTokenGenerator.Generate(user);

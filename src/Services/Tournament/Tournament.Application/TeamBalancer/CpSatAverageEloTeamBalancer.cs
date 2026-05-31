@@ -12,13 +12,11 @@ public sealed class CpSatAverageEloTeamBalancer(
 
     public IReadOnlyList<BalancedTeam> BuildTeams(
         IReadOnlyCollection<PlayerForBalancing> players,
-        int teamSize,
-        string disciplineCode,
-        Guid tournamentId)
+        int teamSize)
     {
         LastDiagnostics = null;
         TeamBalancerBuilder.Validate(players, teamSize);
-        var fallbackTeams = fallbackBalancer.BuildTeams(players, teamSize, disciplineCode, tournamentId);
+        var fallbackTeams = fallbackBalancer.BuildTeams(players, teamSize);
 
         if (teamSize == 1)
         {

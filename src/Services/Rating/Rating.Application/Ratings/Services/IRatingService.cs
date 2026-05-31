@@ -11,6 +11,5 @@ public interface IRatingService
     Task HandleUserRoleChangedAsync(UserRoleChangedEvent integrationEvent, CancellationToken cancellationToken = default);
     Task HandleMatchCompletedAsync(MatchCompletedEvent integrationEvent, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyCollection<PlayerRatingResponse>>> GetPlayerRatingsAsync(Guid playerId, CancellationToken cancellationToken = default);
-    Task<Result<PlayerRatingResponse>> GetPlayerRatingAsync(Guid playerId, string disciplineCode, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyCollection<RatingHistoryResponse>>> GetPlayerHistoryAsync(Guid playerId, CancellationToken cancellationToken = default);
 }
