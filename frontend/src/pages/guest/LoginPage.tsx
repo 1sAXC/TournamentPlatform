@@ -7,6 +7,7 @@ import { Field } from '@/shared/ui/Field';
 import { useLoginMutation } from '@/features/auth/hooks';
 import { toApiError } from '@/shared/api/http';
 import { Alert } from '@/shared/ui/Alert';
+import { Modal } from '@/shared/ui/Modal';
 import { useState } from 'react';
 
 const schema = z.object({
@@ -23,6 +24,7 @@ export function LoginPage() {
   const mutation = useLoginMutation();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [blockedOpen, setBlockedOpen] = useState(false);
 
   const onSubmit = handleSubmit((data) => {
     setError(null);
@@ -31,7 +33,9 @@ export function LoginPage() {
       onError: (err) => {
         const e = toApiError(err);
         if (e.code === 'Auth.AccessDenied') {
-          setError('Этот аккаунт заблокирован. Обратитесь к администратору платформы.');
+          // Blocked accounts get a dedicated modal so the message can't be
+          // missed in the inline-error area between fields.
+          setBlockedOpen(true);
           return;
         }
         if (e.status === 401) {
@@ -44,26 +48,45 @@ export function LoginPage() {
   });
 
   return (
-    <AuthShell
-      title="Добро пожаловать"
-      sub="Войдите в свой аккаунт"
-      alert={error ? <Alert kind="error" icon="flag">{error}</Alert> : undefined}
-      footer={<>
-        Нет аккаунта?{' '}
-        <Link to="/register/player" className="link">Зарегистрироваться</Link>
-      </>}
-    >
-      <form className="col" style={{ gap: 14 }} onSubmit={onSubmit}>
-        <Field label="E-mail / Никнейм / Название" error={errors.login?.message}>
-          <input className="input" autoComplete="username" {...register('login')} />
-        </Field>
-        <Field label="Пароль" error={errors.password?.message}>
-          <input className="input" type="password" autoComplete="current-password" {...register('password')} />
-        </Field>
-        <button className="btn btn-primary btn-lg btn-block" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Входим…' : 'Войти'}
-        </button>
-      </form>
-    </AuthShell>
+    <>
+      <AuthShell
+        title="Добро пожаловать"
+        sub="Войдите в свой аккаунт"
+        alert={error ? <Alert kind="error" icon="flag">{error}</Alert> : undefined}
+        footer={<>
+          Нет аккаунта?{' '}
+          <Link to="/register/player" className="link">Зарегистрироваться</Link>
+        </>}
+      >
+        <form className="col" style={{ gap: 14 }} onSubmit={onSubmit}>
+          <Field label="E-mail / Никнейм / Название" error={errors.login?.message}>
+            <input className="input" autoComplete="username" {...register('login')} />
+          </Field>
+          <Field label="Пароль" error={errors.password?.message}>
+            <input className="input" type="password" autoComplete="current-password" {...register('password')} />
+          </Field>
+          <button className="btn btn-primary btn-lg btn-block" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Входим…' : 'Войти'}
+          </button>
+        </form>
+      </AuthShell>
+      {blockedOpen && (
+        <Modal
+          onClose={() => setBlockedOpen(false)}
+          eyebrow="Доступ ограничен"
+          title="Аккаунт заблокирован"
+          footer={
+            <button className="btn btn-primary" onClick={() => setBlockedOpen(false)}>
+              Понятно
+            </button>
+          }
+        >
+          <p style={{ margin: 0 }}>
+            Ваш аккаунт заблокирован администратором платформы. Если вы считаете,
+            что это произошло по ошибке, свяжитесь с поддержкой.
+          </p>
+        </Modal>
+      )}
+    </>
   );
 }

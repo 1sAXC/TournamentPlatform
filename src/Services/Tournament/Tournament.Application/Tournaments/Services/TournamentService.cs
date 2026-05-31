@@ -115,7 +115,7 @@ public sealed class TournamentService(
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.OrganizerRoleRequired);
         }
 
-        if (organizer.IsDeleted)
+        if (organizer.IsBlocked)
         {
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.OrganizerInactive);
         }
@@ -534,7 +534,7 @@ public sealed class TournamentService(
                 return Result<TournamentDetailsResponse>.Failure(TournamentErrors.TournamentFull);
             }
 
-            if (await tournaments.DeletedUserExistsAsync(currentUser.Id, cancellationToken))
+            if (await tournaments.BlockedUserExistsAsync(currentUser.Id, cancellationToken))
             {
                 return Result<TournamentDetailsResponse>.Failure(TournamentErrors.PlayerAccessDenied);
             }

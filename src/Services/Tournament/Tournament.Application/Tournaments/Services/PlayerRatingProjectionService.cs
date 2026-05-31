@@ -74,15 +74,15 @@ public sealed class PlayerRatingProjectionService(IPlayerRatingProjectionReposit
         await projections.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task HandleUserDeletedAsync(
-        UserDeletedEvent integrationEvent,
+    public async Task HandleUserBlockedAsync(
+        UserBlockedEvent integrationEvent,
         CancellationToken cancellationToken = default)
     {
-        if (!await projections.DeletedUserExistsAsync(integrationEvent.UserId, cancellationToken))
+        if (!await projections.BlockedUserExistsAsync(integrationEvent.UserId, cancellationToken))
         {
-            await projections.AddDeletedUserAsync(
+            await projections.AddBlockedUserAsync(
                 integrationEvent.UserId,
-                integrationEvent.DeletedAtUtc,
+                integrationEvent.BlockedAtUtc,
                 cancellationToken);
         }
 

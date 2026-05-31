@@ -99,7 +99,7 @@ public sealed class AuthService(
             return Result<AuthResponse>.Failure(AuthErrors.InvalidCredentials);
         }
 
-        if (user.Status is AccountStatus.Deleted or AccountStatus.Rejected)
+        if (user.Status is AccountStatus.Blocked or AccountStatus.Rejected)
         {
             return Result<AuthResponse>.Failure(AuthErrors.AccessDenied);
         }
@@ -118,10 +118,10 @@ public sealed class AuthService(
             return Result<CurrentUserResponse>.Failure(AuthErrors.UserNotFound);
         }
 
-        // Mirror login-time gate: deleted/rejected accounts cannot use any
+        // Mirror login-time gate: blocked/rejected accounts cannot use any
         // authenticated endpoint. Returning AccessDenied makes /me reply 401,
         // which the SPA picks up via its interceptor to auto-logout.
-        if (user.Status is AccountStatus.Deleted or AccountStatus.Rejected)
+        if (user.Status is AccountStatus.Blocked or AccountStatus.Rejected)
         {
             return Result<CurrentUserResponse>.Failure(AuthErrors.AccessDenied);
         }
@@ -162,7 +162,7 @@ public sealed class AuthService(
             return Result<CurrentUserResponse>.Failure(AuthErrors.UserNotFound);
         }
 
-        if (user.Status is AccountStatus.Deleted or AccountStatus.Rejected)
+        if (user.Status is AccountStatus.Blocked or AccountStatus.Rejected)
         {
             return Result<CurrentUserResponse>.Failure(AuthErrors.AccessDenied);
         }

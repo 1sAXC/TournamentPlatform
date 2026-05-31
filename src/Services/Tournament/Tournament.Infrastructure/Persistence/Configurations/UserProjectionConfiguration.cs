@@ -28,7 +28,7 @@ public sealed class UserProjectionConfiguration : IEntityTypeConfiguration<UserP
             .HasColumnName("created_at_utc")
             .IsRequired();
 
-        builder.Property(projection => projection.DeletedAtUtc)
-            .HasColumnName("deleted_at_utc");
+        builder.Property(projection => projection.BlockedAtUtc)
+            .HasColumnName("blocked_at_utc");
     }
 }

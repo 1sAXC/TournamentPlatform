@@ -81,7 +81,7 @@ public sealed class RatingServiceTests
     }
 
     [Fact]
-    public async Task HandleUserDeletedAsync_ShouldMarkRatingsDeleted()
+    public async Task HandleUserBlockedAsync_ShouldMarkRatingsDeleted()
     {
         var repository = new InMemoryRatingRepository();
         var service = CreateService(repository);
@@ -96,11 +96,11 @@ public sealed class RatingServiceTests
             PlayerNickname = "PlayerOne"
         });
 
-        await service.HandleUserDeletedAsync(new UserDeletedEvent
+        await service.HandleUserBlockedAsync(new UserBlockedEvent
         {
             UserId = playerId,
             Email = "player@example.com",
-            DeletedAtUtc = DateTime.UtcNow
+            BlockedAtUtc = DateTime.UtcNow
         });
 
         Assert.All(repository.PlayerRatings, rating => Assert.True(rating.IsDeleted));

@@ -86,7 +86,7 @@ public sealed class TournamentServiceTests
     {
         var organizerId = Guid.NewGuid();
         var organizer = UserProjection.Create(organizerId, "Organizer", "@org_contact", DateTime.UtcNow);
-        organizer.MarkDeleted(DateTime.UtcNow);
+        organizer.MarkBlocked(DateTime.UtcNow);
         var users = new InMemoryUserProjectionRepository();
         users.Users.Add(organizer);
         var service = CreateService(new InMemoryTournamentRepository(), users: users);
@@ -607,7 +607,7 @@ public sealed class TournamentServiceTests
                     participant.PlayerId == playerId && (participant.IsActive || tournament.StartedAtUtc is not null))).Select(ToSummary).ToArray());
         }
 
-        public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
+        public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(false);
         }

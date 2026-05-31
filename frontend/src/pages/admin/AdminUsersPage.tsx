@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { adminNav } from '@/features/navigation';
 import {
-  useAdminUsers, useCreateAdminUser, useDeleteAdminUser, useResetUserPassword,
+  useAdminUsers, useBlockAdminUser, useCreateAdminUser, useResetUserPassword, useUnblockAdminUser,
 } from '@/features/admin/hooks';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Badge } from '@/shared/ui/Badge';
@@ -63,7 +63,7 @@ const STATUS_OPTS = [
   { value: 'Active', label: 'Активен' },
   { value: 'PendingApproval', label: 'На проверке' },
   { value: 'Rejected', label: 'Отклонён' },
-  { value: 'Deleted', label: 'Удалён' },
+  { value: 'Blocked', label: 'Заблокирован' },
 ];
 
 export function AdminUsersPage() {
@@ -81,7 +81,8 @@ export function AdminUsersPage() {
   }), [page, role, status, search]);
 
   const { data, isLoading } = useAdminUsers(query);
-  const del = useDeleteAdminUser();
+  const block = useBlockAdminUser();
+  const unblock = useUnblockAdminUser();
   const reset = useResetUserPassword();
 
   const items = data?.items ?? [];
@@ -105,7 +106,7 @@ export function AdminUsersPage() {
         <Stat label="Всего" value={data?.totalCount ?? '—'} />
         <Stat label="Игроков" value={items.filter(i => i.role === 'Player').length} />
         <Stat label="Организаторов" value={items.filter(i => i.role === 'Organizer').length} />
-        <Stat label="Удалённых" value={items.filter(i => i.deletedAtUtc).length} />
+        <Stat label="Заблокированных" value={items.filter(i => i.status === 'Blocked').length} />
       </div>
 
       <div className="filter-bar">
@@ -134,7 +135,7 @@ export function AdminUsersPage() {
                 {items.map((u) => {
                   const name = u.nickname ?? u.organizerName ?? u.email;
                   const variant = u.role === 'Admin' ? 'adm' : u.role === 'Organizer' ? 'org' : 'plr';
-                  const deleted = !!u.deletedAtUtc;
+                  const blocked = u.status === 'Blocked';
                   const statusTone =
                     u.status === 'Active' ? 'success'
                       : u.status === 'PendingApproval' ? 'pending'
@@ -144,7 +145,7 @@ export function AdminUsersPage() {
                       <td className="strong">
                         <div className="row" style={{ gap: 10 }}>
                           <Avatar name={name} size="sm" variant={variant} />
-                          <span style={deleted ? { color: 'var(--muted)' } : {}}>{name}</span>
+                          <span style={blocked ? { color: 'var(--muted)' } : {}}>{name}</span>
                         </div>
                       </td>
                       <td className="mono" style={{ fontSize: 11.5 }}>{u.email}</td>
@@ -157,42 +158,54 @@ export function AdminUsersPage() {
                           {u.status === 'Active' ? 'Активен'
                             : u.status === 'PendingApproval' ? 'На проверке'
                               : u.status === 'Rejected' ? 'Отклонён'
-                                : u.status === 'Deleted' ? 'Удалён'
+                                : u.status === 'Blocked' ? 'Заблокирован'
                                   : u.status}
                         </Badge>
                       </td>
                       <td className="mono">{formatDate(u.createdAtUtc)}</td>
                       <td style={{ textAlign: 'right' }}>
-                        {deleted ? <span style={{ color: 'var(--muted-2)' }}>—</span> : (
-                          <div className="row" style={{ gap: 6, justifyContent: 'flex-end' }}>
+                        <div className="row" style={{ gap: 6, justifyContent: 'flex-end' }}>
+                          <button
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => {
+                              if (!confirm(`Сбросить пароль пользователя ${name}? Будет выдан временный пароль, который нужно сообщить пользователю.`)) return;
+                              reset.mutate({ id: u.id }, {
+                                onSuccess: (r) => {
+                                  showToast('success', r.temporaryPassword
+                                    ? `Новый пароль: ${r.temporaryPassword}`
+                                    : 'Пароль сброшен');
+                                },
+                                onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
+                              });
+                            }}
+                            disabled={reset.isPending}
+                          >Сброс пароля</button>
+                          {blocked ? (
                             <button
-                              className="btn btn-sm btn-ghost"
+                              className="btn btn-sm btn-primary"
                               onClick={() => {
-                                if (!confirm(`Сбросить пароль пользователя ${name}? Будет выдан временный пароль, который нужно сообщить пользователю.`)) return;
-                                reset.mutate({ id: u.id }, {
-                                  onSuccess: (r) => {
-                                    showToast('success', r.temporaryPassword
-                                      ? `Новый пароль: ${r.temporaryPassword}`
-                                      : 'Пароль сброшен');
-                                  },
+                                if (!confirm(`Разблокировать пользователя ${name}? Он снова сможет входить в систему и регистрироваться на турниры.`)) return;
+                                unblock.mutate(u.id, {
+                                  onSuccess: () => showToast('success', 'Пользователь разблокирован'),
                                   onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
                                 });
                               }}
-                              disabled={reset.isPending}
-                            >Сброс пароля</button>
+                              disabled={unblock.isPending}
+                            >Разблокировать</button>
+                          ) : (
                             <button
                               className="btn btn-sm btn-danger"
                               onClick={() => {
                                 if (!confirm(`Заблокировать пользователя ${name}? Он не сможет войти и зарегистрироваться на турниры.`)) return;
-                                del.mutate(u.id, {
+                                block.mutate(u.id, {
                                   onSuccess: () => showToast('info', 'Пользователь заблокирован'),
                                   onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
                                 });
                               }}
-                              disabled={del.isPending}
+                              disabled={block.isPending}
                             >Заблокировать</button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

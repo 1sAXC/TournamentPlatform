@@ -246,7 +246,7 @@ public sealed class AdminUsersServiceTests
     }
 
     [Fact]
-    public async Task DeleteUser_ShouldSoftDeleteAndWriteUserDeleted()
+    public async Task BlockUser_ShouldBlockAndWriteUserBlocked()
     {
         var repository = new InMemoryAuthUserRepository();
         var outbox = new InMemoryOutboxWriter();
@@ -257,27 +257,64 @@ public sealed class AdminUsersServiceTests
         repository.Users.Add(player);
 
         var service = CreateService(repository, outbox);
-        var result = await service.DeleteUserAsync(player.Id, admin.Id);
+        var result = await service.BlockUserAsync(player.Id, admin.Id);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(AccountStatus.Deleted, player.Status);
+        Assert.Equal(AccountStatus.Blocked, player.Status);
         Assert.Single(outbox.Events);
-        Assert.IsType<UserDeletedEvent>(outbox.Events[0]);
+        Assert.IsType<UserBlockedEvent>(outbox.Events[0]);
     }
 
     [Fact]
-    public async Task DeleteUser_ShouldRejectDeletingSelfWhenLastActiveAdmin()
+    public async Task BlockUser_ShouldRejectBlockingSelfWhenLastActiveAdmin()
     {
         var repository = new InMemoryAuthUserRepository();
         var admin = User.CreateAdmin(Guid.NewGuid(), "admin@example.com", "hash", DateTime.UtcNow);
         repository.Users.Add(admin);
 
         var service = CreateService(repository, new InMemoryOutboxWriter());
-        var result = await service.DeleteUserAsync(admin.Id, admin.Id);
+        var result = await service.BlockUserAsync(admin.Id, admin.Id);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(AdminErrors.LastAdminDeleteNotAllowed, result.Error);
+        Assert.Equal(AdminErrors.LastAdminBlockNotAllowed, result.Error);
         Assert.Equal(AccountStatus.Active, admin.Status);
+    }
+
+    [Fact]
+    public async Task UnblockUser_ShouldRestoreActiveAndEmitUserCreated()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var outbox = new InMemoryOutboxWriter();
+        var admin = User.CreateAdmin(Guid.NewGuid(), "admin@example.com", "hash", DateTime.UtcNow);
+        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", "@player_one", DateTime.UtcNow);
+        repository.Users.Add(admin);
+        repository.Users.Add(player);
+
+        var service = CreateService(repository, outbox);
+        await service.BlockUserAsync(player.Id, admin.Id);
+        outbox.Events.Clear();
+
+        var result = await service.UnblockUserAsync(player.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccountStatus.Active, player.Status);
+        Assert.Null(player.BlockedAtUtc);
+        Assert.Single(outbox.Events);
+        Assert.IsType<UserCreatedEvent>(outbox.Events[0]);
+    }
+
+    [Fact]
+    public async Task UnblockUser_ShouldFailWhenUserNotBlocked()
+    {
+        var repository = new InMemoryAuthUserRepository();
+        var player = User.CreatePlayer("player@example.com", "hash", "PlayerOne", "@player_one", DateTime.UtcNow);
+        repository.Users.Add(player);
+
+        var service = CreateService(repository, new InMemoryOutboxWriter());
+        var result = await service.UnblockUserAsync(player.Id);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(AdminErrors.UserNotBlocked, result.Error);
     }
 
     private static AdminUsersService CreateService(

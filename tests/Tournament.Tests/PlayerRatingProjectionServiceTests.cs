@@ -117,27 +117,27 @@ public sealed class PlayerRatingProjectionServiceTests
     }
 
     [Fact]
-    public async Task UserDeleted_CreatesDeletedProjection_Idempotently()
+    public async Task UserBlocked_CreatesBlockedProjection_Idempotently()
     {
         var repository = new InMemoryProjectionRepository();
         var service = new PlayerRatingProjectionService(repository);
-        var integrationEvent = new UserDeletedEvent
+        var integrationEvent = new UserBlockedEvent
         {
             UserId = Guid.NewGuid(),
             Email = "player@test.local",
-            DeletedAtUtc = DateTime.UtcNow
+            BlockedAtUtc = DateTime.UtcNow
         };
 
-        await service.HandleUserDeletedAsync(integrationEvent);
-        await service.HandleUserDeletedAsync(integrationEvent);
+        await service.HandleUserBlockedAsync(integrationEvent);
+        await service.HandleUserBlockedAsync(integrationEvent);
 
-        Assert.Single(repository.DeletedUsers);
+        Assert.Single(repository.BlockedUsers);
     }
 
     private sealed class InMemoryProjectionRepository : IPlayerRatingProjectionRepository
     {
         public List<PlayerRatingProjection> Projections { get; } = [];
-        public List<DeletedUserProjection> DeletedUsers { get; } = [];
+        public List<BlockedUserProjection> BlockedUsers { get; } = [];
 
         public Task<IReadOnlyCollection<PlayerRatingProjection>> GetByPlayerIdAsync(
             Guid playerId,
@@ -168,17 +168,17 @@ public sealed class PlayerRatingProjectionServiceTests
                     .ToArray());
         }
 
-        public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
+        public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(DeletedUsers.Any(projection => projection.UserId == userId));
+            return Task.FromResult(BlockedUsers.Any(projection => projection.UserId == userId));
         }
 
-        public Task AddDeletedUserAsync(
+        public Task AddBlockedUserAsync(
             Guid userId,
-            DateTime deletedAtUtc,
+            DateTime blockedAtUtc,
             CancellationToken cancellationToken = default)
         {
-            DeletedUsers.Add(DeletedUserProjection.Create(userId, deletedAtUtc));
+            BlockedUsers.Add(BlockedUserProjection.Create(userId, blockedAtUtc));
             return Task.CompletedTask;
         }
 

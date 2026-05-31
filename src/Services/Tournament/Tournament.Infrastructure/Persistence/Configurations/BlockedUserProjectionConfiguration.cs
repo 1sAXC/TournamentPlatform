@@ -4,15 +4,15 @@ using Tournament.Domain.Tournaments;
 
 namespace Tournament.Infrastructure.Persistence.Configurations;
 
-public sealed class DeletedUserProjectionConfiguration : IEntityTypeConfiguration<DeletedUserProjection>
+public sealed class BlockedUserProjectionConfiguration : IEntityTypeConfiguration<BlockedUserProjection>
 {
-    public void Configure(EntityTypeBuilder<DeletedUserProjection> builder)
+    public void Configure(EntityTypeBuilder<BlockedUserProjection> builder)
     {
-        builder.ToTable("DeletedUserProjections");
+        builder.ToTable("BlockedUserProjections");
 
         builder.HasKey(projection => projection.UserId);
 
-        builder.Property(projection => projection.DeletedAtUtc)
+        builder.Property(projection => projection.BlockedAtUtc)
             .IsRequired();
     }
 }

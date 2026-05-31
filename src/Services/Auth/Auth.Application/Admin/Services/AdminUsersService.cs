@@ -204,7 +204,7 @@ public sealed class AdminUsersService(
             : Result<OrganizerApplicationResponse>.Failure(result.Error);
     }
 
-    public async Task<Result> DeleteUserAsync(
+    public async Task<Result> BlockUserAsync(
         Guid userId,
         Guid currentAdminUserId,
         CancellationToken cancellationToken = default)
@@ -220,14 +220,36 @@ public sealed class AdminUsersService(
             && user.Status == AccountStatus.Active
             && await users.CountActiveAdminsAsync(cancellationToken) <= 1)
         {
-            return Result.Failure(AdminErrors.LastAdminDeleteNotAllowed);
+            return Result.Failure(AdminErrors.LastAdminBlockNotAllowed);
         }
 
-        user.SoftDelete(DateTime.UtcNow);
+        user.Block(DateTime.UtcNow);
         AddDomainEventsToOutbox(user);
         await users.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
+    }
+
+    public async Task<Result<AdminUserResponse>> UnblockUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return Result<AdminUserResponse>.Failure(AdminErrors.UserNotFound);
+        }
+
+        if (user.Status != AccountStatus.Blocked)
+        {
+            return Result<AdminUserResponse>.Failure(AdminErrors.UserNotBlocked);
+        }
+
+        user.Unblock(DateTime.UtcNow);
+        AddDomainEventsToOutbox(user);
+        await users.SaveChangesAsync(cancellationToken);
+
+        return Result<AdminUserResponse>.Success(ToResponse(user));
     }
 
     public async Task<Result<ResetPasswordResponse>> ResetPasswordAsync(
@@ -389,7 +411,7 @@ public sealed class AdminUsersService(
             user.CreatedAtUtc,
             user.ApprovedAtUtc,
             user.RejectedAtUtc,
-            user.DeletedAtUtc,
+            user.BlockedAtUtc,
             user.CreatedByAdminId);
     }
 

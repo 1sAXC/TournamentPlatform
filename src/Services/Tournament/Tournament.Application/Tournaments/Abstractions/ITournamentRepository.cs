@@ -14,7 +14,7 @@ public interface ITournamentRepository
     Task<IReadOnlyCollection<TournamentSummaryDto>> GetAvailableAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<TournamentSummaryDto>> GetByOrganizerAsync(Guid organizerId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<TournamentSummaryDto>> GetByPlayerAsync(Guid playerId, CancellationToken cancellationToken = default);
-    Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<ITournamentTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
     void Add(Tournament.Domain.Tournaments.Tournament tournament);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

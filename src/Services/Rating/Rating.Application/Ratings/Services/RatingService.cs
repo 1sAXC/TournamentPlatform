@@ -54,8 +54,12 @@ public sealed class RatingService(
         await ratings.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task HandleUserDeletedAsync(UserDeletedEvent integrationEvent, CancellationToken cancellationToken = default)
+    public async Task HandleUserBlockedAsync(UserBlockedEvent integrationEvent, CancellationToken cancellationToken = default)
     {
+        // Internally the Rating subdomain still flags affected per-player rows
+        // as "deleted" — that column predates the block/unblock naming and is
+        // not exposed externally. Renaming requires a column-level migration
+        // which is intentionally out of scope for this change.
         var playerRatings = await ratings.GetPlayerRatingsAsync(integrationEvent.UserId, cancellationToken);
         var now = DateTime.UtcNow;
 

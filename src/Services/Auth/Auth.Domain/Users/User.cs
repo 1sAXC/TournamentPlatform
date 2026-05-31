@@ -63,7 +63,7 @@ public sealed class User
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime? ApprovedAtUtc { get; private set; }
     public DateTime? RejectedAtUtc { get; private set; }
-    public DateTime? DeletedAtUtc { get; private set; }
+    public DateTime? BlockedAtUtc { get; private set; }
     public Guid? CreatedByAdminId { get; private set; }
     public byte[] RowVersion { get; private set; } = [];
 
@@ -213,9 +213,9 @@ public sealed class User
 
     public void Reject(DateTime rejectedAtUtc)
     {
-        if (Status == AccountStatus.Deleted)
+        if (Status == AccountStatus.Blocked)
         {
-            throw new InvalidOperationException("Deleted account cannot be rejected.");
+            throw new InvalidOperationException("Blocked account cannot be rejected.");
         }
 
         Status = AccountStatus.Rejected;
@@ -242,20 +242,46 @@ public sealed class User
         SetPasswordHash(passwordHash);
     }
 
-    public void SoftDelete(DateTime deletedAtUtc)
+    public void Block(DateTime blockedAtUtc)
     {
-        if (Status == AccountStatus.Deleted)
+        if (Status == AccountStatus.Blocked)
         {
             return;
         }
 
-        Status = AccountStatus.Deleted;
-        DeletedAtUtc = deletedAtUtc;
-        _domainEvents.Add(new UserDeletedEvent
+        Status = AccountStatus.Blocked;
+        BlockedAtUtc = blockedAtUtc;
+        _domainEvents.Add(new UserBlockedEvent
         {
             UserId = Id,
             Email = Email,
-            DeletedAtUtc = deletedAtUtc
+            BlockedAtUtc = blockedAtUtc
+        });
+    }
+
+    public void Unblock(DateTime unblockedAtUtc)
+    {
+        if (Status != AccountStatus.Blocked)
+        {
+            throw new InvalidOperationException("Only a blocked account can be unblocked.");
+        }
+
+        Status = AccountStatus.Active;
+        BlockedAtUtc = null;
+        // Re-emit UserCreated so Tournament/Rating projections call
+        // UserProjection.Restore() and drop the user from BlockedUserProjections.
+        // CreatedAtUtc on the entity is preserved; the event timestamp is the
+        // unblock moment so consumers can order it correctly against the prior block.
+        _domainEvents.Add(new UserCreatedEvent
+        {
+            UserId = Id,
+            Role = Role.ToString(),
+            Email = Email,
+            CreatedAtUtc = unblockedAtUtc,
+            CreationSource = "Unblock",
+            PlayerNickname = Nickname,
+            OrganizerName = OrganizerName,
+            ContactHandle = ContactHandle
         });
     }
 

@@ -28,14 +28,14 @@ public sealed class UserProjectionService(IUserProjectionRepository users) : IUs
         await users.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task HandleUserDeletedAsync(
-        UserDeletedEvent integrationEvent,
+    public async Task HandleUserBlockedAsync(
+        UserBlockedEvent integrationEvent,
         CancellationToken cancellationToken = default)
     {
         var projection = await users.GetByIdAsync(integrationEvent.UserId, cancellationToken);
         if (projection is not null)
         {
-            projection.MarkDeleted(integrationEvent.DeletedAtUtc);
+            projection.MarkBlocked(integrationEvent.BlockedAtUtc);
             await users.SaveChangesAsync(cancellationToken);
         }
     }

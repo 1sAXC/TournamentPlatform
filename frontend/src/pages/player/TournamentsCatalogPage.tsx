@@ -25,12 +25,10 @@ export function TournamentsCatalogPage() {
   const nav = role === 'Admin' ? adminNav : role === 'Organizer' ? organizerNav : playerNav;
   const tournaments = data ?? [];
 
-  const disciplines = useMemo(() => {
-    const set = new Set<string>();
-    tournaments.forEach(t => set.add(t.disciplineCode));
-    return Array.from(set);
-  }, [tournaments]);
-
+  // Show all platform-supported disciplines as tabs, not only those that
+  // currently have at least one tournament — otherwise a brand-new platform
+  // (or a discipline temporarily without tournaments) would silently disappear
+  // from the filter.
   const filtered = useMemo(() => {
     return tournaments.filter(t => {
       if (discipline !== 'all' && t.disciplineCode !== discipline) return false;
@@ -51,7 +49,7 @@ export function TournamentsCatalogPage() {
 
       <div className="game-tabs">
         <button className={`game-tab ${discipline === 'all' ? 'on' : ''}`} onClick={() => setDiscipline('all')}>Все</button>
-        {DISCIPLINES.filter(d => disciplines.includes(d.code)).map((d) => (
+        {DISCIPLINES.map((d) => (
           <button
             key={d.code}
             className={`game-tab ${discipline === d.code ? 'on' : ''}`}

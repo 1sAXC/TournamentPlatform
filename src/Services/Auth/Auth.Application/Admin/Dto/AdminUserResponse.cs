@@ -11,5 +11,5 @@ public sealed record AdminUserResponse(
     DateTime CreatedAtUtc,
     DateTime? ApprovedAtUtc,
     DateTime? RejectedAtUtc,
-    DateTime? DeletedAtUtc,
+    DateTime? BlockedAtUtc,
     Guid? CreatedByAdminId);

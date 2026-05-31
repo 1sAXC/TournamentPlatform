@@ -171,8 +171,8 @@ public sealed class BusinessFlowTests
         public Task<IReadOnlyCollection<PlayerRatingProjection>> GetByPlayerIdAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<PlayerRatingProjection>>(Items.Where(p => p.PlayerId == playerId).ToArray());
         public Task<IReadOnlyCollection<PlayerRatingProjection>> GetByPlayerIdsAsync(IReadOnlyCollection<Guid> playerIds, string disciplineCode, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<PlayerRatingProjection>>(Items.Where(p => playerIds.Contains(p.PlayerId) && p.DisciplineCode == disciplineCode).ToArray());
         public Task<PlayerRatingProjection?> GetAsync(Guid playerId, string disciplineCode, CancellationToken cancellationToken = default) => Task.FromResult(Items.FirstOrDefault(p => p.PlayerId == playerId && p.DisciplineCode == disciplineCode));
-        public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(false);
-        public Task AddDeletedUserAsync(Guid userId, DateTime deletedAtUtc, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(false);
+        public Task AddBlockedUserAsync(Guid userId, DateTime blockedAtUtc, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public void Add(PlayerRatingProjection projection) => Items.Add(projection);
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
@@ -187,7 +187,7 @@ public sealed class BusinessFlowTests
         public Task<IReadOnlyCollection<TournamentSummaryDto>> GetAvailableAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([]);
         public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByOrganizerAsync(Guid organizerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([]);
         public Task<IReadOnlyCollection<TournamentSummaryDto>> GetByPlayerAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<TournamentSummaryDto>>([]);
-        public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(false);
+        public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(false);
         public Task<ITournamentTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public void Add(Tournament.Domain.Tournaments.Tournament value) { }
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
 import { organizerNav } from '@/features/navigation';
 import {
-  useCancelTournament, useNextSwissRound, useTournament, useUpdateTournament,
+  useCancelTournament, useNextSwissRound, useTournament,
 } from '@/features/tournaments/hooks';
 import { Alert } from '@/shared/ui/Alert';
 import { Avatar } from '@/shared/ui/Avatar';
@@ -11,8 +11,6 @@ import { Badge } from '@/shared/ui/Badge';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { Icon } from '@/shared/ui/Icon';
 import { Card } from '@/shared/ui/Card';
-import { Modal } from '@/shared/ui/Modal';
-import { Field } from '@/shared/ui/Field';
 import { PStat } from '@/shared/ui/PStat';
 import { TournamentBracketView } from '@/shared/ui/TournamentBracketView';
 import type { MatchResponse, TournamentDetailsResponse } from '@/shared/api/types';
@@ -23,6 +21,7 @@ import { formatMatchScore } from '@/shared/lib/matchScore';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
 import { OrgMatchResultModal } from './OrgMatchResultModal';
+import { EditTournamentModal } from '@/features/tournaments/EditTournamentModal';
 
 export function OrgManagePage() {
   const { id } = useParams<{ id: string }>();
@@ -300,59 +299,6 @@ export function OrgManagePage() {
         />
       )}
     </ScreenFrame>
-  );
-}
-
-function EditTournamentModal({
-  tournamentId, initialTitle, initialDescription, onClose,
-}: {
-  tournamentId: string;
-  initialTitle: string;
-  initialDescription: string;
-  onClose: () => void;
-}) {
-  const update = useUpdateTournament(tournamentId);
-  const [title, setTitle] = useState(initialTitle);
-  const [description, setDescription] = useState(initialDescription);
-  const [error, setError] = useState<string | null>(null);
-
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!title.trim()) { setError('Введите название турнира'); return; }
-    update.mutate(
-      { title: title.trim(), description: description.trim() || null },
-      {
-        onSuccess: () => { showToast('success', 'Турнир обновлён'); onClose(); },
-        onError: (err) => setError(toApiError(err).title ?? 'Не удалось сохранить'),
-      },
-    );
-  }
-
-  return (
-    <Modal
-      onClose={onClose}
-      title="Редактировать турнир"
-      footer={<>
-        <button className="btn" onClick={onClose}>Отмена</button>
-        <button className="btn btn-primary" onClick={onSubmit} disabled={update.isPending}>
-          {update.isPending ? 'Сохраняем…' : 'Сохранить'}
-        </button>
-      </>}
-    >
-      <form className="col" style={{ gap: 12 }} onSubmit={onSubmit}>
-        <Field label="Название турнира">
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
-        </Field>
-        <Field label="Описание">
-          <textarea
-            className="textarea" value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </Field>
-        {error && <div className="helper hint-error">{error}</div>}
-      </form>
-    </Modal>
   );
 }
 

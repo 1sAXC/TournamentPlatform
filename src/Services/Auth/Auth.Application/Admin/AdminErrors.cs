@@ -11,7 +11,8 @@ public static class AdminErrors
     public static readonly Error DuplicateNickname = new("Admin.DuplicateNickname", "Player with this nickname already exists.");
     public static readonly Error OrganizerApprovalNotAllowed = new("Admin.OrganizerApprovalNotAllowed", "Only pending organizers can be approved.");
     public static readonly Error OrganizerRejectNotAllowed = new("Admin.OrganizerRejectNotAllowed", "Only pending organizers can be rejected.");
-    public static readonly Error LastAdminDeleteNotAllowed = new("Admin.LastAdminDeleteNotAllowed", "The last active admin cannot be deleted.");
+    public static readonly Error LastAdminBlockNotAllowed = new("Admin.LastAdminBlockNotAllowed", "The last active admin cannot be blocked.");
+    public static readonly Error UserNotBlocked = new("Admin.UserNotBlocked", "Only blocked users can be unblocked.");
     public static readonly Error PlayerNicknameRequired = new("Admin.PlayerNicknameRequired", "Player nickname is required.");
     public static readonly Error OrganizerNameRequired = new("Admin.OrganizerNameRequired", "Organizer name is required.");
     public static readonly Error ContactHandleRequired = new("Admin.ContactHandleRequired", "Contact handle is required for player and organizer accounts.");

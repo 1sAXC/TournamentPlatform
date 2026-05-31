@@ -70,7 +70,7 @@ public sealed class UserProjectionServiceTests
     {
         var userId = Guid.NewGuid();
         var existing = UserProjection.Create(userId, "Player", "@old", DateTime.UtcNow);
-        existing.MarkDeleted(DateTime.UtcNow);
+        existing.MarkBlocked(DateTime.UtcNow);
         var repository = new InMemoryUserProjectionRepository();
         repository.Users.Add(existing);
         var service = new UserProjectionService(repository);
@@ -86,7 +86,7 @@ public sealed class UserProjectionServiceTests
             ContactHandle = "@new"
         });
 
-        Assert.False(existing.IsDeleted);
+        Assert.False(existing.IsBlocked);
         Assert.Equal("@new", existing.ContactHandle);
     }
 

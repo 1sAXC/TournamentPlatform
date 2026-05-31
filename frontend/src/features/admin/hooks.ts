@@ -56,10 +56,18 @@ export function useCreateAdminUser() {
   });
 }
 
-export function useDeleteAdminUser() {
+export function useBlockAdminUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => adminApi.deleteUser(id),
+    mutationFn: (id: string) => adminApi.blockUser(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
+}
+
+export function useUnblockAdminUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.unblockUser(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
   });
 }

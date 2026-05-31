@@ -17,15 +17,15 @@ public sealed class RatingUserCreatedConsumer(
     }
 }
 
-public sealed class RatingUserDeletedConsumer(
+public sealed class RatingUserBlockedConsumer(
     IRatingService ratingService,
-    ILogger<RatingUserDeletedConsumer> logger)
-    : IIntegrationEventConsumer<UserDeletedEvent>
+    ILogger<RatingUserBlockedConsumer> logger)
+    : IIntegrationEventConsumer<UserBlockedEvent>
 {
-    public async Task ConsumeAsync(UserDeletedEvent integrationEvent, CancellationToken cancellationToken = default)
+    public async Task ConsumeAsync(UserBlockedEvent integrationEvent, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("RatingService received UserDeleted for user {UserId}", integrationEvent.UserId);
-        await ratingService.HandleUserDeletedAsync(integrationEvent, cancellationToken);
+        logger.LogInformation("RatingService received UserBlocked for user {UserId}", integrationEvent.UserId);
+        await ratingService.HandleUserBlockedAsync(integrationEvent, cancellationToken);
     }
 }
 

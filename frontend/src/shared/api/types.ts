@@ -2,7 +2,7 @@
 // Auth.Application.* / Tournament.Application.* / Rating.Application.*
 
 export type Role = 'Player' | 'Organizer' | 'Admin';
-export type AccountStatus = 'Active' | 'PendingApproval' | 'Rejected' | 'Deleted';
+export type AccountStatus = 'Active' | 'PendingApproval' | 'Rejected' | 'Blocked';
 
 export interface CurrentUserResponse {
   userId: string;
@@ -281,7 +281,7 @@ export interface AdminUserResponse {
   createdAtUtc: string;
   approvedAtUtc?: string | null;
   rejectedAtUtc?: string | null;
-  deletedAtUtc?: string | null;
+  blockedAtUtc?: string | null;
   createdByAdminId?: string | null;
 }
 

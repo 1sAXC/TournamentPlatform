@@ -66,22 +66,30 @@ public sealed class AdminUsersController(IAdminUsersService adminUsersService) :
         return ToActionResult(result);
     }
 
-    [HttpDelete("users/{id:guid}")]
+    [HttpPost("users/{id:guid}/block")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> BlockUser(Guid id, CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out var currentAdminId))
         {
             return Unauthorized();
         }
 
-        var result = await adminUsersService.DeleteUserAsync(id, currentAdminId, cancellationToken);
+        var result = await adminUsersService.BlockUserAsync(id, currentAdminId, cancellationToken);
         if (result.IsSuccess)
         {
             return NoContent();
         }
 
         return ToErrorActionResult(result.Error);
+    }
+
+    [HttpPost("users/{id:guid}/unblock")]
+    [ProducesResponseType(typeof(AdminUserResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UnblockUser(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await adminUsersService.UnblockUserAsync(id, cancellationToken);
+        return ToActionResult(result);
     }
 
     [HttpPost("users/{id:guid}/reset-password")]
@@ -123,7 +131,7 @@ public sealed class AdminUsersController(IAdminUsersService adminUsersService) :
             return Conflict(CreateProblemDetails(error, StatusCodes.Status409Conflict));
         }
 
-        if (error == AdminErrors.LastAdminDeleteNotAllowed)
+        if (error == AdminErrors.LastAdminBlockNotAllowed || error == AdminErrors.UserNotBlocked)
         {
             return Conflict(CreateProblemDetails(error, StatusCodes.Status409Conflict));
         }

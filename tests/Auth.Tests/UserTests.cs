@@ -41,7 +41,7 @@ public sealed class UserTests
     }
 
     [Fact]
-    public void SoftDelete_ShouldMarkAccountDeletedAndSetDeletedAt()
+    public void Block_ShouldMarkAccountBlockedAndSetBlockedAt()
     {
         var user = User.CreatePlayer(
             "player@example.com",
@@ -50,11 +50,45 @@ public sealed class UserTests
             "@player_one",
             DateTime.UtcNow);
 
-        var deletedAtUtc = DateTime.UtcNow;
-        user.SoftDelete(deletedAtUtc);
+        var blockedAtUtc = DateTime.UtcNow;
+        user.Block(blockedAtUtc);
 
-        Assert.Equal(AccountStatus.Deleted, user.Status);
-        Assert.Equal(deletedAtUtc, user.DeletedAtUtc);
+        Assert.Equal(AccountStatus.Blocked, user.Status);
+        Assert.Equal(blockedAtUtc, user.BlockedAtUtc);
+        Assert.Contains(user.DomainEvents, domainEvent => domainEvent is UserBlockedEvent);
+    }
+
+    [Fact]
+    public void Unblock_FromBlocked_RestoresActiveAndEmitsUserCreated()
+    {
+        var user = User.CreatePlayer(
+            "player@example.com",
+            "hashed-password",
+            "PlayerOne",
+            "@player_one",
+            DateTime.UtcNow);
+        user.Block(DateTime.UtcNow);
+        user.ClearDomainEvents();
+
+        user.Unblock(DateTime.UtcNow);
+
+        Assert.Equal(AccountStatus.Active, user.Status);
+        Assert.Null(user.BlockedAtUtc);
+        var created = Assert.Single(user.DomainEvents.OfType<UserCreatedEvent>());
+        Assert.Equal("Unblock", created.CreationSource);
+    }
+
+    [Fact]
+    public void Unblock_FromActive_Throws()
+    {
+        var user = User.CreatePlayer(
+            "player@example.com",
+            "hashed-password",
+            "PlayerOne",
+            "@player_one",
+            DateTime.UtcNow);
+
+        Assert.Throws<InvalidOperationException>(() => user.Unblock(DateTime.UtcNow));
     }
 
     [Fact]

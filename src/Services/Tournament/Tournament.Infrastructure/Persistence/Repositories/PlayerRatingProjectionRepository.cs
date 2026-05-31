@@ -38,20 +38,20 @@ public sealed class PlayerRatingProjectionRepository(TournamentDbContext dbConte
             .ToArrayAsync(cancellationToken);
     }
 
-    public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
+    public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        return dbContext.DeletedUserProjections.AnyAsync(
+        return dbContext.BlockedUserProjections.AnyAsync(
             projection => projection.UserId == userId,
             cancellationToken);
     }
 
-    public async Task AddDeletedUserAsync(
+    public async Task AddBlockedUserAsync(
         Guid userId,
-        DateTime deletedAtUtc,
+        DateTime blockedAtUtc,
         CancellationToken cancellationToken = default)
     {
-        await dbContext.DeletedUserProjections.AddAsync(
-            DeletedUserProjection.Create(userId, deletedAtUtc),
+        await dbContext.BlockedUserProjections.AddAsync(
+            BlockedUserProjection.Create(userId, blockedAtUtc),
             cancellationToken);
     }
 

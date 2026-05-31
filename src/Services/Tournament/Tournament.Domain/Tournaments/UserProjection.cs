@@ -25,9 +25,9 @@ public sealed class UserProjection
     /// </summary>
     public string? ContactHandle { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
-    public DateTime? DeletedAtUtc { get; private set; }
+    public DateTime? BlockedAtUtc { get; private set; }
 
-    public bool IsDeleted => DeletedAtUtc is not null;
+    public bool IsBlocked => BlockedAtUtc is not null;
 
     public static UserProjection Create(Guid userId, string role, string? contactHandle, DateTime createdAtUtc)
     {
@@ -37,7 +37,7 @@ public sealed class UserProjection
     public void Restore(string role)
     {
         Role = role;
-        DeletedAtUtc = null;
+        BlockedAtUtc = null;
     }
 
     public void ChangeRole(string role)
@@ -50,8 +50,8 @@ public sealed class UserProjection
         ContactHandle = contactHandle;
     }
 
-    public void MarkDeleted(DateTime deletedAtUtc)
+    public void MarkBlocked(DateTime blockedAtUtc)
     {
-        DeletedAtUtc = deletedAtUtc;
+        BlockedAtUtc = blockedAtUtc;
     }
 }

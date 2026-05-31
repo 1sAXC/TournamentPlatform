@@ -5,5 +5,5 @@ public enum AccountStatus
     PendingApproval,
     Active,
     Rejected,
-    Deleted
+    Blocked
 }

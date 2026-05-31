@@ -31,17 +31,17 @@ public sealed class TournamentRatingUpdatedConsumer(
     }
 }
 
-public sealed class TournamentUserDeletedConsumer(
+public sealed class TournamentUserBlockedConsumer(
     IPlayerRatingProjectionService playerRatingProjectionService,
     IUserProjectionService userProjectionService,
-    ILogger<TournamentUserDeletedConsumer> logger)
-    : IIntegrationEventConsumer<UserDeletedEvent>
+    ILogger<TournamentUserBlockedConsumer> logger)
+    : IIntegrationEventConsumer<UserBlockedEvent>
 {
-    public async Task ConsumeAsync(UserDeletedEvent integrationEvent, CancellationToken cancellationToken = default)
+    public async Task ConsumeAsync(UserBlockedEvent integrationEvent, CancellationToken cancellationToken = default)
     {
-        await userProjectionService.HandleUserDeletedAsync(integrationEvent, cancellationToken);
-        await playerRatingProjectionService.HandleUserDeletedAsync(integrationEvent, cancellationToken);
-        logger.LogInformation("TournamentService projected UserDeleted for user {UserId}", integrationEvent.UserId);
+        await userProjectionService.HandleUserBlockedAsync(integrationEvent, cancellationToken);
+        await playerRatingProjectionService.HandleUserBlockedAsync(integrationEvent, cancellationToken);
+        logger.LogInformation("TournamentService projected UserBlocked for user {UserId}", integrationEvent.UserId);
     }
 }
 

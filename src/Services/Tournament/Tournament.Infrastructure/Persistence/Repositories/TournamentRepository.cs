@@ -96,9 +96,9 @@ public sealed class TournamentRepository(TournamentDbContext dbContext) : ITourn
             .ToArrayAsync(cancellationToken);
     }
 
-    public Task<bool> DeletedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
+    public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        return dbContext.DeletedUserProjections.AnyAsync(
+        return dbContext.BlockedUserProjections.AnyAsync(
             projection => projection.UserId == userId,
             cancellationToken);
     }

@@ -35,8 +35,10 @@ export const adminApi = {
     http.get<AdminUserResponse>(`/api/admin/users/${id}`).then(r => r.data),
   createUser: (req: CreateAdminUserRequest) =>
     http.post<AdminUserResponse>('/api/admin/users', req).then(r => r.data),
-  deleteUser: (id: string) =>
-    http.delete<void>(`/api/admin/users/${id}`).then(r => r.data),
+  blockUser: (id: string) =>
+    http.post<void>(`/api/admin/users/${id}/block`).then(r => r.data),
+  unblockUser: (id: string) =>
+    http.post<AdminUserResponse>(`/api/admin/users/${id}/unblock`).then(r => r.data),
   resetPassword: (id: string, req: ResetPasswordRequest = {}) =>
     http.post<ResetPasswordResponse>(`/api/admin/users/${id}/reset-password`, req).then(r => r.data),
   updateRole: (id: string, req: UpdateUserRoleRequest) =>

@@ -10,11 +10,13 @@ import { Badge } from '@/shared/ui/Badge';
 import { Stat } from '@/shared/ui/Stat';
 import { Icon } from '@/shared/ui/Icon';
 import { EmptyState } from '@/shared/ui/EmptyState';
-import { STATUS_LABEL, STATUS_TONE, disciplineLabel } from '@/shared/lib/disciplines';
+import { DISCIPLINES, STATUS_LABEL, STATUS_TONE, disciplineLabel } from '@/shared/lib/disciplines';
 import { formatDate } from '@/shared/lib/formatters';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
 import { AdminCreateTournamentModal } from './AdminCreateTournamentModal';
+import { EditTournamentModal } from '@/features/tournaments/EditTournamentModal';
+import type { TournamentListItemResponse } from '@/shared/api/types';
 
 export function AdminTournamentsPage() {
   const { data, isLoading } = useAllTournaments();
@@ -26,6 +28,7 @@ export function AdminTournamentsPage() {
   const [status, setStatus] = useState('all');
   const [discipline, setDiscipline] = useState('all');
   const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<TournamentListItemResponse | null>(null);
 
   const all = data ?? [];
   const counts = useMemo(() => ({
@@ -35,7 +38,10 @@ export function AdminTournamentsPage() {
     done: all.filter(t => t.status === 'Completed').length,
   }), [all]);
 
-  const disciplines = useMemo(() => Array.from(new Set(all.map(t => t.disciplineCode))), [all]);
+  // List all supported disciplines, not just those with at least one tournament
+  // — otherwise a discipline disappears from the filter as soon as its last
+  // tournament is removed.
+  const disciplines = useMemo(() => DISCIPLINES.map(d => d.code), []);
 
   const filtered = all.filter(t => {
     if (status !== 'all' && t.status !== status) return false;
@@ -108,6 +114,7 @@ export function AdminTournamentsPage() {
                 {filtered.map((t) => {
                   const tone = STATUS_TONE[t.status] ?? 'open';
                   const isActive = t.status === 'Open' || t.status === 'Full' || t.status === 'InProgress';
+                  const isEditable = t.status === 'Open' || t.status === 'Full';
                   const isDeletable = t.status === 'Cancelled' || t.status === 'Completed';
                   return (
                     <tr key={t.id}>
@@ -123,6 +130,11 @@ export function AdminTournamentsPage() {
                           <button className="btn btn-sm" onClick={() => navigate(`/tournaments/${t.id}`)}>
                             <Icon name="eye" size={11} /> Просмотр
                           </button>
+                          {isEditable && (
+                            <button className="btn btn-sm" onClick={() => setEditing(t)}>
+                              <Icon name="pen" size={11} /> Редактировать
+                            </button>
+                          )}
                           {isActive && (
                             <button className="btn btn-sm btn-danger" onClick={() => onCancel(t.id)} disabled={cancel.isPending}>
                               Отменить
@@ -142,6 +154,15 @@ export function AdminTournamentsPage() {
             </table>
           )}
       </div>
+
+      {editing && (
+        <EditTournamentModal
+          tournamentId={editing.id}
+          initialTitle={editing.title}
+          initialDescription={editing.description ?? ''}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </ScreenFrame>
   );
 }

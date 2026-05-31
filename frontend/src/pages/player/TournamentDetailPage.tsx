@@ -20,6 +20,7 @@ import { formatDate } from '@/shared/lib/formatters';
 import { formatMatchScore } from '@/shared/lib/matchScore';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
+import { EditTournamentModal } from '@/features/tournaments/EditTournamentModal';
 
 export function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,7 @@ export function TournamentDetailPage() {
   const register = useRegisterForTournament();
   const unregister = useUnregisterFromTournament();
   const [refreshing, setRefreshing] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   // Navigation to the detailed match page is identical from any "click a
   // match" surface — bracket cell or "Текущий раунд" card.
@@ -52,6 +54,10 @@ export function TournamentDetailPage() {
   // InProgress, Completed, or Cancelled).
   const isRegistered = !!user && data.participants.some(p => p.playerId === user.userId && p.isActive);
   const canLeave = isRegistered && data.canLeave;
+  // Backend gate for PUT /api/tournaments/{id} (TournamentEditNotAllowed):
+  // only Open/Full tournaments are editable. Mirror that here so the button
+  // doesn't appear when it would be guaranteed to fail.
+  const canEdit = role === 'Admin' && (data.status === 'Open' || data.status === 'Full');
 
   async function onRefresh() {
     setRefreshing(true);
@@ -113,6 +119,11 @@ export function TournamentDetailPage() {
                 ? <><span className="spin" /> Обновляем…</>
                 : <><Icon name="swap" size={12} /> Обновить</>}
             </button>
+            {canEdit && (
+              <button className="btn btn-sm" onClick={() => setEditing(true)}>
+                <Icon name="pen" size={12} /> Редактировать
+              </button>
+            )}
             {role === 'Player' && !isRegistered && data.canRegister && (
               <button className="btn btn-primary btn-lg" onClick={onRegister} disabled={register.isPending}>
                 {register.isPending ? 'Записываем…' : 'Записаться на турнир'}
@@ -283,6 +294,15 @@ export function TournamentDetailPage() {
           </div>
           <TournamentBracketView sections={buildBracketSections(data, (m) => goToMatch(m.id))} />
         </div>
+      )}
+
+      {editing && (
+        <EditTournamentModal
+          tournamentId={id}
+          initialTitle={data.title}
+          initialDescription={data.description ?? ''}
+          onClose={() => setEditing(false)}
+        />
       )}
     </ScreenFrame>
   );
