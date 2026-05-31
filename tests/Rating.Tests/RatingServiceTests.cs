@@ -467,6 +467,15 @@ public sealed class RatingServiceTests
                 .ToArray());
         }
 
+        public Task<IReadOnlyCollection<PlayerRating>> GetAllPlayerRatingsAsync(
+            Guid playerId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<PlayerRating>>(PlayerRatings
+                .Where(rating => rating.PlayerId == playerId)
+                .ToArray());
+        }
+
         public Task<PlayerRating?> GetPlayerRatingAsync(
             Guid playerId,
             string disciplineCode,
@@ -476,6 +485,16 @@ public sealed class RatingServiceTests
                 rating.PlayerId == playerId
                 && rating.DisciplineCode == disciplineCode
                 && !rating.IsDeleted));
+        }
+
+        public Task<PlayerRating?> GetPlayerRatingIncludingDeletedAsync(
+            Guid playerId,
+            string disciplineCode,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(PlayerRatings.FirstOrDefault(rating =>
+                rating.PlayerId == playerId
+                && rating.DisciplineCode == disciplineCode));
         }
 
         public Task<IReadOnlyCollection<RatingHistory>> GetPlayerHistoryAsync(

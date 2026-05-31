@@ -171,6 +171,7 @@ public sealed class TournamentLifecycleServiceTests
         public Task<PlayerRatingProjection?> GetAsync(Guid playerId, string disciplineCode, CancellationToken cancellationToken = default) => Task.FromResult(Projections.FirstOrDefault(projection => projection.PlayerId == playerId && projection.DisciplineCode == disciplineCode));
         public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(false);
         public Task AddBlockedUserAsync(Guid userId, DateTime blockedAtUtc, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RemoveBlockedUserAsync(Guid userId, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public void Add(PlayerRatingProjection projection) => Projections.Add(projection);
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }

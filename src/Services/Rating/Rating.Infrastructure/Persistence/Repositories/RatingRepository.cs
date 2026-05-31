@@ -16,6 +16,16 @@ public sealed class RatingRepository(RatingDbContext dbContext) : IRatingReposit
             .ToArrayAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<PlayerRating>> GetAllPlayerRatingsAsync(
+        Guid playerId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.PlayerRatings
+            .Where(rating => rating.PlayerId == playerId)
+            .OrderBy(rating => rating.DisciplineCode)
+            .ToArrayAsync(cancellationToken);
+    }
+
     public Task<PlayerRating?> GetPlayerRatingAsync(
         Guid playerId,
         string disciplineCode,
@@ -26,6 +36,18 @@ public sealed class RatingRepository(RatingDbContext dbContext) : IRatingReposit
             rating => rating.PlayerId == playerId
                 && rating.DisciplineCode == normalizedDisciplineCode
                 && !rating.IsDeleted,
+            cancellationToken);
+    }
+
+    public Task<PlayerRating?> GetPlayerRatingIncludingDeletedAsync(
+        Guid playerId,
+        string disciplineCode,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedDisciplineCode = disciplineCode.Trim();
+        return dbContext.PlayerRatings.FirstOrDefaultAsync(
+            rating => rating.PlayerId == playerId
+                && rating.DisciplineCode == normalizedDisciplineCode,
             cancellationToken);
     }
 

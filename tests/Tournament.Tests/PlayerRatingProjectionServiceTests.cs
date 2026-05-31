@@ -182,6 +182,12 @@ public sealed class PlayerRatingProjectionServiceTests
             return Task.CompletedTask;
         }
 
+        public Task RemoveBlockedUserAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            BlockedUsers.RemoveAll(projection => projection.UserId == userId);
+            return Task.CompletedTask;
+        }
+
         public void Add(PlayerRatingProjection projection)
         {
             if (Projections.All(existing =>

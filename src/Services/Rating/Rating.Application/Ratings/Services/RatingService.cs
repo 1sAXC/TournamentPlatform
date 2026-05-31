@@ -30,14 +30,31 @@ public sealed class RatingService(
             return;
         }
 
-        if (await ratings.HasAnyRatingAsync(integrationEvent.UserId, cancellationToken))
-        {
-            return;
-        }
+        // Load ALL ratings including soft-deleted ones — this method serves
+        // both first-time creation AND unblock-restoration (User.Unblock
+        // re-emits UserCreatedEvent with CreationSource="Unblock"). If we
+        // filtered out soft-deleted rows we'd try to INSERT a duplicate and
+        // violate the unique index (PlayerId, DisciplineCode).
+        var existingRatings = await ratings.GetAllPlayerRatingsAsync(integrationEvent.UserId, cancellationToken);
+        var existingByCode = existingRatings.ToDictionary(
+            rating => rating.DisciplineCode,
+            StringComparer.OrdinalIgnoreCase);
 
         var now = DateTime.UtcNow;
+        var anyChange = false;
+
         foreach (var disciplineCode in InitialDisciplines)
         {
+            if (existingByCode.TryGetValue(disciplineCode, out var existing))
+            {
+                if (existing.IsDeleted)
+                {
+                    existing.Restore(now);
+                    anyChange = true;
+                }
+                continue;
+            }
+
             ratings.AddPlayerRating(PlayerRating.CreateInitial(
                 integrationEvent.UserId,
                 disciplineCode,
@@ -49,9 +66,13 @@ public sealed class RatingService(
                 disciplineCode,
                 InitialElo,
                 now));
+            anyChange = true;
         }
 
-        await ratings.SaveChangesAsync(cancellationToken);
+        if (anyChange)
+        {
+            await ratings.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task HandleUserBlockedAsync(UserBlockedEvent integrationEvent, CancellationToken cancellationToken = default)
@@ -193,11 +214,20 @@ public sealed class RatingService(
         var result = new Dictionary<Guid, PlayerRating>();
         foreach (var player in players)
         {
-            var rating = await ratings.GetPlayerRatingAsync(player.UserId, disciplineCode, cancellationToken);
+            // Use the deleted-aware lookup: if the player was blocked
+            // mid-tournament the row exists with IsDeleted=true; the regular
+            // GetPlayerRatingAsync would return null and we'd try to insert a
+            // duplicate, violating the unique (PlayerId, DisciplineCode)
+            // index. Restoring the row keeps the previous history intact.
+            var rating = await ratings.GetPlayerRatingIncludingDeletedAsync(player.UserId, disciplineCode, cancellationToken);
             if (rating is null)
             {
                 rating = PlayerRating.CreateInitial(player.UserId, disciplineCode, InitialElo, DateTime.UtcNow);
                 ratings.AddPlayerRating(rating);
+            }
+            else if (rating.IsDeleted)
+            {
+                rating.Restore(DateTime.UtcNow);
             }
 
             result[player.UserId] = rating;

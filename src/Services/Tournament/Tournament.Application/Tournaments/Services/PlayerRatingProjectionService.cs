@@ -21,8 +21,15 @@ public sealed class PlayerRatingProjectionService(IPlayerRatingProjectionReposit
         UserCreatedEvent integrationEvent,
         CancellationToken cancellationToken = default)
     {
+        // Unblocking re-emits UserCreatedEvent (see User.Unblock). Clear any
+        // existing block projection so the user can register for tournaments
+        // again. Role-agnostic on purpose because the block-side
+        // (HandleUserBlockedAsync) is also role-agnostic.
+        await projections.RemoveBlockedUserAsync(integrationEvent.UserId, cancellationToken);
+
         if (!string.Equals(integrationEvent.Role, "Player", StringComparison.OrdinalIgnoreCase))
         {
+            await projections.SaveChangesAsync(cancellationToken);
             return;
         }
 

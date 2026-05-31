@@ -44,6 +44,17 @@ public sealed class PlayerRating
         UpdatedAtUtc = deletedAtUtc;
     }
 
+    public void Restore(DateTime restoredAtUtc)
+    {
+        if (!IsDeleted)
+        {
+            return;
+        }
+
+        IsDeleted = false;
+        UpdatedAtUtc = restoredAtUtc;
+    }
+
     public void ApplyMatchResult(int newElo, bool isWin, DateTime updatedAtUtc)
     {
         Elo = Math.Max(100, newElo);

@@ -156,7 +156,9 @@ public sealed class BusinessFlowTests
         public List<PlayerRating> PlayerRatings { get; } = [];
         public List<RatingHistory> Histories { get; } = [];
         public Task<IReadOnlyCollection<PlayerRating>> GetPlayerRatingsAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<PlayerRating>>(PlayerRatings.Where(r => r.PlayerId == playerId && !r.IsDeleted).ToArray());
+        public Task<IReadOnlyCollection<PlayerRating>> GetAllPlayerRatingsAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<PlayerRating>>(PlayerRatings.Where(r => r.PlayerId == playerId).ToArray());
         public Task<PlayerRating?> GetPlayerRatingAsync(Guid playerId, string disciplineCode, CancellationToken cancellationToken = default) => Task.FromResult(PlayerRatings.FirstOrDefault(r => r.PlayerId == playerId && r.DisciplineCode == disciplineCode && !r.IsDeleted));
+        public Task<PlayerRating?> GetPlayerRatingIncludingDeletedAsync(Guid playerId, string disciplineCode, CancellationToken cancellationToken = default) => Task.FromResult(PlayerRatings.FirstOrDefault(r => r.PlayerId == playerId && r.DisciplineCode == disciplineCode));
         public Task<IReadOnlyCollection<RatingHistory>> GetPlayerHistoryAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<RatingHistory>>(Histories.Where(h => h.PlayerId == playerId).ToArray());
         public Task<bool> HasAnyRatingAsync(Guid playerId, CancellationToken cancellationToken = default) => Task.FromResult(PlayerRatings.Any(r => r.PlayerId == playerId));
         public Task<bool> HasMatchHistoryAsync(Guid matchId, CancellationToken cancellationToken = default) => Task.FromResult(Histories.Any(h => h.MatchId == matchId));
@@ -173,6 +175,7 @@ public sealed class BusinessFlowTests
         public Task<PlayerRatingProjection?> GetAsync(Guid playerId, string disciplineCode, CancellationToken cancellationToken = default) => Task.FromResult(Items.FirstOrDefault(p => p.PlayerId == playerId && p.DisciplineCode == disciplineCode));
         public Task<bool> BlockedUserExistsAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(false);
         public Task AddBlockedUserAsync(Guid userId, DateTime blockedAtUtc, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RemoveBlockedUserAsync(Guid userId, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public void Add(PlayerRatingProjection projection) => Items.Add(projection);
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }

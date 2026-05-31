@@ -55,6 +55,16 @@ public sealed class PlayerRatingProjectionRepository(TournamentDbContext dbConte
             cancellationToken);
     }
 
+    public async Task RemoveBlockedUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var existing = await dbContext.BlockedUserProjections
+            .FirstOrDefaultAsync(projection => projection.UserId == userId, cancellationToken);
+        if (existing is not null)
+        {
+            dbContext.BlockedUserProjections.Remove(existing);
+        }
+    }
+
     public void Add(PlayerRatingProjection projection)
     {
         dbContext.PlayerRatingProjections.Add(projection);
