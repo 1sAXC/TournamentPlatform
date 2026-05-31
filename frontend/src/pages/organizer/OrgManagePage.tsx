@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ScreenFrame } from '@/shared/ui/ScreenFrame';
-import { organizerNav } from '@/features/navigation';
+import { adminNav, organizerNav } from '@/features/navigation';
+import { useAuth } from '@/shared/auth/useAuth';
 import {
   useCancelTournament, useNextSwissRound, useTournament,
 } from '@/features/tournaments/hooks';
@@ -29,11 +30,18 @@ export function OrgManagePage() {
   const cancel = useCancelTournament();
   const nextRound = useNextSwissRound();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [resultFor, setResultFor] = useState<MatchResponse | null>(null);
   const [editing, setEditing] = useState(false);
 
+  // Same page serves Organizer (own tournament) and Admin (oversight).
+  // Pick nav and back-route accordingly.
+  const isAdmin = role === 'Admin';
+  const nav = isAdmin ? adminNav : organizerNav;
+  const listPath = isAdmin ? '/admin/tournaments' : '/organizer';
+
   if (isLoading || !data || !id) {
-    return <ScreenFrame nav={organizerNav}><EmptyState title={isLoading ? 'Загрузка…' : 'Турнир не найден'} /></ScreenFrame>;
+    return <ScreenFrame nav={nav}><EmptyState title={isLoading ? 'Загрузка…' : 'Турнир не найден'} /></ScreenFrame>;
   }
 
   const tone = STATUS_TONE[data.status] ?? 'open';
@@ -48,7 +56,7 @@ export function OrgManagePage() {
   function onCancel() {
     if (!confirm('Отменить турнир?')) return;
     cancel.mutate(id!, {
-      onSuccess: () => { showToast('info', 'Турнир отменён'); navigate('/organizer'); },
+      onSuccess: () => { showToast('info', 'Турнир отменён'); navigate(listPath); },
       onError: (err) => showToast('error', toApiError(err).title ?? 'Не удалось'),
     });
   }
@@ -75,7 +83,7 @@ export function OrgManagePage() {
   const activeParticipants = data.participants.filter(p => p.isActive);
 
   return (
-    <ScreenFrame nav={organizerNav}>
+    <ScreenFrame nav={nav}>
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div className="row" style={{ gap: 14, alignItems: 'flex-start' }}>

@@ -170,7 +170,7 @@ public sealed class AdminUsersServiceTests
         repository.Users.Add(organizer);
 
         var service = CreateService(repository, outbox);
-        var result = await service.ApproveOrganizerAsync(organizer.Id);
+        var result = await service.ApproveOrganizerApplicationAsync(organizer.Id);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(AccountStatus.Active, organizer.Status);
@@ -215,7 +215,7 @@ public sealed class AdminUsersServiceTests
         repository.Users.Add(organizer);
 
         var service = CreateService(repository, outbox);
-        var result = await service.RejectOrganizerAsync(organizer.Id);
+        var result = await service.RejectOrganizerApplicationAsync(organizer.Id);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(AccountStatus.Rejected, organizer.Status);

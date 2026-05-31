@@ -33,8 +33,15 @@ export const useCompletedTournaments = () =>
 export const useMyTournaments = () =>
   useQuery({ queryKey: qk.my(), queryFn: tournamentsApi.my });
 
-export const useOrganizerTournaments = () =>
-  useQuery({ queryKey: qk.organizerMine(), queryFn: tournamentsApi.organizerMine });
+export const useOrganizerTournaments = (options: { enabled?: boolean } = {}) =>
+  useQuery({
+    queryKey: qk.organizerMine(),
+    queryFn: tournamentsApi.organizerMine,
+    // The backend endpoint requires RequireActiveOrganizer. Disable the query
+    // for pending/rejected organizers so they don't hit a guaranteed 403
+    // when landing on /organizer/profile.
+    enabled: options.enabled ?? true,
+  });
 
 export const useTournament = (id: string | undefined) =>
   useQuery({

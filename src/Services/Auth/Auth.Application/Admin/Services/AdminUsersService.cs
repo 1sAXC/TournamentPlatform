@@ -44,14 +44,6 @@ public sealed class AdminUsersService(
             totalCount));
     }
 
-    public async Task<Result<AdminUserResponse>> GetUserAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var user = await users.GetByIdAsync(userId, cancellationToken);
-        return user is null
-            ? Result<AdminUserResponse>.Failure(AdminErrors.UserNotFound)
-            : Result<AdminUserResponse>.Success(ToResponse(user));
-    }
-
     public async Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsAsync(
         OrganizerApplicationsQuery query,
         CancellationToken cancellationToken = default)
@@ -140,68 +132,48 @@ public sealed class AdminUsersService(
         return Result<AdminUserResponse>.Success(ToResponse(user));
     }
 
-    public async Task<Result<AdminUserResponse>> ApproveOrganizerAsync(
+    public async Task<Result<OrganizerApplicationResponse>> ApproveOrganizerApplicationAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
         var user = await users.GetByIdAsync(userId, cancellationToken);
         if (user is null)
         {
-            return Result<AdminUserResponse>.Failure(AdminErrors.UserNotFound);
+            return Result<OrganizerApplicationResponse>.Failure(AdminErrors.UserNotFound);
         }
 
         if (user.Role != UserRole.Organizer || user.Status != AccountStatus.PendingApproval)
         {
-            return Result<AdminUserResponse>.Failure(AdminErrors.OrganizerApprovalNotAllowed);
+            return Result<OrganizerApplicationResponse>.Failure(AdminErrors.OrganizerApprovalNotAllowed);
         }
 
         user.Approve(DateTime.UtcNow);
         AddDomainEventsToOutbox(user);
         await users.SaveChangesAsync(cancellationToken);
 
-        return Result<AdminUserResponse>.Success(ToResponse(user));
-    }
-
-    public async Task<Result<OrganizerApplicationResponse>> ApproveOrganizerApplicationAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await ApproveOrganizerAsync(userId, cancellationToken);
-        return result.IsSuccess
-            ? Result<OrganizerApplicationResponse>.Success(ToOrganizerApplicationResponse(result.Value))
-            : Result<OrganizerApplicationResponse>.Failure(result.Error);
-    }
-
-    public async Task<Result<AdminUserResponse>> RejectOrganizerAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        var user = await users.GetByIdAsync(userId, cancellationToken);
-        if (user is null)
-        {
-            return Result<AdminUserResponse>.Failure(AdminErrors.UserNotFound);
-        }
-
-        if (user.Role != UserRole.Organizer || user.Status != AccountStatus.PendingApproval)
-        {
-            return Result<AdminUserResponse>.Failure(AdminErrors.OrganizerRejectNotAllowed);
-        }
-
-        user.Reject(DateTime.UtcNow);
-        AddDomainEventsToOutbox(user);
-        await users.SaveChangesAsync(cancellationToken);
-
-        return Result<AdminUserResponse>.Success(ToResponse(user));
+        return Result<OrganizerApplicationResponse>.Success(ToOrganizerApplicationResponse(user));
     }
 
     public async Task<Result<OrganizerApplicationResponse>> RejectOrganizerApplicationAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var result = await RejectOrganizerAsync(userId, cancellationToken);
-        return result.IsSuccess
-            ? Result<OrganizerApplicationResponse>.Success(ToOrganizerApplicationResponse(result.Value))
-            : Result<OrganizerApplicationResponse>.Failure(result.Error);
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return Result<OrganizerApplicationResponse>.Failure(AdminErrors.UserNotFound);
+        }
+
+        if (user.Role != UserRole.Organizer || user.Status != AccountStatus.PendingApproval)
+        {
+            return Result<OrganizerApplicationResponse>.Failure(AdminErrors.OrganizerRejectNotAllowed);
+        }
+
+        user.Reject(DateTime.UtcNow);
+        AddDomainEventsToOutbox(user);
+        await users.SaveChangesAsync(cancellationToken);
+
+        return Result<OrganizerApplicationResponse>.Success(ToOrganizerApplicationResponse(user));
     }
 
     public async Task<Result> BlockUserAsync(
@@ -272,35 +244,6 @@ public sealed class AdminUsersService(
         return Result<ResetPasswordResponse>.Success(new ResetPasswordResponse(
             user.Id,
             generated ? temporaryPassword : null));
-    }
-
-    public async Task<Result<AdminUserResponse>> UpdateRoleAsync(
-        Guid userId,
-        UpdateUserRoleRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var user = await users.GetByIdAsync(userId, cancellationToken);
-        if (user is null)
-        {
-            return Result<AdminUserResponse>.Failure(AdminErrors.UserNotFound);
-        }
-
-        if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var role))
-        {
-            return Result<AdminUserResponse>.Failure(AdminErrors.InvalidRole);
-        }
-
-        var validationResult = await ValidateRoleSpecificFieldsAsync(user.Id, role, request.Nickname, request.OrganizerName, cancellationToken);
-        if (validationResult.IsFailure)
-        {
-            return Result<AdminUserResponse>.Failure(validationResult.Error);
-        }
-
-        user.ChangeRole(role, request.Nickname?.Trim(), request.OrganizerName?.Trim(), DateTime.UtcNow);
-        AddDomainEventsToOutbox(user);
-        await users.SaveChangesAsync(cancellationToken);
-
-        return Result<AdminUserResponse>.Success(ToResponse(user));
     }
 
     private async Task<Result<User>> CreateUserByRoleAsync(
@@ -421,19 +364,6 @@ public sealed class AdminUsersService(
             user.Id,
             user.Email,
             user.Status.ToString(),
-            user.OrganizerName ?? string.Empty,
-            user.ContactHandle,
-            user.CreatedAtUtc,
-            user.ApprovedAtUtc,
-            user.RejectedAtUtc);
-    }
-
-    private static OrganizerApplicationResponse ToOrganizerApplicationResponse(AdminUserResponse user)
-    {
-        return new OrganizerApplicationResponse(
-            user.Id,
-            user.Email,
-            user.Status,
             user.OrganizerName ?? string.Empty,
             user.ContactHandle,
             user.CreatedAtUtc,

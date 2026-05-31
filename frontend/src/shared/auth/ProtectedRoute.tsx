@@ -19,7 +19,15 @@ export function ProtectedRoute({ roles, requireActiveOrganizer }: Props) {
   if (roles && role && !roles.includes(role)) {
     return <Navigate to="/" replace />;
   }
-  if (requireActiveOrganizer && (role !== 'Organizer' || user?.accountStatus !== 'Active')) {
+  // Admin bypasses the active-organizer requirement: routes that are
+  // organizer's home turf (creating/managing tournaments) are also legitimate
+  // admin oversight surfaces and the backend allows them via the
+  // RequireOrganizerOrAdmin policy. Pending/rejected organizers still bounce.
+  if (
+    requireActiveOrganizer
+    && role !== 'Admin'
+    && (role !== 'Organizer' || user?.accountStatus !== 'Active')
+  ) {
     return <Navigate to="/organizer/pending" replace />;
   }
   return <Outlet />;

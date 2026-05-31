@@ -6,7 +6,6 @@ import type {
   OrganizerApplicationResponse, OrganizerApplicationsQuery,
   PagedResult, ResetPasswordRequest, ResetPasswordResponse,
   TournamentDetailsResponse,
-  UpdateUserRoleRequest,
 } from './types';
 
 export const adminApi = {
@@ -31,8 +30,6 @@ export const adminApi = {
   // Admin users
   listUsers: (q: AdminUsersQuery = {}) =>
     http.get<PagedResult<AdminUserResponse>>('/api/admin/users', { params: q }).then(r => r.data),
-  getUser: (id: string) =>
-    http.get<AdminUserResponse>(`/api/admin/users/${id}`).then(r => r.data),
   createUser: (req: CreateAdminUserRequest) =>
     http.post<AdminUserResponse>('/api/admin/users', req).then(r => r.data),
   blockUser: (id: string) =>
@@ -41,8 +38,6 @@ export const adminApi = {
     http.post<AdminUserResponse>(`/api/admin/users/${id}/unblock`).then(r => r.data),
   resetPassword: (id: string, req: ResetPasswordRequest = {}) =>
     http.post<ResetPasswordResponse>(`/api/admin/users/${id}/reset-password`, req).then(r => r.data),
-  updateRole: (id: string, req: UpdateUserRoleRequest) =>
-    http.patch<AdminUserResponse>(`/api/admin/users/${id}/role`, req).then(r => r.data),
 
   // Admin tournaments
   createTournament: (req: AdminCreateTournamentRequest) =>

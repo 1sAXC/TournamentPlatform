@@ -26,7 +26,9 @@ type FormValues = z.infer<typeof schema>;
 
 export function OrgProfilePage() {
   const { user, isActiveOrganizer } = useAuth();
-  const myTournaments = useOrganizerTournaments();
+  // Skip the query for pending/rejected organizers — the endpoint requires
+  // an Active organizer and would 403 on every page mount otherwise.
+  const myTournaments = useOrganizerTournaments({ enabled: isActiveOrganizer });
   const changePwd = useChangePasswordMutation();
   const [pwdError, setPwdError] = useState<string | null>(null);
 

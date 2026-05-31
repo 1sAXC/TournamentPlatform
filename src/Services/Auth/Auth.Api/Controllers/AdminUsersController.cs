@@ -25,15 +25,6 @@ public sealed class AdminUsersController(IAdminUsersService adminUsersService) :
         return ToActionResult(result);
     }
 
-    [HttpGet("users/{id:guid}")]
-    [ProducesResponseType(typeof(AdminUserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetUser(Guid id, CancellationToken cancellationToken)
-    {
-        var result = await adminUsersService.GetUserAsync(id, cancellationToken);
-        return ToActionResult(result);
-    }
-
     [HttpPost("users")]
     [ProducesResponseType(typeof(AdminUserResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -47,22 +38,6 @@ public sealed class AdminUsersController(IAdminUsersService adminUsersService) :
         }
 
         var result = await adminUsersService.CreateUserAsync(request, currentAdminId, cancellationToken);
-        return ToActionResult(result);
-    }
-
-    [HttpPost("organizers/{id:guid}/approve")]
-    [ProducesResponseType(typeof(AdminUserResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> ApproveOrganizer(Guid id, CancellationToken cancellationToken)
-    {
-        var result = await adminUsersService.ApproveOrganizerAsync(id, cancellationToken);
-        return ToActionResult(result);
-    }
-
-    [HttpPost("organizers/{id:guid}/reject")]
-    [ProducesResponseType(typeof(AdminUserResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> RejectOrganizer(Guid id, CancellationToken cancellationToken)
-    {
-        var result = await adminUsersService.RejectOrganizerAsync(id, cancellationToken);
         return ToActionResult(result);
     }
 
@@ -100,17 +75,6 @@ public sealed class AdminUsersController(IAdminUsersService adminUsersService) :
         CancellationToken cancellationToken)
     {
         var result = await adminUsersService.ResetPasswordAsync(id, request, cancellationToken);
-        return ToActionResult(result);
-    }
-
-    [HttpPatch("users/{id:guid}/role")]
-    [ProducesResponseType(typeof(AdminUserResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateRole(
-        Guid id,
-        UpdateUserRoleRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await adminUsersService.UpdateRoleAsync(id, request, cancellationToken);
         return ToActionResult(result);
     }
 

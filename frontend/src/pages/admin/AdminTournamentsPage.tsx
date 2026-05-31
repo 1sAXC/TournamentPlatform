@@ -130,6 +130,15 @@ export function AdminTournamentsPage() {
                           <button className="btn btn-sm" onClick={() => navigate(`/tournaments/${t.id}`)}>
                             <Icon name="eye" size={11} /> Просмотр
                           </button>
+                          {isActive && (
+                            <button
+                              className="btn btn-sm"
+                              onClick={() => navigate(`/organizer/tournaments/${t.id}`)}
+                              title="Завершить матчи, запустить следующий раунд"
+                            >
+                              <Icon name="trophy" size={11} /> Управление
+                            </button>
+                          )}
                           {isEditable && (
                             <button className="btn btn-sm" onClick={() => setEditing(t)}>
                               <Icon name="pen" size={11} /> Редактировать

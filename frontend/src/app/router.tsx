@@ -70,6 +70,14 @@ const router = createBrowserRouter([
     children: [
       { path: '/organizer', element: <OrgTournamentsPage /> },
       { path: '/organizer/create', element: <OrgCreatePage /> },
+    ],
+  },
+  {
+    // Tournament management page is also opened by admins for oversight —
+    // the backend complete-match / swiss-next-round / cancel endpoints
+    // allow Admin via RequireOrganizerOrAdmin.
+    element: <ProtectedRoute roles={['Organizer', 'Admin']} requireActiveOrganizer />,
+    children: [
       { path: '/organizer/tournaments/:id', element: <OrgManagePage /> },
     ],
   },

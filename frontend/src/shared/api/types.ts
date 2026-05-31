@@ -294,12 +294,6 @@ export interface CreateAdminUserRequest {
   contactHandle?: string | null;
 }
 
-export interface UpdateUserRoleRequest {
-  role: Role | string;
-  nickname?: string | null;
-  organizerName?: string | null;
-}
-
 export interface ResetPasswordRequest { temporaryPassword?: string | null; }
 export interface ResetPasswordResponse { userId: string; temporaryPassword?: string | null; }
 

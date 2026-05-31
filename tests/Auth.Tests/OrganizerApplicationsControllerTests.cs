@@ -130,9 +130,6 @@ public sealed class OrganizerApplicationsControllerTests
         public Task<Result<PagedResult<AdminUserResponse>>> GetUsersAsync(AdminUsersQuery query, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
-        public Task<Result<AdminUserResponse>> GetUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException();
-
         public Task<Result<PagedResult<OrganizerApplicationResponse>>> GetOrganizerApplicationsAsync(OrganizerApplicationsQuery query, CancellationToken cancellationToken = default) =>
             Task.FromResult(OrganizerApplicationsResult);
 
@@ -151,12 +148,6 @@ public sealed class OrganizerApplicationsControllerTests
         public Task<Result<AdminUserResponse>> CreateUserAsync(CreateAdminUserRequest request, Guid adminUserId, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
-        public Task<Result<AdminUserResponse>> ApproveOrganizerAsync(Guid userId, CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException();
-
-        public Task<Result<AdminUserResponse>> RejectOrganizerAsync(Guid userId, CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException();
-
         public Task<Result> BlockUserAsync(Guid userId, Guid currentAdminUserId, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
@@ -164,9 +155,6 @@ public sealed class OrganizerApplicationsControllerTests
             throw new NotImplementedException();
 
         public Task<Result<ResetPasswordResponse>> ResetPasswordAsync(Guid userId, ResetPasswordRequest request, CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException();
-
-        public Task<Result<AdminUserResponse>> UpdateRoleAsync(Guid userId, UpdateUserRoleRequest request, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
     }
 }

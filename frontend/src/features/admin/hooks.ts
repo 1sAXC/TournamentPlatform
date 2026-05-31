@@ -6,7 +6,6 @@ import type {
   CreateAdminUserRequest,
   OrganizerApplicationsQuery,
   ResetPasswordRequest,
-  UpdateUserRoleRequest,
 } from '@/shared/api/types';
 
 export const adminKeys = {
@@ -76,15 +75,6 @@ export function useResetUserPassword() {
   return useMutation({
     mutationFn: ({ id, req }: { id: string; req?: ResetPasswordRequest }) =>
       adminApi.resetPassword(id, req),
-  });
-}
-
-export function useUpdateUserRole() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, req }: { id: string; req: UpdateUserRoleRequest }) =>
-      adminApi.updateRole(id, req),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
   });
 }
 
