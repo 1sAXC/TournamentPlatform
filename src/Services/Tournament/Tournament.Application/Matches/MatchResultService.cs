@@ -127,15 +127,11 @@ public sealed class MatchResultService(
             IsTechnicalDefeat = match.IsTechnicalDefeat,
             WinnerPlayers = winner.Members.Select(member => new MatchCompletedPlayerDto
             {
-                UserId = member.PlayerId,
-                Nickname = member.Nickname,
-                EloBeforeMatch = member.Elo
+                UserId = member.PlayerId
             }).ToArray(),
             LoserPlayers = loser.Members.Select(member => new MatchCompletedPlayerDto
             {
-                UserId = member.PlayerId,
-                Nickname = member.Nickname,
-                EloBeforeMatch = member.Elo
+                UserId = member.PlayerId
             }).ToArray()
         };
     }

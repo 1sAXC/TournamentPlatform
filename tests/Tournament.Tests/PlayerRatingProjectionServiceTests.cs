@@ -85,7 +85,6 @@ public sealed class PlayerRatingProjectionServiceTests
         {
             UserId = userId,
             DisciplineCode = DisciplineCodes.CS2,
-            OldElo = 1000,
             NewElo = 1130,
             UpdatedAtUtc = DateTime.UtcNow
         });
@@ -104,7 +103,6 @@ public sealed class PlayerRatingProjectionServiceTests
         {
             UserId = Guid.NewGuid(),
             DisciplineCode = DisciplineCodes.Valorant,
-            OldElo = 1000,
             NewElo = 1042,
             UpdatedAtUtc = DateTime.UtcNow
         };

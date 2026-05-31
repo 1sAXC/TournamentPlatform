@@ -426,17 +426,13 @@ public sealed class RatingServiceTests
             WinnerPlayers = winnerIds
                 .Select(playerId => new MatchCompletedPlayerDto
                 {
-                    UserId = playerId,
-                    Nickname = "Winner",
-                    EloBeforeMatch = 1000
+                    UserId = playerId
                 })
                 .ToArray(),
             LoserPlayers = loserIds
                 .Select(playerId => new MatchCompletedPlayerDto
                 {
-                    UserId = playerId,
-                    Nickname = "Loser",
-                    EloBeforeMatch = 1000
+                    UserId = playerId
                 })
                 .ToArray()
         };

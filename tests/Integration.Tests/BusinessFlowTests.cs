@@ -132,8 +132,8 @@ public sealed class BusinessFlowTests
             TeamSize = 1,
             WinnerTeamId = Guid.NewGuid(),
             LoserTeamId = Guid.NewGuid(),
-            WinnerPlayers = [new MatchCompletedPlayerDto { UserId = winnerId, Nickname = "Winner", EloBeforeMatch = 1000 }],
-            LoserPlayers = [new MatchCompletedPlayerDto { UserId = loserId, Nickname = "Loser", EloBeforeMatch = 1000 }]
+            WinnerPlayers = [new MatchCompletedPlayerDto { UserId = winnerId }],
+            LoserPlayers = [new MatchCompletedPlayerDto { UserId = loserId }]
         };
     }
 

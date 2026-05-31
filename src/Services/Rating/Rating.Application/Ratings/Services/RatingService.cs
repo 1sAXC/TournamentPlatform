@@ -249,11 +249,7 @@ public sealed class RatingService(
         {
             UserId = rating.PlayerId,
             DisciplineCode = rating.DisciplineCode,
-            OldElo = oldElo,
             NewElo = newElo,
-            Delta = newElo - oldElo,
-            MatchId = integrationEvent.MatchId,
-            TournamentId = integrationEvent.TournamentId,
             UpdatedAtUtc = updatedAtUtc
         });
     }
