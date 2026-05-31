@@ -33,4 +33,7 @@ public static class TournamentErrors
     public static readonly Error OrganizerRoleRequired = new("Tournaments.OrganizerRoleRequired", "User must have Organizer role.");
     public static readonly Error OrganizerInactive = new("Tournaments.OrganizerInactive", "Organizer must be active.");
     public static readonly Error CurrentRoundNotCompleted = new("Tournaments.CurrentRoundNotCompleted", "Current round has not been completed yet.");
+    public static readonly Error TournamentNotInProgress = new("Tournaments.NotInProgress", "Action requires the tournament to be in progress.");
+    public static readonly Error NotSwissTournament = new("Tournaments.NotSwissTournament", "Action is only available for Swiss tournaments.");
+    public static readonly Error SwissRoundsExhausted = new("Tournaments.SwissRoundsExhausted", "All Swiss rounds have already been played.");
 }

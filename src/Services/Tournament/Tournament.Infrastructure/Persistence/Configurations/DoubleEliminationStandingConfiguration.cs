@@ -15,6 +15,9 @@ public sealed class DoubleEliminationStandingConfiguration : IEntityTypeConfigur
         builder.Property(standing => standing.Id)
             .ValueGeneratedNever();
 
+        // Derived from Losses, see DoubleEliminationStanding.IsEliminated.
+        builder.Ignore(standing => standing.IsEliminated);
+
         builder.HasIndex(standing => new { standing.TournamentId, standing.TeamId })
             .IsUnique();
     }

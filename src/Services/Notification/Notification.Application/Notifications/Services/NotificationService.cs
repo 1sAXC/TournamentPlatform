@@ -8,7 +8,6 @@ public sealed class NotificationService(INotificationRepository notifications) :
 {
     public async Task<NotificationListResponse> ListAsync(
         Guid recipientUserId,
-        bool unreadOnly,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -18,12 +17,11 @@ public sealed class NotificationService(INotificationRepository notifications) :
 
         var items = await notifications.GetForUserAsync(
             recipientUserId,
-            unreadOnly,
             skip,
             take,
             cancellationToken);
 
-        var total = await notifications.CountForUserAsync(recipientUserId, unreadOnly, cancellationToken);
+        var total = await notifications.CountForUserAsync(recipientUserId, cancellationToken);
         var unread = await notifications.CountUnreadForUserAsync(recipientUserId, cancellationToken);
 
         var responseItems = items

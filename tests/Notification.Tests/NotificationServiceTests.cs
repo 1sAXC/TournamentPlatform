@@ -22,29 +22,11 @@ public sealed class NotificationServiceTests
         ]);
         var service = new NotificationService(repository);
 
-        var page = await service.ListAsync(ownerId, unreadOnly: false, pageNumber: 1, pageSize: 20);
+        var page = await service.ListAsync(ownerId, pageNumber: 1, pageSize: 20);
 
         Assert.Equal(3, page.Items.Count);
         Assert.Equal(3, page.TotalCount);
         Assert.Equal(2, page.UnreadCount);
-    }
-
-    [Fact]
-    public async Task List_UnreadOnly_FiltersOutReadNotifications()
-    {
-        var ownerId = Guid.NewGuid();
-        var repository = new InMemoryRepository();
-        repository.Notifications.AddRange([
-            CreateNotification(ownerId, isRead: false),
-            CreateNotification(ownerId, isRead: true),
-        ]);
-        var service = new NotificationService(repository);
-
-        var page = await service.ListAsync(ownerId, unreadOnly: true, pageNumber: 1, pageSize: 20);
-
-        Assert.Single(page.Items);
-        Assert.Equal(1, page.TotalCount);
-        Assert.Equal(1, page.UnreadCount);
     }
 
     [Fact]
@@ -115,17 +97,17 @@ public sealed class NotificationServiceTests
     {
         public List<NotificationEntity> Notifications { get; } = [];
 
-        public Task<IReadOnlyCollection<NotificationEntity>> GetForUserAsync(Guid recipientUserId, bool unreadOnly, int skip, int take, CancellationToken cancellationToken = default) =>
+        public Task<IReadOnlyCollection<NotificationEntity>> GetForUserAsync(Guid recipientUserId, int skip, int take, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyCollection<NotificationEntity>>(
                 Notifications
-                    .Where(n => n.RecipientUserId == recipientUserId && (!unreadOnly || !n.IsRead))
+                    .Where(n => n.RecipientUserId == recipientUserId)
                     .OrderByDescending(n => n.CreatedAtUtc)
                     .Skip(skip)
                     .Take(take)
                     .ToArray());
 
-        public Task<int> CountForUserAsync(Guid recipientUserId, bool unreadOnly, CancellationToken cancellationToken = default) =>
-            Task.FromResult(Notifications.Count(n => n.RecipientUserId == recipientUserId && (!unreadOnly || !n.IsRead)));
+        public Task<int> CountForUserAsync(Guid recipientUserId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Notifications.Count(n => n.RecipientUserId == recipientUserId));
 
         public Task<int> CountUnreadForUserAsync(Guid recipientUserId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Notifications.Count(n => n.RecipientUserId == recipientUserId && !n.IsRead));

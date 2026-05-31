@@ -2,9 +2,10 @@ namespace Notification.Domain.Notifications;
 
 /// <summary>
 /// A delivered notification record for a specific recipient. Created by
-/// the fan-out logic in Notification.Api when integration events arrive
-/// from RabbitMQ. Idempotency is enforced by a unique index on
-/// (SourceEventId, RecipientUserId).
+/// the fan-out logic in Notification.Application
+/// (<see cref="Notifications.Services.RoundCreatedFanout"/>) when
+/// integration events arrive from RabbitMQ. Idempotency is enforced by a
+/// unique index on (SourceEventId, RecipientUserId).
 /// </summary>
 public sealed class Notification
 {

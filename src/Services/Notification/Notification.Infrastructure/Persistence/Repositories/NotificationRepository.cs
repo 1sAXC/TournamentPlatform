@@ -8,12 +8,12 @@ public sealed class NotificationRepository(NotificationDbContext dbContext) : IN
 {
     public async Task<IReadOnlyCollection<NotificationEntity>> GetForUserAsync(
         Guid recipientUserId,
-        bool unreadOnly,
         int skip,
         int take,
         CancellationToken cancellationToken = default)
     {
-        return await ApplyFilter(recipientUserId, unreadOnly)
+        return await dbContext.Notifications
+            .Where(notification => notification.RecipientUserId == recipientUserId)
             .OrderByDescending(notification => notification.CreatedAtUtc)
             .Skip(skip)
             .Take(take)
@@ -22,10 +22,11 @@ public sealed class NotificationRepository(NotificationDbContext dbContext) : IN
 
     public Task<int> CountForUserAsync(
         Guid recipientUserId,
-        bool unreadOnly,
         CancellationToken cancellationToken = default)
     {
-        return ApplyFilter(recipientUserId, unreadOnly).CountAsync(cancellationToken);
+        return dbContext.Notifications
+            .Where(notification => notification.RecipientUserId == recipientUserId)
+            .CountAsync(cancellationToken);
     }
 
     public Task<int> CountUnreadForUserAsync(
@@ -61,16 +62,5 @@ public sealed class NotificationRepository(NotificationDbContext dbContext) : IN
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private IQueryable<NotificationEntity> ApplyFilter(Guid recipientUserId, bool unreadOnly)
-    {
-        var query = dbContext.Notifications.Where(notification => notification.RecipientUserId == recipientUserId);
-        if (unreadOnly)
-        {
-            query = query.Where(notification => notification.ReadAtUtc == null);
-        }
-
-        return query;
     }
 }

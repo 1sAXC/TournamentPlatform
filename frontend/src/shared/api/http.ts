@@ -115,6 +115,9 @@ const errorCodeMap: Record<string, string> = {
   'Tournaments.OrganizerRoleRequired': 'Пользователь должен иметь роль организатора',
   'Tournaments.OrganizerInactive': 'Организатор должен быть активным',
   'Tournaments.CurrentRoundNotCompleted': 'Текущий раунд ещё не завершён',
+  'Tournaments.NotInProgress': 'Действие доступно только для активного турнира',
+  'Tournaments.NotSwissTournament': 'Действие доступно только для швейцарской системы',
+  'Tournaments.SwissRoundsExhausted': 'Все раунды Swiss уже сыграны',
   'Notifications.NotFound': 'Уведомление не найдено',
   'Notifications.AccessDenied': 'Это уведомление вам недоступно',
 };

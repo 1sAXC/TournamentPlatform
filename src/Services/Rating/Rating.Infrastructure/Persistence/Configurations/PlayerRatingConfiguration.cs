@@ -25,8 +25,12 @@ public sealed class PlayerRatingConfiguration : IEntityTypeConfiguration<PlayerR
         builder.Property(rating => rating.UpdatedAtUtc)
             .IsRequired();
 
+        // RowVersion is kept as a plain byte[] column for legacy compatibility
+        // with the initial schema. It is NOT a concurrency token: nothing in
+        // the domain updates it. PlayerRating updates are serialised through
+        // a single-consumer RabbitMQ queue (prefetch=1), so optimistic
+        // concurrency control is intentionally not used here.
         builder.Property(rating => rating.RowVersion)
-            .IsConcurrencyToken()
             .HasDefaultValue(Array.Empty<byte>());
 
         builder.HasIndex(rating => new { rating.PlayerId, rating.DisciplineCode })

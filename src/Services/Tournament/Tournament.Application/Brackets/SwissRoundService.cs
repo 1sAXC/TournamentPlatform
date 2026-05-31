@@ -29,9 +29,14 @@ public sealed class SwissRoundService(
             return Result.Failure(TournamentErrors.AccessDenied);
         }
 
-        if (tournament.Status != TournamentStatus.InProgress || tournament.Format != TournamentFormat.Swiss)
+        if (tournament.Format != TournamentFormat.Swiss)
         {
-            return Result.Failure(TournamentErrors.TournamentAlreadyStarted);
+            return Result.Failure(TournamentErrors.NotSwissTournament);
+        }
+
+        if (tournament.Status != TournamentStatus.InProgress)
+        {
+            return Result.Failure(TournamentErrors.TournamentNotInProgress);
         }
 
         var currentRound = tournament.Rounds
@@ -45,7 +50,7 @@ public sealed class SwissRoundService(
 
         if (currentRound.Number >= tournament.SwissRounds)
         {
-            return Result.Failure(TournamentErrors.TournamentAlreadyStarted);
+            return Result.Failure(TournamentErrors.SwissRoundsExhausted);
         }
 
         var generator = (SwissBracketGenerator)bracketGeneratorFactory.GetGenerator(TournamentFormat.Swiss);

@@ -16,7 +16,6 @@ public sealed class NotificationsController(INotificationService notifications) 
     [HttpGet]
     [ProducesResponseType(typeof(NotificationListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
-        [FromQuery] bool unreadOnly = false,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
@@ -26,7 +25,7 @@ public sealed class NotificationsController(INotificationService notifications) 
             return Unauthorized();
         }
 
-        var list = await notifications.ListAsync(currentUser.UserId, unreadOnly, pageNumber, pageSize, cancellationToken);
+        var list = await notifications.ListAsync(currentUser.UserId, pageNumber, pageSize, cancellationToken);
         return Ok(list);
     }
 

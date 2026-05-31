@@ -17,7 +17,11 @@ public sealed class DoubleEliminationStanding
     public Guid TournamentId { get; private set; }
     public Guid TeamId { get; private set; }
     public int Losses { get; private set; }
-    public bool IsEliminated { get; private set; }
+
+    // Double-elimination convention: a team is out of the bracket after two
+    // losses. Derived from Losses on demand so the schema doesn't carry a
+    // duplicate persisted bit. The Configuration uses .Ignore() for this.
+    public bool IsEliminated => Losses >= 2;
 
     public static DoubleEliminationStanding Create(Guid tournamentId, Guid teamId)
     {
@@ -27,9 +31,5 @@ public sealed class DoubleEliminationStanding
     public void AddLoss()
     {
         Losses++;
-        if (Losses >= 2)
-        {
-            IsEliminated = true;
-        }
     }
 }

@@ -84,7 +84,6 @@ namespace Auth.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(32)");
 
                     b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bytea")

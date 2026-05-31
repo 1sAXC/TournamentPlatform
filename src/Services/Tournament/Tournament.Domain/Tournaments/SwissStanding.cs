@@ -19,8 +19,6 @@ public sealed class SwissStanding
     public int Points { get; private set; }
     public int Wins { get; private set; }
     public int Losses { get; private set; }
-    public double? BuchholzScore { get; private set; }
-    public string? OpponentsJson { get; private set; }
 
     public static SwissStanding Create(Guid tournamentId, Guid teamId)
     {

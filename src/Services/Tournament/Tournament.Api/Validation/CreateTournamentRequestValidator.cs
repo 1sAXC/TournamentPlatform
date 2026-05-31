@@ -23,10 +23,13 @@ public sealed class CreateTournamentRequestValidator : AbstractValidator<CreateT
 
         RuleFor(request => request.Format)
             .NotEmpty()
-            .Must(format => Enum.TryParse<TournamentPlatform.Contracts.Enums.TournamentFormat>(
-                format,
-                ignoreCase: true,
-                out _))
+            .Must(format => !string.IsNullOrWhiteSpace(format)
+                && !char.IsDigit(format.Trim()[0])
+                && Enum.TryParse<TournamentPlatform.Contracts.Enums.TournamentFormat>(
+                    format,
+                    ignoreCase: true,
+                    out var parsed)
+                && Enum.IsDefined(parsed))
             .WithMessage("Format is invalid.");
 
         RuleFor(request => request.TeamSize)

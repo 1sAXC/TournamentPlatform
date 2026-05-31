@@ -7,7 +7,6 @@ public interface INotificationService
 {
     Task<NotificationListResponse> ListAsync(
         Guid recipientUserId,
-        bool unreadOnly,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);

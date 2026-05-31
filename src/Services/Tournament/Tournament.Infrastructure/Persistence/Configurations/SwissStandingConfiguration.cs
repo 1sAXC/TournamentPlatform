@@ -15,9 +15,6 @@ public sealed class SwissStandingConfiguration : IEntityTypeConfiguration<SwissS
         builder.Property(standing => standing.Id)
             .ValueGeneratedNever();
 
-        builder.Property(standing => standing.OpponentsJson)
-            .HasColumnType("jsonb");
-
         builder.HasIndex(standing => new { standing.TournamentId, standing.TeamId })
             .IsUnique();
     }

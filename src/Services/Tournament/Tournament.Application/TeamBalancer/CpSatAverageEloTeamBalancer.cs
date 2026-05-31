@@ -8,13 +8,10 @@ public sealed class CpSatAverageEloTeamBalancer(
     IRandomProvider randomProvider,
     IOptions<TeamBalancingOptions> options) : ITeamBalancer
 {
-    public CpSatTeamBalancingDiagnostics? LastDiagnostics { get; private set; }
-
     public IReadOnlyList<BalancedTeam> BuildTeams(
         IReadOnlyCollection<PlayerForBalancing> players,
         int teamSize)
     {
-        LastDiagnostics = null;
         TeamBalancerBuilder.Validate(players, teamSize);
         var fallbackTeams = fallbackBalancer.BuildTeams(players, teamSize);
 
@@ -67,12 +64,6 @@ public sealed class CpSatAverageEloTeamBalancer(
             solver.StringParameters = BuildSolverParameters(options.Value);
 
             var status = solver.Solve(model);
-            LastDiagnostics = new CpSatTeamBalancingDiagnostics(
-                status.ToString(),
-                status is CpSolverStatus.Optimal or CpSolverStatus.Feasible
-                    ? (long)solver.ObjectiveValue
-                    : null,
-                solver.BestObjectiveBound);
 
             if (status is not (CpSolverStatus.Optimal or CpSolverStatus.Feasible))
             {

@@ -64,8 +64,13 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.CreatedAtUtc)
             .IsRequired();
 
+        // RowVersion is kept as a plain byte[] column for legacy compatibility
+        // with the initial schema. It is NOT a concurrency token: nothing in
+        // the domain updates it, so configuring it as one would be a no-op
+        // (EF would compare empty-against-empty forever). If optimistic
+        // concurrency on User becomes important, switch to xmin via
+        // .UseXminAsConcurrencyToken() and update mutating methods.
         builder.Property(user => user.RowVersion)
-            .IsConcurrencyToken()
             .HasDefaultValue(Array.Empty<byte>());
 
         builder.Ignore(user => user.DomainEvents);

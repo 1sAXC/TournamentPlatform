@@ -35,7 +35,7 @@ public sealed class TournamentService(
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidTitle);
         }
 
-        if (!Enum.TryParse<TournamentFormat>(request.Format, ignoreCase: true, out var format))
+        if (!TryParseTournamentFormat(request.Format, out var format))
         {
             return Result<TournamentDetailsResponse>.Failure(TournamentErrors.InvalidFormat);
         }
@@ -453,6 +453,27 @@ public sealed class TournamentService(
     public static string NormalizeTitle(string title)
     {
         return title.Trim().ToUpperInvariant();
+    }
+
+    // Enum.TryParse(ignoreCase: true) accepts numeric strings ("0", "1", …)
+    // as valid enum values, which would silently let a request like
+    // { "format": "1" } through. Restrict to the named members only.
+    private static bool TryParseTournamentFormat(string? value, out TournamentFormat format)
+    {
+        format = default;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var trimmed = value.Trim();
+        if (trimmed.Length == 0 || char.IsDigit(trimmed[0]))
+        {
+            return false;
+        }
+
+        return Enum.TryParse(trimmed, ignoreCase: true, out format)
+            && Enum.IsDefined(format);
     }
 
     private static Result ValidateSwissRounds(TournamentFormat format, int? swissRounds)

@@ -155,7 +155,7 @@ public sealed class AuthServiceTests
         Assert.True(oldLogin.IsFailure);
         Assert.Equal(AuthErrors.InvalidCredentials, oldLogin.Error);
         Assert.True(newLogin.IsSuccess);
-        Assert.Equal(player.Id, newLogin.Value.User.Id);
+        Assert.Equal(player.Id, newLogin.Value.User.UserId);
     }
 
     [Fact]

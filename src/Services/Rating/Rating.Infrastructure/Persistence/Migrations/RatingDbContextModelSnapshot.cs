@@ -52,7 +52,6 @@ namespace Rating.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bytea")

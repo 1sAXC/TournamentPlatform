@@ -166,17 +166,17 @@ public sealed class RoundCreatedFanoutTests
     {
         public List<NotificationEntity> Notifications { get; } = [];
 
-        public Task<IReadOnlyCollection<NotificationEntity>> GetForUserAsync(Guid recipientUserId, bool unreadOnly, int skip, int take, CancellationToken cancellationToken = default) =>
+        public Task<IReadOnlyCollection<NotificationEntity>> GetForUserAsync(Guid recipientUserId, int skip, int take, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyCollection<NotificationEntity>>(
                 Notifications
-                    .Where(n => n.RecipientUserId == recipientUserId && (!unreadOnly || !n.IsRead))
+                    .Where(n => n.RecipientUserId == recipientUserId)
                     .OrderByDescending(n => n.CreatedAtUtc)
                     .Skip(skip)
                     .Take(take)
                     .ToArray());
 
-        public Task<int> CountForUserAsync(Guid recipientUserId, bool unreadOnly, CancellationToken cancellationToken = default) =>
-            Task.FromResult(Notifications.Count(n => n.RecipientUserId == recipientUserId && (!unreadOnly || !n.IsRead)));
+        public Task<int> CountForUserAsync(Guid recipientUserId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Notifications.Count(n => n.RecipientUserId == recipientUserId));
 
         public Task<int> CountUnreadForUserAsync(Guid recipientUserId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Notifications.Count(n => n.RecipientUserId == recipientUserId && !n.IsRead));

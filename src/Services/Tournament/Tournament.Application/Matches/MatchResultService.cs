@@ -47,7 +47,7 @@ public sealed class MatchResultService(
 
         if (tournament.Status != TournamentStatus.InProgress)
         {
-            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.TournamentAlreadyStarted);
+            return Result<TournamentDetailsResponse>.Failure(TournamentErrors.TournamentNotInProgress);
         }
 
         if (match.TeamAId is null || match.TeamBId is null)
