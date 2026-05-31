@@ -9,7 +9,6 @@ public sealed class RatingDbContext(DbContextOptions<RatingDbContext> options) :
 {
     public DbSet<PlayerRating> PlayerRatings => Set<PlayerRating>();
     public DbSet<RatingHistory> RatingHistories => Set<RatingHistory>();
-    public DbSet<PlayerTournamentStatistic> PlayerTournamentStatistics => Set<PlayerTournamentStatistic>();
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 

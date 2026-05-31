@@ -39,7 +39,6 @@ public static class RatingInfrastructureServiceCollectionExtensions
         services.AddRabbitMqConsumer<UserBlockedEvent, RatingUserBlockedConsumer>("rating.user-blocked");
         services.AddRabbitMqConsumer<UserRoleChangedEvent, RatingUserRoleChangedConsumer>("rating.user-role-changed");
         services.AddRabbitMqConsumer<MatchCompletedEvent, RatingMatchCompletedConsumer>("rating.match-completed");
-        services.AddRabbitMqConsumer<TournamentCompletedEvent, RatingTournamentCompletedConsumer>("rating.tournament-completed");
 
         return services;
     }

@@ -46,7 +46,7 @@ public sealed class TournamentServiceTests
         var organizerId = Guid.NewGuid();
         var repository = new InMemoryTournamentRepository();
         var users = new InMemoryUserProjectionRepository();
-        users.Users.Add(UserProjection.Create(organizerId, "Organizer", "@org_contact", DateTime.UtcNow));
+        users.Users.Add(UserProjection.Create(organizerId, "Organizer", "@org_contact", "Test Org", DateTime.UtcNow));
         var service = CreateService(repository, users: users);
 
         var result = await service.CreateByAdminAsync(AdminValidRequest("Admin Cup", organizerId), Admin);
@@ -72,7 +72,7 @@ public sealed class TournamentServiceTests
     {
         var playerId = Guid.NewGuid();
         var users = new InMemoryUserProjectionRepository();
-        users.Users.Add(UserProjection.Create(playerId, "Player", "@player_contact", DateTime.UtcNow));
+        users.Users.Add(UserProjection.Create(playerId, "Player", "@player_contact", null, DateTime.UtcNow));
         var service = CreateService(new InMemoryTournamentRepository(), users: users);
 
         var result = await service.CreateByAdminAsync(AdminValidRequest("Player Owner Cup", playerId), Admin);
@@ -85,7 +85,7 @@ public sealed class TournamentServiceTests
     public async Task AdminCreate_WithDeletedOrganizer_GetsOrganizerInactive()
     {
         var organizerId = Guid.NewGuid();
-        var organizer = UserProjection.Create(organizerId, "Organizer", "@org_contact", DateTime.UtcNow);
+        var organizer = UserProjection.Create(organizerId, "Organizer", "@org_contact", "Test Org", DateTime.UtcNow);
         organizer.MarkBlocked(DateTime.UtcNow);
         var users = new InMemoryUserProjectionRepository();
         users.Users.Add(organizer);
@@ -102,7 +102,7 @@ public sealed class TournamentServiceTests
     {
         var organizerId = Guid.NewGuid();
         var users = new InMemoryUserProjectionRepository();
-        users.Users.Add(UserProjection.Create(organizerId, "Organizer", "@org_contact", DateTime.UtcNow));
+        users.Users.Add(UserProjection.Create(organizerId, "Organizer", "@org_contact", "Test Org", DateTime.UtcNow));
         var service = CreateService(new InMemoryTournamentRepository(), users: users);
 
         var result = await service.CreateByAdminAsync(AdminValidRequest("Forbidden Cup", organizerId), ActiveOrganizer);

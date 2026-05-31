@@ -34,7 +34,7 @@ public sealed class UserProjectionServiceTests
     public async Task HandleUserContactHandleChanged_UpdatesExistingProjection()
     {
         var userId = Guid.NewGuid();
-        var existing = UserProjection.Create(userId, "Player", "@old", DateTime.UtcNow);
+        var existing = UserProjection.Create(userId, "Player", "@old", null, DateTime.UtcNow);
         var repository = new InMemoryUserProjectionRepository();
         repository.Users.Add(existing);
         var service = new UserProjectionService(repository);
@@ -69,7 +69,7 @@ public sealed class UserProjectionServiceTests
     public async Task HandleUserCreated_RestoresAndUpdatesContactForExistingProjection()
     {
         var userId = Guid.NewGuid();
-        var existing = UserProjection.Create(userId, "Player", "@old", DateTime.UtcNow);
+        var existing = UserProjection.Create(userId, "Player", "@old", null, DateTime.UtcNow);
         existing.MarkBlocked(DateTime.UtcNow);
         var repository = new InMemoryUserProjectionRepository();
         repository.Users.Add(existing);

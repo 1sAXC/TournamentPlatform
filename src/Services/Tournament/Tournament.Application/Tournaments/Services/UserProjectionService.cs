@@ -17,11 +17,12 @@ public sealed class UserProjectionService(IUserProjectionRepository users) : IUs
                 integrationEvent.UserId,
                 integrationEvent.Role,
                 integrationEvent.ContactHandle,
+                integrationEvent.OrganizerName,
                 integrationEvent.CreatedAtUtc));
         }
         else
         {
-            projection.Restore(integrationEvent.Role);
+            projection.Restore(integrationEvent.Role, integrationEvent.OrganizerName);
             projection.UpdateContactHandle(integrationEvent.ContactHandle);
         }
 
@@ -54,11 +55,12 @@ public sealed class UserProjectionService(IUserProjectionRepository users) : IUs
                 integrationEvent.UserId,
                 integrationEvent.NewRole,
                 contactHandle: null,
+                integrationEvent.OrganizerName,
                 integrationEvent.ChangedAtUtc));
         }
         else
         {
-            projection.ChangeRole(integrationEvent.NewRole);
+            projection.ChangeRole(integrationEvent.NewRole, integrationEvent.OrganizerName);
         }
 
         await users.SaveChangesAsync(cancellationToken);

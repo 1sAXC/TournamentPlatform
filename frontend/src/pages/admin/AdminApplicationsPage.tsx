@@ -51,8 +51,16 @@ export function AdminApplicationsPage() {
                   <Avatar name={a.organizerName} size="lg" variant="org" />
                   <div className="col" style={{ gap: 4, flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: 15 }}>{a.organizerName}</div>
-                    <div className="row" style={{ gap: 8 }}>
+                    <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                       <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{a.email}</span>
+                      {a.contactHandle && (
+                        <>
+                          <span style={{ color: 'var(--muted-2)' }}>·</span>
+                          <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }} title="Контакт заявителя">
+                            {a.contactHandle}
+                          </span>
+                        </>
+                      )}
                       <span style={{ color: 'var(--muted-2)' }}>·</span>
                       <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>подана {formatDate(a.createdAtUtc)}</span>
                     </div>

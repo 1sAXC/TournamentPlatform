@@ -257,6 +257,7 @@ export interface OrganizerApplicationResponse {
   email: string;
   status: string;
   organizerName: string;
+  contactHandle?: string | null;
   createdAtUtc: string;
   approvedAtUtc?: string | null;
   rejectedAtUtc?: string | null;

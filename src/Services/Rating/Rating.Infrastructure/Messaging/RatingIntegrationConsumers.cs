@@ -57,13 +57,3 @@ public sealed class RatingMatchCompletedConsumer(
         await ratingService.HandleMatchCompletedAsync(integrationEvent, cancellationToken);
     }
 }
-
-public sealed class RatingTournamentCompletedConsumer(ILogger<RatingTournamentCompletedConsumer> logger)
-    : IIntegrationEventConsumer<TournamentCompletedEvent>
-{
-    public Task ConsumeAsync(TournamentCompletedEvent integrationEvent, CancellationToken cancellationToken = default)
-    {
-        logger.LogInformation("RatingService received TournamentCompleted for tournament {TournamentId}", integrationEvent.TournamentId);
-        return Task.CompletedTask;
-    }
-}

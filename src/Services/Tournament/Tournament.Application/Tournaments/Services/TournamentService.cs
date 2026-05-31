@@ -190,6 +190,11 @@ public sealed class TournamentService(
             return projections.TryGetValue(userId, out var projection) ? projection.ContactHandle : null;
         }
 
+        string? ResolveOrganizerName(Guid userId)
+        {
+            return projections.TryGetValue(userId, out var projection) ? projection.OrganizerName : null;
+        }
+
         MatchTeamResponse? MapTeam(Domain.Tournaments.Team? team)
         {
             if (team is null)
@@ -215,10 +220,7 @@ public sealed class TournamentService(
 
         var organizer = new MatchOrganizerResponse(
             tournament.OrganizerId,
-            // Organizer's display name is not stored on tournament; we keep it
-            // null here. Frontend resolves it from the organizer's own profile
-            // surface (already available via Auth lookups elsewhere if needed).
-            OrganizerName: null,
+            OrganizerName: ResolveOrganizerName(tournament.OrganizerId),
             ContactHandle: ResolveContact(tournament.OrganizerId));
 
         return Result<MatchDetailsResponse>.Success(new MatchDetailsResponse(
