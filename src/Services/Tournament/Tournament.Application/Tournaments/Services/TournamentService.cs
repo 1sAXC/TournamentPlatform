@@ -15,7 +15,7 @@ public sealed class TournamentService(
     private const int MaxTournamentPlayers = 120;
 
     private static readonly Regex TitleRegex = new(
-        @"^(?!.* {2,})(?!.*-{2,})[A-Za-z0-9][A-Za-z0-9 -]*[A-Za-z0-9]$",
+        @"^(?=.{5,50}$)(?!.* {2,})(?!.*-{2,})[A-Za-z0-9Ѐ-ӿ][A-Za-z0-9Ѐ-ӿ -]*[A-Za-z0-9Ѐ-ӿ]$",
         RegexOptions.Compiled,
         TimeSpan.FromMilliseconds(100));
 

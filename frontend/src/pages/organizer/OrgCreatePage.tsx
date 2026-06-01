@@ -13,8 +13,8 @@ import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
 
 const schema = z.object({
-  title: z.string().min(3, 'Минимум 3 символа').max(120, 'Максимум 120 символов'),
-  description: z.string().max(1000, 'Максимум 1000 символов').optional(),
+  title: z.string().min(5, 'Минимум 5 символов').max(50, 'Максимум 50 символов'),
+  description: z.string().max(150, 'Максимум 150 символов').optional(),
   disciplineCode: z.string().min(1, 'Выберите дисциплину'),
   format: z.enum(['Swiss', 'SingleElimination', 'DoubleElimination']),
   swissRounds: z.coerce
@@ -26,13 +26,12 @@ const schema = z.object({
   teamSize: z.coerce
     .number({ invalid_type_error: 'Введите размер команды' })
     .int('Должно быть целым числом')
-    .min(1, 'Минимум 1 игрок в команде')
-    .max(10, 'Максимум 10 игроков в команде'),
+    .refine((v) => v === 1 || v === 2 || v === 5, 'Размер команды должен быть 1, 2 или 5'),
   maxPlayers: z.coerce
     .number({ invalid_type_error: 'Введите число участников' })
     .int('Должно быть целым числом')
     .min(2, 'Минимум 2 участника')
-    .max(256, 'Максимум 256 участников'),
+    .max(120, 'Максимум 120 участников'),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -93,7 +92,7 @@ export function OrgCreatePage() {
               </select>
             </Field>
             <Field label="Макс. участников" error={errors.maxPlayers?.message}>
-              <input className="input" type="number" min={2} max={256} {...register('maxPlayers')} />
+              <input className="input" type="number" {...register('maxPlayers')} />
             </Field>
           </div>
         </div>
@@ -128,8 +127,8 @@ export function OrgCreatePage() {
 
         <div className="eyebrow" style={{ marginBottom: 12 }}>Формат команд</div>
         <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Игроков в команде" hint="1 для одиночного" error={errors.teamSize?.message}>
-            <input className="input" type="number" min={1} max={10} {...register('teamSize')} />
+          <Field label="Игроков в команде" hint="1, 2 или 5" error={errors.teamSize?.message}>
+            <input className="input" type="number" {...register('teamSize')} />
           </Field>
         </div>
 

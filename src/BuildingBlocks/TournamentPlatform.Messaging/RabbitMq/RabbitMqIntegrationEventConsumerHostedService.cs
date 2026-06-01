@@ -86,34 +86,76 @@ public sealed class RabbitMqIntegrationEventConsumerHostedService<TEvent, TConsu
         channel.QueueBind(errorQueue, _options.DeadLetterExchangeName, "#");
     }
 
+    private const int MaxConsumeAttempts = 3;
+
     private async Task HandleDeliveryAsync(IModel channel, BasicDeliverEventArgs args, CancellationToken cancellationToken)
     {
+        TEvent integrationEvent;
         try
         {
             var payload = Encoding.UTF8.GetString(args.Body.Span);
-            var integrationEvent = JsonSerializer.Deserialize<TEvent>(payload, JsonSerializerOptions)
+            integrationEvent = JsonSerializer.Deserialize<TEvent>(payload, JsonSerializerOptions)
                 ?? throw new InvalidOperationException($"Cannot deserialize {typeof(TEvent).Name}.");
-
-            var consumerName = typeof(TConsumer).FullName ?? typeof(TConsumer).Name;
-            using var scope = serviceScopeFactory.CreateScope();
-            var inbox = scope.ServiceProvider.GetRequiredService<IInboxMessageStore>();
-
-            if (await inbox.HasProcessedAsync(integrationEvent.EventId, consumerName, cancellationToken))
-            {
-                channel.BasicAck(args.DeliveryTag, multiple: false);
-                return;
-            }
-
-            var consumer = scope.ServiceProvider.GetRequiredService<TConsumer>();
-            await consumer.ConsumeAsync(integrationEvent, cancellationToken);
-            await inbox.MarkProcessedAsync(integrationEvent.EventId, consumerName, DateTime.UtcNow, cancellationToken);
-
-            channel.BasicAck(args.DeliveryTag, multiple: false);
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "RabbitMQ consumer {QueueName} failed to process delivery.", queueName);
+            logger.LogError(exception, "RabbitMQ consumer {QueueName} failed to deserialize delivery; dead-lettering.", queueName);
             channel.BasicNack(args.DeliveryTag, multiple: false, requeue: false);
+            return;
+        }
+
+        var consumerName = typeof(TConsumer).FullName ?? typeof(TConsumer).Name;
+
+        for (var attempt = 1; attempt <= MaxConsumeAttempts; attempt++)
+        {
+            try
+            {
+                using var scope = serviceScopeFactory.CreateScope();
+                var inbox = scope.ServiceProvider.GetRequiredService<IInboxMessageStore>();
+
+                if (await inbox.HasProcessedAsync(integrationEvent.EventId, consumerName, cancellationToken))
+                {
+                    channel.BasicAck(args.DeliveryTag, multiple: false);
+                    return;
+                }
+
+                var consumer = scope.ServiceProvider.GetRequiredService<TConsumer>();
+                await consumer.ConsumeAsync(integrationEvent, cancellationToken);
+                await inbox.MarkProcessedAsync(integrationEvent.EventId, consumerName, DateTime.UtcNow, cancellationToken);
+
+                channel.BasicAck(args.DeliveryTag, multiple: false);
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception) when (attempt < MaxConsumeAttempts)
+            {
+                var backoff = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+                logger.LogWarning(
+                    exception,
+                    "RabbitMQ consumer {QueueName} attempt {Attempt}/{MaxAttempts} failed; retrying in {BackoffSeconds}s.",
+                    queueName, attempt, MaxConsumeAttempts, backoff.TotalSeconds);
+
+                try
+                {
+                    await Task.Delay(backoff, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(
+                    exception,
+                    "RabbitMQ consumer {QueueName} exhausted {MaxAttempts} attempts; dead-lettering.",
+                    queueName, MaxConsumeAttempts);
+                channel.BasicNack(args.DeliveryTag, multiple: false, requeue: false);
+                return;
+            }
         }
     }
 }

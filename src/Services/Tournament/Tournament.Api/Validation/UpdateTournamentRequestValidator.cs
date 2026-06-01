@@ -9,10 +9,10 @@ public sealed class UpdateTournamentRequestValidator : AbstractValidator<UpdateT
     {
         RuleFor(request => request.Title)
             .NotEmpty()
-            .MaximumLength(200)
-            .Matches(@"^(?!.* {2,})(?!.*-{2,})[A-Za-z0-9][A-Za-z0-9 -]*[A-Za-z0-9]$");
+            .Length(5, 50)
+            .Matches(@"^(?=.{5,50}$)(?!.* {2,})(?!.*-{2,})[A-Za-z0-9Ѐ-ӿ][A-Za-z0-9Ѐ-ӿ -]*[A-Za-z0-9Ѐ-ӿ]$");
 
         RuleFor(request => request.Description)
-            .MaximumLength(4000);
+            .MaximumLength(150);
     }
 }

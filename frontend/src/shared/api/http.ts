@@ -63,6 +63,7 @@ const validationMessageMap: Record<string, string> = {
   'MaxPlayers must be divisible by TeamSize.': 'Максимальное число игроков должно делиться на размер команды',
   'Format is invalid.': 'Некорректный формат турнира',
   'TeamSize must be 1, 2 or 5.': 'Размер команды должен быть 1, 2 или 5',
+  "'Title' is not in the correct format.": 'Некорректное название турнира',
 };
 
 // Maps backend error codes (ProblemDetails.type) to localized titles.

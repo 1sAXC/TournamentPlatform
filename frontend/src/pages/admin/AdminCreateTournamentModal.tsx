@@ -13,13 +13,16 @@ import { toApiError } from '@/shared/api/http';
 
 const schema = z.object({
   organizerId: z.string().uuid('Выберите организатора'),
-  title: z.string().min(3, 'Минимум 3 символа').max(120, 'Максимум 120 символов'),
-  description: z.string().max(1000, 'Максимум 1000 символов').optional(),
+  title: z.string().min(5, 'Минимум 5 символов').max(50, 'Максимум 50 символов'),
+  description: z.string().max(150, 'Максимум 150 символов').optional(),
   disciplineCode: z.string().min(1, 'Выберите дисциплину'),
   format: z.enum(['Swiss', 'SingleElimination', 'DoubleElimination']),
   swissRounds: z.coerce.number().int().min(1).max(20).optional(),
-  teamSize: z.coerce.number().int().min(1, 'Минимум 1').max(10, 'Максимум 10'),
-  maxPlayers: z.coerce.number().int().min(2, 'Минимум 2').max(256, 'Максимум 256'),
+  teamSize: z.coerce
+    .number({ invalid_type_error: 'Введите размер команды' })
+    .int('Должно быть целым числом')
+    .refine((v) => v === 1 || v === 2 || v === 5, 'Размер команды должен быть 1, 2 или 5'),
+  maxPlayers: z.coerce.number().int().min(2, 'Минимум 2 участника').max(120, 'Максимум 120 участников'),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -99,7 +102,7 @@ export function AdminCreateTournamentModal({ onClose }: Props) {
             </select>
           </Field>
           <Field label="Макс. участников" error={errors.maxPlayers?.message}>
-            <input className="input" type="number" min={2} max={256} {...register('maxPlayers')} />
+            <input className="input" type="number" {...register('maxPlayers')} />
           </Field>
         </div>
 
@@ -111,8 +114,8 @@ export function AdminCreateTournamentModal({ onClose }: Props) {
               <option value="SingleElimination">Single Elim</option>
             </select>
           </Field>
-          <Field label="Игроков в команде" error={errors.teamSize?.message} hint="1 для одиночного">
-            <input className="input" type="number" min={1} max={10} {...register('teamSize')} />
+          <Field label="Игроков в команде" error={errors.teamSize?.message} hint="1, 2 или 5">
+            <input className="input" type="number" {...register('teamSize')} />
           </Field>
         </div>
 
