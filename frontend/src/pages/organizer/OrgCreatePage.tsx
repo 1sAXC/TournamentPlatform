@@ -11,9 +11,10 @@ import { DISCIPLINES } from '@/shared/lib/disciplines';
 import { useCreateTournament } from '@/features/tournaments/hooks';
 import { showToast } from '@/shared/ui/Toast';
 import { toApiError } from '@/shared/api/http';
+import { tournamentTitleSchema } from '@/shared/lib/tournamentTitle';
 
 const schema = z.object({
-  title: z.string().min(5, 'Минимум 5 символов').max(50, 'Максимум 50 символов'),
+  title: tournamentTitleSchema,
   description: z.string().max(150, 'Максимум 150 символов').optional(),
   disciplineCode: z.string().min(1, 'Выберите дисциплину'),
   format: z.enum(['Swiss', 'SingleElimination', 'DoubleElimination']),

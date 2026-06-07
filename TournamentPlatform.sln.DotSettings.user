@@ -1,6 +1,19 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=b9538fee_002D0ed4_002D41fd_002Dbd6e_002D232c9f4f276a/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="AdminUsersServiceTests" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;xUnit::4925F561-382B-4C9F-8833-BE48D2756210::net8.0::Auth.Tests.AdminUsersServiceTests&lt;/TestId&gt;&#xD;
-  &lt;/TestAncestor&gt;&#xD;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ACpModel_002Ecs_002Fl_003AC_0021_003FUsers_003FIlySm_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fdcd28bbb3b2342823711186ad7de51e4e996c9c7ba87c697e13f9422a2_003FCpModel_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=97c1dd64_002Dc07b_002D4f0c_002D80ee_002Defcce0be776f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Session #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;And&gt;&#xD;
+    &lt;Or&gt;&#xD;
+      &lt;TestAncestor&gt;&#xD;
+        &lt;TestId&gt;xUnit::4925F561-382B-4C9F-8833-BE48D2756210::net8.0::Auth.Tests.AdminUsersServiceTests&lt;/TestId&gt;&#xD;
+      &lt;/TestAncestor&gt;&#xD;
+      &lt;Project Location="D:\Учеба\Диплом\soft\TournamentPlatform\tests\Tournament.Tests" Presentation="&amp;lt;tests&amp;gt;\&amp;lt;Tournament.Tests&amp;gt;" /&gt;&#xD;
+      &lt;Project Location="D:\Учеба\Диплом\soft\TournamentPlatform\tests\Rating.Tests" Presentation="&amp;lt;tests&amp;gt;\&amp;lt;Rating.Tests&amp;gt;" /&gt;&#xD;
+    &lt;/Or&gt;&#xD;
+    &lt;TestAncestor&gt;&#xD;
+      &lt;TestId&gt;xUnit::C2C34809-9494-4A01-96E9-B336A6F55EB0::net8.0::Tournament.Tests.MatchResultServiceTests&lt;/TestId&gt;&#xD;
+    &lt;/TestAncestor&gt;&#xD;
+  &lt;/And&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	
+	</wpf:ResourceDictionary>
