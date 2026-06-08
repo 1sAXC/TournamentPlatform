@@ -50,12 +50,7 @@ public sealed class SwissBracketGenerator(IOutboxWriter outboxWriter)
         round.Complete(DateTime.UtcNow);
         if (round.Number == tournament.SwissRounds)
         {
-            var standings = tournament.SwissStandings
-                .OrderByDescending(standing => standing.Points)
-                .ThenByDescending(standing => standing.Wins)
-                .Select(standing => standing.TeamId)
-                .ToArray();
-            CompleteTournament(tournament, standings);
+            CompleteTournament(tournament);
         }
 
         return Task.CompletedTask;

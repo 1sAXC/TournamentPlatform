@@ -209,25 +209,7 @@ public sealed class DoubleEliminationBracketGenerator(IOutboxWriter outboxWriter
             return;
         }
 
-        CompleteWithStandings(tournament, winner, loser);
-    }
-
-    private void CompleteWithStandings(Domain.Tournaments.Tournament tournament, Guid champion, Guid runnerUp)
-    {
-        var standings = new List<Guid> { champion, runnerUp };
-        // 3rd onward by LB elimination round, latest first (loser of LB Final
-        // is 3rd, loser of preceding LB round is 4th, etc.).
-        var lbRoundsReversed = tournament.Rounds
-            .Where(r => r.BracketType == BracketType.Lower)
-            .OrderByDescending(r => r.Number);
-        foreach (var round in lbRoundsReversed)
-        {
-            foreach (var match in round.Matches.Where(m => m.LoserTeamId.HasValue))
-            {
-                standings.Add(match.LoserTeamId!.Value);
-            }
-        }
-        CompleteTournament(tournament, standings);
+        CompleteTournament(tournament);
     }
 
     private static int UpperRoundCount(Domain.Tournaments.Tournament tournament)

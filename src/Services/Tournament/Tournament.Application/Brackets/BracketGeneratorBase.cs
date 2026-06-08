@@ -132,43 +132,14 @@ public abstract class BracketGeneratorBase(IOutboxWriter outboxWriter) : IBracke
         });
     }
 
-    protected void CompleteTournament(
-        Domain.Tournaments.Tournament tournament,
-        IReadOnlyList<Guid> orderedTeamIds)
+    protected void CompleteTournament(Domain.Tournaments.Tournament tournament)
     {
         if (tournament.Status == TournamentStatus.Completed)
         {
             return;
         }
 
-        var now = DateTime.UtcNow;
-        tournament.Complete(now);
-        outboxWriter.Add(new TournamentCompletedEvent
-        {
-            TournamentId = tournament.Id,
-            TournamentName = tournament.Title,
-            DisciplineCode = tournament.DisciplineCode,
-            CompletedAtUtc = now,
-            Standings = orderedTeamIds
-                .Select((teamId, index) =>
-                {
-                    var team = tournament.Teams.Single(t => t.Id == teamId);
-                    return new TournamentStandingDto
-                    {
-                        TeamId = team.Id,
-                        TeamName = team.Name,
-                        Place = index + 1,
-                        Members = team.Members.Select(member => new EventTeamMemberDto
-                        {
-                            UserId = member.PlayerId,
-                            Nickname = member.Nickname,
-                            Elo = member.Elo,
-                            IsCaptain = member.PlayerId == team.CaptainPlayerId
-                        }).ToArray()
-                    };
-                })
-                .ToArray()
-        });
+        tournament.Complete(DateTime.UtcNow);
     }
 
     protected static Round? FindRound(Domain.Tournaments.Tournament tournament, Match match)

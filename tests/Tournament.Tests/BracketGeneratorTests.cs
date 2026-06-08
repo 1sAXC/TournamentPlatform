@@ -45,7 +45,6 @@ public sealed class BracketGeneratorTests
         await generator.HandleMatchCompletedAsync(tournament, thirdMatch, CancellationToken.None);
 
         Assert.Equal(TournamentStatus.Completed, tournament.Status);
-        Assert.Single(outbox.Events.OfType<TournamentCompletedEvent>());
     }
 
     [Fact]

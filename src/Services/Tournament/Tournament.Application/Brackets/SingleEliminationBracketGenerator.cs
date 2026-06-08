@@ -86,44 +86,6 @@ public sealed class SingleEliminationBracketGenerator(IOutboxWriter outboxWriter
             return;
         }
 
-        var standings = BuildStandings(tournament, final, thirdPlace);
-        CompleteTournament(tournament, standings);
-    }
-
-    // Orders teams by finishing position: final winner, final loser, 3rd-place
-    // winner, 3rd-place loser, then earlier-eliminated teams from latest round
-    // backwards. The earlier-round losers are grouped (same elimination round
-    // means tied place) but reported in seed order within the group.
-    private static IReadOnlyList<Guid> BuildStandings(
-        Domain.Tournaments.Tournament tournament,
-        Round final,
-        Round? thirdPlace)
-    {
-        var ordered = new List<Guid>();
-        var finalMatch = final.Matches.Single();
-        if (finalMatch.WinnerTeamId.HasValue) ordered.Add(finalMatch.WinnerTeamId.Value);
-        if (finalMatch.LoserTeamId.HasValue) ordered.Add(finalMatch.LoserTeamId.Value);
-
-        if (thirdPlace is not null)
-        {
-            var tp = thirdPlace.Matches.Single();
-            if (tp.WinnerTeamId.HasValue) ordered.Add(tp.WinnerTeamId.Value);
-            if (tp.LoserTeamId.HasValue) ordered.Add(tp.LoserTeamId.Value);
-        }
-
-        var semifinalNumber = final.Number - 1;
-        var earlierRounds = tournament.Rounds
-            .Where(r => r.BracketType == BracketType.Main && r.Number < final.Number)
-            .Where(r => thirdPlace is null || r.Number < semifinalNumber)
-            .OrderByDescending(r => r.Number);
-        foreach (var round in earlierRounds)
-        {
-            foreach (var match in round.Matches.Where(m => m.LoserTeamId.HasValue))
-            {
-                ordered.Add(match.LoserTeamId!.Value);
-            }
-        }
-
-        return ordered;
+        CompleteTournament(tournament);
     }
 }

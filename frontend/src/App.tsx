@@ -7,7 +7,6 @@ import { useAuthStore } from './shared/auth/authStore';
 import { useMeSync } from './shared/auth/useMe';
 
 function AuthBootstrap() {
-  // Mounted inside QueryClientProvider so it can use TanStack Query.
   useMeSync();
   return null;
 }
